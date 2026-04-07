@@ -1,0 +1,75 @@
+{
+  "brokers": [
+    {
+      "name": "BtcTurk",
+      "type": "crypto",
+      "spotRate": 0.0012,
+      "minCommission": 0,
+      "bsmvIncluded": true,
+      "notes": "Kademeli: %0.01–%0.12 arası (30 günlük hacme göre). KDV (%20) dahildir."
+    },
+    {
+      "name": "Paribu",
+      "type": "crypto",
+      "spotRate": 0.0025,
+      "minCommission": 0,
+      "bsmvIncluded": false,
+      "notes": "Kademeli: %0.10–%0.35 arası (hacim + kıdem yılına göre). Kıdemli kullanıcılara %50'ye varan indirim."
+    },
+    {
+      "name": "CoinTR",
+      "type": "crypto",
+      "spotRate": 0.0010,
+      "minCommission": 0,
+      "bsmvIncluded": false,
+      "notes": "Spot işlem ücreti %0.10–%0.12. Ücret, alım/satım yapılan varlık cinsinden tahsil edilir."
+    },
+    {
+      "name": "Binance",
+      "type": "crypto",
+      "spotRate": 0.0010,
+      "minCommission": 0,
+      "bsmvIncluded": false,
+      "notes": "Standart %0.10. BNB ile ödeme veya VIP seviyesine göre kademeli indirim. Dönemsel sıfır komisyon kampanyaları olabilir."
+    },
+    {
+      "name": "Midas",
+      "type": "crypto",
+      "spotRate": 0.0015,
+      "minCommission": 0,
+      "bsmvIncluded": false,
+      "notes": "Kademeli: 0–10M TL hacim → %0.15, 10–100M TL → %0.12, 100M+ TL → %0.10."
+    },
+    {
+      "name": "Garanti BBVA e-Trader",
+      "type": "stock",
+      "spotRate": 0.00195,
+      "minCommission": 2.0,
+      "bsmvIncluded": false,
+      "notes": "Standart binde 1,95 civarı. Son 3 aylık ortalama hacme göre avantajlı oranlar. Üzerine %5 BSMV + Borsa Payı eklenir."
+    },
+    {
+      "name": "İş Yatırım",
+      "type": "stock",
+      "spotRate": 0.0010,
+      "minCommission": 2.0,
+      "bsmvIncluded": false,
+      "notes": "Hacim bazlı kademeli: on binde 10'dan on binde 5'e kadar. İşlem kanalına göre farklı tarifeler. Üzerine %5 BSMV eklenir."
+    },
+    {
+      "name": "Gedik Yatırım",
+      "type": "stock",
+      "spotRate": 0.00099,
+      "minCommission": 1.5,
+      "bsmvIncluded": false,
+      "notes": "Hacim ve yatırımcı statüsüne göre özel oranlar. Üzerine %5 BSMV + Borsa Payı eklenir."
+    }
+  ],
+  "_meta": {
+    "currency": "TRY",
+    "lastUpdated": "2026-04-07",
+    "disclaimer": "Oranlar genel bilgilendirme amaçlıdır. Güncel tarifeler için ilgili kurumun resmi web sitesini kontrol ediniz.",
+    "spotRateUnit": "decimal (örn. 0.0010 = %0.10 = binde 1)",
+    "minCommissionUnit": "TRY"
+  }
+}
