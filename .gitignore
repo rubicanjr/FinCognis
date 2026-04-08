@@ -4,6 +4,7 @@ node_modules/
 .cursor/
 .opencode/
 .next/
+out/
 # dist/ — pre-built hooks are included for zero-dependency install
 *.db
 *.sqlite
