@@ -1,75 +1,851 @@
 {
+  "categories": [
+    {
+      "id": "pay_piyasalari",
+      "name": "Pay Piyasalari (Hisse Senetleri)",
+      "description": "BIST hisse islemleri ve paya dayali urunler."
+    },
+    {
+      "id": "sabit_getirili",
+      "name": "Sabit Getirili Menkul Kiymetler (Borclanma Araclari)",
+      "description": "Tahvil, bono, eurobond ve benzeri borclanma araclari."
+    },
+    {
+      "id": "fon_etf",
+      "name": "Yatirim Fonlari ve ETF'ler",
+      "description": "TEFAS fonlari, BYF ve ETF urunleri."
+    },
+    {
+      "id": "emtialar",
+      "name": "Emtialar",
+      "description": "Altin, gumus, petrol ve emtia bazli urunler."
+    },
+    {
+      "id": "kripto",
+      "name": "Kripto Varliklar",
+      "description": "Kripto borsa ve spot al-sat islemleri."
+    },
+    {
+      "id": "forex",
+      "name": "Doviz Piyasalari (Forex / Pariteler)",
+      "description": "Kaldiracli doviz ve parite islemleri."
+    },
+    {
+      "id": "turev",
+      "name": "Turev Araclar",
+      "description": "VIOP, opsiyon ve varant islemleri."
+    },
+    {
+      "id": "nakit",
+      "name": "Nakit ve Nakit Benzerleri (Para Piyasasi Araclari)",
+      "description": "Para piyasasi fonlari ve benzeri dusuk riskli araclar."
+    }
+  ],
+  "markets": [
+    {
+      "id": "pay_piyasasi",
+      "name": "Pay Piyasasi",
+      "categoryId": "pay_piyasalari",
+      "defaultFees": {
+        "bsmvRate": 0.05,
+        "bistRate": 0.000025,
+        "takasbankFixed": 0.2,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0,
+        "withholdingRate": 0
+      }
+    },
+    {
+      "id": "sabit_getirili",
+      "name": "Sabit Getirili Menkul Kiymetler",
+      "categoryId": "sabit_getirili",
+      "defaultFees": {
+        "bsmvRate": 0.01,
+        "bistRate": 0,
+        "takasbankFixed": 0.15,
+        "spreadRate": 0.0001,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.001,
+        "withholdingRate": 0.1
+      }
+    },
+    {
+      "id": "fon_etf",
+      "name": "Fon / ETF / BYF",
+      "categoryId": "fon_etf",
+      "defaultFees": {
+        "bsmvRate": 0,
+        "bistRate": 0.00001,
+        "takasbankFixed": 0.1,
+        "spreadRate": 0.0001,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0,
+        "withholdingRate": 0.1
+      }
+    },
+    {
+      "id": "emtia",
+      "name": "Emtia",
+      "categoryId": "emtialar",
+      "defaultFees": {
+        "bsmvRate": 0.05,
+        "bistRate": 0,
+        "takasbankFixed": 0.15,
+        "spreadRate": 0.0005,
+        "swapDailyRate": 0.0001,
+        "fxConversionRate": 0.0015,
+        "withholdingRate": 0.1
+      }
+    },
+    {
+      "id": "kripto",
+      "name": "Kripto Spot",
+      "categoryId": "kripto",
+      "defaultFees": {
+        "bsmvRate": 0,
+        "bistRate": 0,
+        "takasbankFixed": 0,
+        "spreadRate": 0.0007,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.001,
+        "withholdingRate": 0
+      }
+    },
+    {
+      "id": "forex",
+      "name": "Forex / Pariteler",
+      "categoryId": "forex",
+      "defaultFees": {
+        "bsmvRate": 0,
+        "bistRate": 0,
+        "takasbankFixed": 0,
+        "spreadRate": 0.0012,
+        "swapDailyRate": 0.0002,
+        "fxConversionRate": 0,
+        "withholdingRate": 0
+      }
+    },
+    {
+      "id": "turev",
+      "name": "VIOP / Opsiyon / Varant",
+      "categoryId": "turev",
+      "defaultFees": {
+        "bsmvRate": 0.05,
+        "bistRate": 0.00002,
+        "takasbankFixed": 0.25,
+        "spreadRate": 0.0003,
+        "swapDailyRate": 0.0001,
+        "fxConversionRate": 0,
+        "withholdingRate": 0
+      }
+    },
+    {
+      "id": "nakit",
+      "name": "Para Piyasasi Araclari",
+      "categoryId": "nakit",
+      "defaultFees": {
+        "bsmvRate": 0,
+        "bistRate": 0,
+        "takasbankFixed": 0,
+        "spreadRate": 0.00005,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0,
+        "withholdingRate": 0.1
+      }
+    }
+  ],
   "brokers": [
     {
-      "name": "BtcTurk",
-      "type": "crypto",
-      "spotRate": 0.0012,
-      "minCommission": 0,
-      "bsmvIncluded": true,
-      "notes": "Kademeli: %0.01–%0.12 arası (30 günlük hacme göre). KDV (%20) dahildir."
+      "id": "ziraat-yatirim",
+      "name": "Ziraat Yatirim",
+      "institutionType": "state_bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00195 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.0016 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0012 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00095 }
+        ],
+        "minCommission": 5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0024,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": [
+        { "title": "Yeni musteri ilk ay %15 komisyon indirimi", "rateMultiplier": 0.85, "active": false }
+      ]
     },
     {
-      "name": "Paribu",
-      "type": "crypto",
-      "spotRate": 0.0025,
-      "minCommission": 0,
-      "bsmvIncluded": false,
-      "notes": "Kademeli: %0.10–%0.35 arası (hacim + kıdem yılına göre). Kıdemli kullanıcılara %50'ye varan indirim."
+      "id": "vakif-yatirim",
+      "name": "Vakif Yatirim",
+      "institutionType": "state_bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0019 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00155 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00115 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00092 }
+        ],
+        "minCommission": 5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00019,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0023,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": [
+        { "title": "VIOP aktif kullaniciya %10 oran indirimi", "rateMultiplier": 0.9, "active": false }
+      ]
     },
     {
-      "name": "CoinTR",
-      "type": "crypto",
-      "spotRate": 0.0010,
-      "minCommission": 0,
-      "bsmvIncluded": false,
-      "notes": "Spot işlem ücreti %0.10–%0.12. Ücret, alım/satım yapılan varlık cinsinden tahsil edilir."
+      "id": "halk-yatirim",
+      "name": "Halk Yatirim",
+      "institutionType": "state_bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0019 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00158 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00118 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00093 }
+        ],
+        "minCommission": 5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.00013,
+        "fxConversionRate": 0.0022,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": []
     },
     {
-      "name": "Binance",
-      "type": "crypto",
-      "spotRate": 0.0010,
-      "minCommission": 0,
-      "bsmvIncluded": false,
-      "notes": "Standart %0.10. BNB ile ödeme veya VIP seviyesine göre kademeli indirim. Dönemsel sıfır komisyon kampanyaları olabilir."
+      "id": "is-yatirim",
+      "name": "Is Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0017 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00135 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.001 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00075 }
+        ],
+        "minCommission": 4
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00017,
+        "swapDailyRate": 0.00012,
+        "fxConversionRate": 0.002,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.18
+      },
+      "promotions": [
+        { "title": "Yeni hesap acilisinda 3 ay %20 indirim", "rateMultiplier": 0.8, "active": false }
+      ]
     },
     {
+      "id": "gedik-yatirim",
+      "name": "Gedik Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "fon_etf", "turev", "forex"],
+      "supportedMarkets": ["pay_piyasasi", "fon_etf", "turev", "forex"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00155 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00125 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00092 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.0007 }
+        ],
+        "minCommission": 3.5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00018,
+        "swapDailyRate": 0.00015,
+        "fxConversionRate": 0.0021,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.18
+      },
+      "promotions": []
+    },
+    {
+      "id": "midas",
       "name": "Midas",
-      "type": "crypto",
-      "spotRate": 0.0015,
-      "minCommission": 0,
-      "bsmvIncluded": false,
-      "notes": "Kademeli: 0–10M TL hacim → %0.15, 10–100M TL → %0.12, 100M+ TL → %0.10."
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "fon_etf", "kripto"],
+      "supportedMarkets": ["pay_piyasasi", "fon_etf", "kripto"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0015 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.0012 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0009 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00065 }
+        ],
+        "minCommission": 1
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.0001,
+        "fxConversionRate": 0.0019,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.15
+      },
+      "promotions": [
+        { "title": "US hisse islemlerinde donemsel sifir komisyon", "rateMultiplier": 0.6, "active": false }
+      ]
     },
     {
+      "id": "tacirler-yatirim",
+      "name": "Tacirler Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "emtialar"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "emtia"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0016 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.0013 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00095 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00072 }
+        ],
+        "minCommission": 3.5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00018,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0019,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.18
+      },
+      "promotions": []
+    },
+    {
+      "id": "ak-yatirim",
+      "name": "Ak Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0018 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.0014 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00105 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.0008 }
+        ],
+        "minCommission": 4
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00019,
+        "swapDailyRate": 0.00013,
+        "fxConversionRate": 0.0021,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.18
+      },
+      "promotions": []
+    },
+    {
+      "id": "garanti-etrader",
       "name": "Garanti BBVA e-Trader",
-      "type": "stock",
-      "spotRate": 0.00195,
-      "minCommission": 2.0,
-      "bsmvIncluded": false,
-      "notes": "Standart binde 1,95 civarı. Son 3 aylık ortalama hacme göre avantajlı oranlar. Üzerine %5 BSMV + Borsa Payı eklenir."
+      "institutionType": "bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00195 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00155 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00115 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00088 }
+        ],
+        "minCommission": 5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0024,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": []
     },
     {
-      "name": "İş Yatırım",
-      "type": "stock",
-      "spotRate": 0.0010,
-      "minCommission": 2.0,
-      "bsmvIncluded": false,
-      "notes": "Hacim bazlı kademeli: on binde 10'dan on binde 5'e kadar. İşlem kanalına göre farklı tarifeler. Üzerine %5 BSMV eklenir."
+      "id": "yapi-kredi-yatirim",
+      "name": "Yapi Kredi Yatirim",
+      "institutionType": "bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00185 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00145 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0011 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00085 }
+        ],
+        "minCommission": 4.5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00019,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0022,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": []
     },
     {
-      "name": "Gedik Yatırım",
-      "type": "stock",
-      "spotRate": 0.00099,
-      "minCommission": 1.5,
-      "bsmvIncluded": false,
-      "notes": "Hacim ve yatırımcı statüsüne göre özel oranlar. Üzerine %5 BSMV + Borsa Payı eklenir."
+      "id": "deniz-yatirim",
+      "name": "Deniz Yatirim",
+      "institutionType": "bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00185 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00146 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0011 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00086 }
+        ],
+        "minCommission": 4.5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0022,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": []
+    },
+    {
+      "id": "qnb-invest",
+      "name": "QNB Invest",
+      "institutionType": "bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0018 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00142 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00108 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00083 }
+        ],
+        "minCommission": 4.5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00019,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0022,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": []
+    },
+    {
+      "id": "teb-yatirim",
+      "name": "TEB Yatirim",
+      "institutionType": "bank",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00182 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00144 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00108 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00084 }
+        ],
+        "minCommission": 4.5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.00014,
+        "fxConversionRate": 0.0023,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": []
+    },
+    {
+      "id": "osmanli-yatirim",
+      "name": "Osmanli Menkul",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "turev", "forex"],
+      "supportedMarkets": ["pay_piyasasi", "turev", "forex"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0017 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00132 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00098 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00076 }
+        ],
+        "minCommission": 3
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00021,
+        "swapDailyRate": 0.00018,
+        "fxConversionRate": 0.0023,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.18
+      },
+      "promotions": []
+    },
+    {
+      "id": "integral-yatirim",
+      "name": "Integral Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["forex", "emtialar", "turev"],
+      "supportedMarkets": ["forex", "emtia", "turev"],
+      "currencies": ["USD", "TRY"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0012 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00095 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00075 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.0006 }
+        ],
+        "minCommission": 0
+      },
+      "fees": {
+        "bsmvIncluded": true,
+        "bistIncluded": true,
+        "takasbankIncluded": true,
+        "spreadRate": 0.0012,
+        "swapDailyRate": 0.00024,
+        "fxConversionRate": 0.0005,
+        "withholdingRate": 0,
+        "takasbankFixed": 0
+      },
+      "promotions": []
+    },
+    {
+      "id": "btcturk",
+      "name": "BtcTurk",
+      "institutionType": "crypto",
+      "supportedCategories": ["kripto"],
+      "supportedMarkets": ["kripto"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 200000, "rate": 0.0012 },
+          { "maxMonthlyVolume": 1000000, "rate": 0.001 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0008 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.0005 }
+        ],
+        "minCommission": 0
+      },
+      "fees": {
+        "bsmvIncluded": true,
+        "bistIncluded": true,
+        "takasbankIncluded": true,
+        "spreadRate": 0.0009,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.001,
+        "withholdingRate": 0,
+        "takasbankFixed": 0
+      },
+      "promotions": [
+        { "title": "Maker kampanyasi %25 indirim", "rateMultiplier": 0.75, "active": false }
+      ]
+    },
+    {
+      "id": "paribu",
+      "name": "Paribu",
+      "institutionType": "crypto",
+      "supportedCategories": ["kripto"],
+      "supportedMarkets": ["kripto"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 200000, "rate": 0.0025 },
+          { "maxMonthlyVolume": 1000000, "rate": 0.002 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0014 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.001 }
+        ],
+        "minCommission": 0
+      },
+      "fees": {
+        "bsmvIncluded": true,
+        "bistIncluded": true,
+        "takasbankIncluded": true,
+        "spreadRate": 0.0011,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.0013,
+        "withholdingRate": 0,
+        "takasbankFixed": 0
+      },
+      "promotions": []
+    },
+    {
+      "id": "cointr",
+      "name": "CoinTR",
+      "institutionType": "crypto",
+      "supportedCategories": ["kripto"],
+      "supportedMarkets": ["kripto"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 200000, "rate": 0.0012 },
+          { "maxMonthlyVolume": 1000000, "rate": 0.001 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00075 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00055 }
+        ],
+        "minCommission": 0
+      },
+      "fees": {
+        "bsmvIncluded": true,
+        "bistIncluded": true,
+        "takasbankIncluded": true,
+        "spreadRate": 0.00085,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.0011,
+        "withholdingRate": 0,
+        "takasbankFixed": 0
+      },
+      "promotions": []
+    },
+    {
+      "id": "binance-tr",
+      "name": "Binance TR",
+      "institutionType": "crypto",
+      "supportedCategories": ["kripto"],
+      "supportedMarkets": ["kripto"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 200000, "rate": 0.001 },
+          { "maxMonthlyVolume": 1000000, "rate": 0.0009 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0007 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.0004 }
+        ],
+        "minCommission": 0
+      },
+      "fees": {
+        "bsmvIncluded": true,
+        "bistIncluded": true,
+        "takasbankIncluded": true,
+        "spreadRate": 0.0008,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.001,
+        "withholdingRate": 0,
+        "takasbankFixed": 0
+      },
+      "promotions": [
+        { "title": "Token ile odemede %25 indirim", "rateMultiplier": 0.75, "active": false }
+      ]
+    },
+    {
+      "id": "okx-tr",
+      "name": "OKX TR",
+      "institutionType": "crypto",
+      "supportedCategories": ["kripto"],
+      "supportedMarkets": ["kripto"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 200000, "rate": 0.0011 },
+          { "maxMonthlyVolume": 1000000, "rate": 0.0009 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00065 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00045 }
+        ],
+        "minCommission": 0
+      },
+      "fees": {
+        "bsmvIncluded": true,
+        "bistIncluded": true,
+        "takasbankIncluded": true,
+        "spreadRate": 0.0008,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.001,
+        "withholdingRate": 0,
+        "takasbankFixed": 0
+      },
+      "promotions": []
+    },
+    {
+      "id": "bitexen",
+      "name": "Bitexen",
+      "institutionType": "crypto",
+      "supportedCategories": ["kripto"],
+      "supportedMarkets": ["kripto"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 200000, "rate": 0.0014 },
+          { "maxMonthlyVolume": 1000000, "rate": 0.0012 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.0009 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.0007 }
+        ],
+        "minCommission": 0
+      },
+      "fees": {
+        "bsmvIncluded": true,
+        "bistIncluded": true,
+        "takasbankIncluded": true,
+        "spreadRate": 0.001,
+        "swapDailyRate": 0,
+        "fxConversionRate": 0.0013,
+        "withholdingRate": 0,
+        "takasbankFixed": 0
+      },
+      "promotions": []
+    },
+    {
+      "id": "seker-yatirim",
+      "name": "Seker Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "fon_etf", "turev", "forex"],
+      "supportedMarkets": ["pay_piyasasi", "fon_etf", "turev", "forex"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00172 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00135 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.001 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00078 }
+        ],
+        "minCommission": 3.5
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.00021,
+        "swapDailyRate": 0.00017,
+        "fxConversionRate": 0.0021,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.19
+      },
+      "promotions": []
+    },
+    {
+      "id": "anadolu-yatirim",
+      "name": "Anadolu Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.00175 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00138 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00102 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00079 }
+        ],
+        "minCommission": 3.8
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.00015,
+        "fxConversionRate": 0.0021,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.19
+      },
+      "promotions": []
+    },
+    {
+      "id": "oyak-yatirim",
+      "name": "OYAK Yatirim",
+      "institutionType": "broker",
+      "supportedCategories": ["pay_piyasalari", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "supportedMarkets": ["pay_piyasasi", "sabit_getirili", "fon_etf", "turev", "nakit"],
+      "currencies": ["TRY", "USD"],
+      "commissionModel": {
+        "tiers": [
+          { "maxMonthlyVolume": 500000, "rate": 0.0018 },
+          { "maxMonthlyVolume": 2000000, "rate": 0.00142 },
+          { "maxMonthlyVolume": 10000000, "rate": 0.00108 },
+          { "maxMonthlyVolume": 999999999, "rate": 0.00082 }
+        ],
+        "minCommission": 4
+      },
+      "fees": {
+        "bsmvIncluded": false,
+        "bistIncluded": false,
+        "takasbankIncluded": false,
+        "spreadRate": 0.0002,
+        "swapDailyRate": 0.00015,
+        "fxConversionRate": 0.0022,
+        "withholdingRate": 0.1,
+        "takasbankFixed": 0.2
+      },
+      "promotions": []
     }
   ],
   "_meta": {
-    "currency": "TRY",
-    "lastUpdated": "2026-04-07",
-    "disclaimer": "Oranlar genel bilgilendirme amaçlıdır. Güncel tarifeler için ilgili kurumun resmi web sitesini kontrol ediniz.",
-    "spotRateUnit": "decimal (örn. 0.0010 = %0.10 = binde 1)",
-    "minCommissionUnit": "TRY"
+    "currencyBase": "TRY",
+    "defaultUsdTry": 38.0,
+    "lastUpdated": "2026-04-08",
+    "dataVersion": "2.0.0",
+    "disclaimer": "Tarifeler bilgilendirme amaclidir. Kurum bazli ozel oranlar ve kampanyalar degisebilir."
   }
 }
