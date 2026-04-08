@@ -1,256 +1,429 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { startTransition, useDeferredValue, useMemo, useState } from "react";
+import {
+  CRISIS_LIBRARY,
+  DEFAULT_WEIGHTS,
+  SCENARIO_SET,
+  STRESS_ASSETS,
+} from "@/components/tools/stress/data";
+import { runStressAnalysis } from "@/components/tools/stress/engine";
+import StressResults from "@/components/tools/stress/StressResults";
+import type { PortfolioInput, StressAssetClass } from "@/components/tools/stress/types";
 
-interface Asset {
-  id: string;
-  label: string;
-  icon: string;
-  color: string;
-  beta: number;
+interface DraftState {
+  portfolioValue: string;
+  selectedCrisisId: string;
+  scenarioSeverity: PortfolioInput["scenarioSeverity"];
+  withdrawalRatePct: string;
+  macroShock: {
+    rateShockPct: string;
+    inflationShockPct: string;
+    btcShockPct: string;
+    dxyStable: boolean;
+  };
+  weights: Record<string, string>;
 }
 
-interface Scenario {
-  id: string;
-  year: number;
-  label: string;
-  description: string;
-  baseDrawdown: number;
-  icon: string;
-  duration: string;
-  recovery: string;
+const DEFAULT_PORTFOLIO_VALUE = 1_000_000;
+const DEFAULT_WITHDRAWAL = 4;
+
+function parseNumeric(value: string, fallback = 0) {
+  const normalized = value.replace(",", ".").replace(/[^0-9.-]/g, "");
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-interface StressResult {
-  scenario: Scenario;
-  dropPct: number;
-  lossTL: number;
+function formatCurrencyInput(value: number) {
+  return Number(value).toLocaleString("tr-TR");
 }
 
-const ASSETS: Asset[] = [
-  { id: "BTC", label: "Bitcoin", icon: "BTC", color: "#F7931A", beta: 2 },
-  { id: "ETH", label: "Ethereum", icon: "ETH", color: "#627EEA", beta: 2.5 },
-  { id: "BIST100", label: "BIST 100", icon: "BIST", color: "#E31E24", beta: 1 },
-  { id: "THYAO", label: "Turk Hava Yollari", icon: "THY", color: "#C8102E", beta: 1.3 },
-  { id: "ALTIN", label: "Altin (ONS)", icon: "XAU", color: "#FFD700", beta: -0.15 },
-  { id: "USD", label: "Dolar (USD/TRY)", icon: "USD", color: "#85BB65", beta: -0.4 },
-];
-
-const SCENARIOS: Scenario[] = [
-  {
-    id: "2008",
-    year: 2008,
-    label: "Kuresel Finans Krizi",
-    description: "Mortgage kaynakli likidite daralmasi ve sert piyasa dususu.",
-    baseDrawdown: -0.55,
-    icon: "2008",
-    duration: "18 ay",
-    recovery: "~4 yil",
-  },
-  {
-    id: "2020",
-    year: 2020,
-    label: "COVID-19 Cokusu",
-    description: "Pandemi soku ve global kapanmalarla hizli satis dalgasi.",
-    baseDrawdown: -0.34,
-    icon: "2020",
-    duration: "33 gun",
-    recovery: "~5 ay",
-  },
-  {
-    id: "2022",
-    year: 2022,
-    label: "Faiz ve Kripto Krizi",
-    description: "Agresif faiz artislari ve kripto piyasasindaki iflas zinciri.",
-    baseDrawdown: -0.28,
-    icon: "2022",
-    duration: "10 ay",
-    recovery: "~18 ay",
-  },
-];
-
-function formatFullTL(amount: number) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+function classLabel(assetClass: StressAssetClass) {
+  if (assetClass === "crypto") return "Kripto";
+  if (assetClass === "turkish_equity") return "TR Hisse";
+  if (assetClass === "us_equity") return "ABD Hisse";
+  if (assetClass === "commodity") return "Emtia";
+  if (assetClass === "bond") return "Tahvil";
+  return "Doviz";
 }
 
-function simulateStress(portfolioAmount: number, asset: Asset): StressResult[] {
-  return SCENARIOS.map((scenario) => {
-    const rawDrop = scenario.baseDrawdown * asset.beta;
-    const dropPct = Math.max(-0.95, Math.min(0.6, rawDrop));
-    return {
-      scenario,
-      dropPct,
-      lossTL: portfolioAmount * dropPct,
-    };
-  });
+function createWeightDraft() {
+  return STRESS_ASSETS.reduce<Record<string, string>>((acc, asset) => {
+    const defaultWeight = DEFAULT_WEIGHTS[asset.id] ?? 0;
+    acc[asset.id] = defaultWeight > 0 ? (defaultWeight * 100).toFixed(2) : "0";
+    return acc;
+  }, {});
 }
 
-function FooterStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <span className="block text-[9px] uppercase tracking-wider text-on-surface-variant/60">{label}</span>
-      <span className="mt-0.5 block text-[11px] font-bold text-on-surface-variant">{value}</span>
-    </div>
-  );
+function createDefaultDraft(): DraftState {
+  return {
+    portfolioValue: formatCurrencyInput(DEFAULT_PORTFOLIO_VALUE),
+    selectedCrisisId: CRISIS_LIBRARY[0]?.id ?? "gfc_2008",
+    scenarioSeverity: "medium",
+    withdrawalRatePct: String(DEFAULT_WITHDRAWAL),
+    macroShock: {
+      rateShockPct: "0",
+      inflationShockPct: "0",
+      btcShockPct: "0",
+      dxyStable: true,
+    },
+    weights: createWeightDraft(),
+  };
+}
+
+function buildInputFromDraft(draft: DraftState): PortfolioInput {
+  const portfolioValue = Math.max(parseNumeric(draft.portfolioValue, DEFAULT_PORTFOLIO_VALUE), 1_000);
+  const weights = Object.entries(draft.weights).reduce<Record<string, number>>((acc, [assetId, value]) => {
+    const pct = Math.max(parseNumeric(value, 0), 0);
+    acc[assetId] = pct / 100;
+    return acc;
+  }, {});
+
+  return {
+    portfolioValue,
+    weights,
+    selectedCrisisId: draft.selectedCrisisId,
+    scenarioSeverity: draft.scenarioSeverity,
+    macroShock: {
+      rateShockPct: parseNumeric(draft.macroShock.rateShockPct, 0),
+      inflationShockPct: parseNumeric(draft.macroShock.inflationShockPct, 0),
+      dxyStable: draft.macroShock.dxyStable,
+      btcShockPct: parseNumeric(draft.macroShock.btcShockPct, 0),
+    },
+    withdrawalRatePct: Math.max(parseNumeric(draft.withdrawalRatePct, DEFAULT_WITHDRAWAL), 0),
+  };
+}
+
+function weightTotal(weights: Record<string, string>) {
+  return Object.values(weights).reduce((acc, value) => acc + Math.max(parseNumeric(value, 0), 0), 0);
 }
 
 export default function StressTest() {
-  const [portfolio, setPortfolio] = useState("");
-  const [assetId, setAssetId] = useState("BTC");
-  const [results, setResults] = useState<StressResult[] | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [draft, setDraft] = useState<DraftState>(() => createDefaultDraft());
+  const [analysisInput, setAnalysisInput] = useState<PortfolioInput>(() => buildInputFromDraft(createDefaultDraft()));
+  const deferredInput = useDeferredValue(analysisInput);
+  const analysis = useMemo(() => runStressAnalysis(deferredInput), [deferredInput]);
 
-  const selectedAsset = useMemo(() => ASSETS.find((asset) => asset.id === assetId), [assetId]);
-  const parsedAmount = Number.parseFloat(portfolio.replace(/[^0-9.]/g, "")) || 0;
+  const totalWeight = useMemo(() => weightTotal(draft.weights), [draft.weights]);
 
-  const handleSimulate = useCallback(() => {
-    if (!selectedAsset || parsedAmount <= 0) {
-      return;
-    }
-    setLoading(true);
-    setResults(null);
+  const runSimulation = () => {
+    startTransition(() => {
+      setAnalysisInput(buildInputFromDraft(draft));
+    });
+  };
 
-    setTimeout(() => {
-      setResults(simulateStress(parsedAmount, selectedAsset));
-      setLoading(false);
-    }, 900);
-  }, [parsedAmount, selectedAsset]);
+  const resetDefaults = () => {
+    const defaults = createDefaultDraft();
+    startTransition(() => {
+      setDraft(defaults);
+      setAnalysisInput(buildInputFromDraft(defaults));
+    });
+  };
 
-  const worstCase = results
-    ? results.reduce((worst, current) => (current.dropPct < worst.dropPct ? current : worst), results[0])
-    : null;
+  const setEqualWeights = () => {
+    const eachWeight = (100 / STRESS_ASSETS.length).toFixed(2);
+    setDraft((current) => ({
+      ...current,
+      weights: STRESS_ASSETS.reduce<Record<string, string>>((acc, asset) => {
+        acc[asset.id] = eachWeight;
+        return acc;
+      }, {}),
+    }));
+  };
+
+  const applyMacroPreset = (preset: "policy_tightening" | "btc_crash" | "inflation_spike") => {
+    setDraft((current) => {
+      if (preset === "policy_tightening") {
+        return {
+          ...current,
+          macroShock: {
+            ...current.macroShock,
+            rateShockPct: "3",
+            inflationShockPct: "4",
+          },
+        };
+      }
+      if (preset === "btc_crash") {
+        return {
+          ...current,
+          macroShock: {
+            ...current.macroShock,
+            dxyStable: true,
+            btcShockPct: "-40",
+          },
+        };
+      }
+      return {
+        ...current,
+        macroShock: {
+          ...current.macroShock,
+          rateShockPct: "1",
+          inflationShockPct: "10",
+          dxyStable: false,
+        },
+      };
+    });
+  };
 
   return (
-    <div className="flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/10">
-            <span className="material-symbols-outlined text-2xl text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
-              shield
-            </span>
-          </div>
-          <h2 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface">Portfoy Stres Simulatoru</h2>
-          <p className="mt-1 text-sm text-on-surface-variant">Kriz senaryolarinda portfoyunuzu test edin</p>
-        </div>
-
-        <div className="space-y-4 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5">
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-              Portfoy Tutari (TL)
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="100.000"
-              value={portfolio}
-              onChange={(event) => {
-                const raw = event.target.value.replace(/[^0-9]/g, "");
-                if (!raw) {
-                  setPortfolio("");
-                  return;
-                }
-                setPortfolio(Number(raw).toLocaleString("tr-TR"));
-              }}
-              className="w-full rounded-xl border border-outline-variant/20 bg-surface px-4 py-3 text-sm font-medium text-on-surface transition-all focus:border-secondary/50 focus:outline-none focus:ring-1 focus:ring-secondary/20"
-            />
-            {parsedAmount > 0 && <p className="mt-1 text-[10px] text-on-surface-variant/60">{formatFullTL(parsedAmount)}</p>}
-          </div>
-
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-on-surface-variant">
-              Varlik Secimi
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {ASSETS.map((asset) => (
-                <button
-                  key={asset.id}
-                  onClick={() => setAssetId(asset.id)}
-                  className={`rounded-xl border px-2 py-3 text-xs font-semibold transition-all ${
-                    assetId === asset.id
-                      ? "border-secondary/40 bg-secondary/5 text-secondary"
-                      : "border-outline-variant/10 bg-surface text-on-surface-variant"
-                  }`}
-                >
-                  {asset.id}
-                </button>
-              ))}
+    <section className="px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-7xl space-y-4">
+        <div className="rounded-[28px] bg-surface-container-low p-5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] sm:p-6">
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/15 text-secondary">
+              <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                shield
+              </span>
+            </div>
+            <div className="min-w-[230px]">
+              <p className="font-label text-[11px] font-bold uppercase tracking-[0.24em] text-secondary">FinCognis Risk Lab</p>
+              <h2 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
+                Portfoy Stres Simulasyonu
+              </h2>
             </div>
           </div>
 
-          <button
-            onClick={handleSimulate}
-            disabled={loading || parsedAmount <= 0}
-            className="w-full rounded-xl bg-secondary py-3.5 text-sm font-bold text-on-secondary transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {loading ? "Simulasyon Calisiyor..." : "Stres Testi Baslat"}
-          </button>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="rounded-2xl bg-surface p-4">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">1) Ana Parametreler</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs text-on-surface-variant sm:col-span-2">
+                  Portfoy Degeri (TL)
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={draft.portfolioValue}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        portfolioValue: event.target.value.replace(/[^0-9.,]/g, ""),
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                  />
+                </label>
+
+                <label className="text-xs text-on-surface-variant">
+                  Kriz senaryosu
+                  <select
+                    value={draft.selectedCrisisId}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        selectedCrisisId: event.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                  >
+                    {CRISIS_LIBRARY.map((scenario) => (
+                      <option key={scenario.id} value={scenario.id}>
+                        {scenario.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-xs text-on-surface-variant">
+                  Yillik cekim orani (%)
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={draft.withdrawalRatePct}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        withdrawalRatePct: event.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                  />
+                </label>
+
+                <div className="sm:col-span-2">
+                  <p className="mb-2 text-xs text-on-surface-variant">Sok seviyesi</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {SCENARIO_SET.map((scenario) => (
+                      <button
+                        key={scenario.id}
+                        onClick={() =>
+                          setDraft((current) => ({
+                            ...current,
+                            scenarioSeverity: scenario.id,
+                          }))
+                        }
+                        className={`rounded-lg px-2 py-2 text-xs font-semibold ${
+                          draft.scenarioSeverity === scenario.id
+                            ? "bg-secondary/20 text-secondary"
+                            : "bg-surface-container-high text-on-surface-variant"
+                        }`}
+                      >
+                        {scenario.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-surface p-4">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">2) Hipotetik Makro Soklar</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-xs text-on-surface-variant">
+                  Faiz degisimi (%)
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={draft.macroShock.rateShockPct}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        macroShock: { ...current.macroShock, rateShockPct: event.target.value },
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                  />
+                </label>
+                <label className="text-xs text-on-surface-variant">
+                  Enflasyon degisimi (%)
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={draft.macroShock.inflationShockPct}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        macroShock: { ...current.macroShock, inflationShockPct: event.target.value },
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                  />
+                </label>
+                <label className="text-xs text-on-surface-variant">
+                  BTC sok (%)
+                  <input
+                    type="number"
+                    step="1"
+                    value={draft.macroShock.btcShockPct}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        macroShock: { ...current.macroShock, btcShockPct: event.target.value },
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl bg-surface-container-high px-3 py-2 text-sm text-on-surface"
+                  />
+                </label>
+                <label className="flex items-end gap-2 text-sm text-on-surface-variant">
+                  <input
+                    type="checkbox"
+                    checked={draft.macroShock.dxyStable}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        macroShock: { ...current.macroShock, dxyStable: event.target.checked },
+                      }))
+                    }
+                  />
+                  DXY sabit varsay
+                </label>
+              </div>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <button
+                  onClick={() => applyMacroPreset("policy_tightening")}
+                  className="rounded-lg bg-surface-container-high px-2 py-2 text-xs font-semibold text-on-surface-variant"
+                >
+                  Faiz +3%
+                </button>
+                <button
+                  onClick={() => applyMacroPreset("btc_crash")}
+                  className="rounded-lg bg-surface-container-high px-2 py-2 text-xs font-semibold text-on-surface-variant"
+                >
+                  BTC -40%
+                </button>
+                <button
+                  onClick={() => applyMacroPreset("inflation_spike")}
+                  className="rounded-lg bg-surface-container-high px-2 py-2 text-xs font-semibold text-on-surface-variant"
+                >
+                  Enflasyon Soku
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-surface p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">3) Coklu Varlik Agirliklari</p>
+              <button
+                onClick={setEqualWeights}
+                className="rounded-lg bg-surface-container-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant"
+              >
+                Esit Agirlik
+              </button>
+              <button
+                onClick={resetDefaults}
+                className="rounded-lg bg-surface-container-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant"
+              >
+                Varsayilan
+              </button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {STRESS_ASSETS.map((asset) => (
+                <div key={asset.id} className="rounded-xl bg-surface-container-high p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-on-surface">{asset.ticker}</p>
+                    <p className="text-[11px] text-on-surface-variant">{classLabel(asset.assetClass)}</p>
+                  </div>
+                  <p className="mt-1 truncate text-[11px] text-on-surface-variant">{asset.name}</p>
+                  <label className="mt-2 block text-[11px] text-on-surface-variant">
+                    Agirlik (%)
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={draft.weights[asset.id] ?? "0"}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          weights: {
+                            ...current.weights,
+                            [asset.id]: event.target.value,
+                          },
+                        }))
+                      }
+                      className="mt-1 w-full rounded-lg bg-surface px-2 py-1.5 text-sm text-on-surface"
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+              <span className="text-on-surface-variant">Toplam agirlik: %{totalWeight.toFixed(2)}</span>
+              {Math.abs(totalWeight - 100) > 0.5 && (
+                <span className="rounded-md bg-amber-500/15 px-2 py-1 text-amber-300">
+                  Not: Motor agirliklari otomatik normalize eder.
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              onClick={runSimulation}
+              className="rounded-xl bg-secondary px-5 py-3 text-sm font-bold text-on-secondary transition hover:brightness-110"
+            >
+              Stres Analizini Calistir
+            </button>
+            <p className="text-xs text-on-surface-variant">
+              DCC-GARCH, multivariate t-Copula, Monte Carlo, Kupiec ve phase-shuffled testleri birlikte calisir.
+            </p>
+          </div>
         </div>
 
-        {results && (
-          <div className="mt-4 space-y-3">
-            {worstCase && (
-              <div className="rounded-2xl border border-red-500/10 bg-red-500/5 px-5 py-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">En Kotu Senaryo</span>
-                <div className="mt-2 flex items-end justify-between">
-                  <div>
-                    <span className="block text-xs text-on-surface-variant">
-                      {worstCase.scenario.year} - {worstCase.scenario.label}
-                    </span>
-                    <span className="mt-1 block font-headline text-2xl font-extrabold text-red-400">
-                      {(worstCase.dropPct * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <span className="font-headline text-lg font-bold text-red-400">
-                    {formatFullTL(Math.abs(worstCase.lossTL))}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {results.map((result) => (
-              <div key={result.scenario.id} className="overflow-hidden rounded-2xl border border-outline-variant/10 bg-surface-container-low">
-                <div className="flex items-start justify-between px-5 pb-3 pt-4">
-                  <div>
-                    <span className="block font-headline text-sm font-bold text-on-surface">{result.scenario.year}</span>
-                    <span className="block text-[11px] text-on-surface-variant">{result.scenario.label}</span>
-                  </div>
-                  <span className="text-sm font-bold text-on-surface">{(result.dropPct * 100).toFixed(1)}%</span>
-                </div>
-
-                <div className="px-5 pb-3">
-                  <p className="text-[11px] leading-relaxed text-on-surface-variant/70">{result.scenario.description}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 px-5 pb-3">
-                  <div className="rounded-xl bg-surface-container-highest p-3">
-                    <span className="block text-[9px] uppercase tracking-wider text-on-surface-variant/60">Tahmini Kayip</span>
-                    <span className="mt-1 block font-headline text-lg font-extrabold text-on-surface">
-                      {formatFullTL(Math.abs(result.lossTL))}
-                    </span>
-                  </div>
-                  <div className="rounded-xl bg-surface-container-highest p-3">
-                    <span className="block text-[9px] uppercase tracking-wider text-on-surface-variant/60">Kalan Portfoy</span>
-                    <span className="mt-1 block font-headline text-lg font-extrabold text-on-surface">
-                      {formatFullTL(parsedAmount + result.lossTL)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 border-t border-outline-variant/10 px-5 py-3 text-center">
-                  <FooterStat label="Piyasa Dususu" value={`${(result.scenario.baseDrawdown * 100).toFixed(0)}%`} />
-                  <FooterStat label="Kriz Suresi" value={result.scenario.duration} />
-                  <FooterStat label="Toparlanma" value={result.scenario.recovery} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <StressResults analysis={analysis} portfolioValue={deferredInput.portfolioValue} />
       </div>
-    </div>
+    </section>
   );
 }
+
