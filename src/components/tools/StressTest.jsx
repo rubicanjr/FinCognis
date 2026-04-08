@@ -125,9 +125,9 @@ export default function StressTest() {
               shield
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-on-surface tracking-tight font-headline">
+          <h2 className="text-2xl font-extrabold text-on-surface tracking-tight font-headline">
             Portföy Stres Simülatörü
-          </h1>
+          </h2>
           <p className="text-sm text-on-surface-variant mt-1 font-body">
             Kriz senaryolarında portföyünüzü test edin
           </p>

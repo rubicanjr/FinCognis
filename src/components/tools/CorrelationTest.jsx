@@ -117,9 +117,9 @@ export default function CorrelationTest() {
               query_stats
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-on-surface tracking-tight font-headline">
+          <h2 className="text-2xl font-extrabold text-on-surface tracking-tight font-headline">
             Korelasyon Çarpışma Testi
-          </h1>
+          </h2>
           <p className="text-sm text-on-surface-variant mt-1 font-body">
             İki varlık arasındaki ilişkiyi analiz edin
           </p>

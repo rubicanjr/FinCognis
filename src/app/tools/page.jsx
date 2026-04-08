@@ -1,63 +1,81 @@
-"use client";
+import ToolsPageClient from "@/components/tools/ToolsPageClient";
+import {
+  SITE_NAME,
+  SITE_URL,
+  buildAbsoluteUrl,
+  createPageMetadata,
+} from "@/lib/seo";
 
-import { useState } from "react";
-import Navbar from "@/components/landing/Navbar";
-import CommissionCalculator from "@/components/tools/CommissionCalculator";
-import CorrelationTest from "@/components/tools/CorrelationTest";
-import StressTest from "@/components/tools/StressTest";
+const toolsTitle = `${SITE_NAME} Araçlar | Komisyon, Korelasyon ve Stres Testi`;
+const toolsDescription =
+  "FinCognis araçlar sayfasında komisyon maliyeti hesaplayın, varlık korelasyonunu ölçün ve farklı kriz senaryolarında portföy stres testi uygulayın.";
 
-const TOOLS = [
-  { id: "commission", label: "Komisyon", icon: "payments" },
-  { id: "correlation", label: "Korelasyon", icon: "query_stats" },
-  { id: "stress", label: "Stres Testi", icon: "shield" },
-];
+export const metadata = createPageMetadata({
+  title: toolsTitle,
+  description: toolsDescription,
+  path: "/tools",
+  keywords: [
+    "komisyon hesaplama aracı",
+    "korelasyon testi",
+    "portföy stres testi",
+    "yatırım araçları",
+    "FinCognis tools",
+  ],
+});
+
+const toolsStructuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/tools#webpage`,
+      url: `${SITE_URL}/tools`,
+      name: toolsTitle,
+      description: toolsDescription,
+      inLanguage: "tr-TR",
+      isPartOf: {
+        "@id": `${SITE_URL}#website`,
+      },
+      publisher: {
+        "@id": `${SITE_URL}#organization`,
+      },
+      primaryImageOfPage: {
+        "@type": "ImageObject",
+        url: buildAbsoluteUrl("/social-preview.png"),
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${SITE_URL}/tools#breadcrumb`,
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Anasayfa",
+          item: SITE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Araçlar",
+          item: `${SITE_URL}/tools`,
+        },
+      ],
+    },
+  ],
+};
 
 export default function ToolsPage() {
-  const [activeTool, setActiveTool] = useState("commission");
-
   return (
-    <div className="min-h-screen bg-surface">
-      <Navbar />
-
-      {/* Tool selector — below navbar */}
-      <div className="pt-24 pb-6 px-6 max-w-2xl mx-auto">
-        <div className="text-center mb-6">
-          <p className="text-secondary font-label font-bold tracking-[0.2em] uppercase text-sm mb-2">
-            Finansal Araçlar
-          </p>
-          <h1 className="text-3xl font-headline font-extrabold text-on-surface">
-            Analiz & Hesaplama
-          </h1>
-        </div>
-
-        <div className="flex gap-2 bg-surface-container-low rounded-2xl p-1.5 border border-outline-variant/10">
-          {TOOLS.map((tool) => (
-            <button
-              key={tool.id}
-              onClick={() => setActiveTool(tool.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold font-headline transition-all duration-200 cursor-pointer ${
-                activeTool === tool.id
-                  ? "bg-secondary/15 text-secondary shadow-sm"
-                  : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              <span
-                className="material-symbols-outlined text-base"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                {tool.icon}
-              </span>
-              {tool.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <main className="pb-16">
-        {activeTool === "commission" && <CommissionCalculator />}
-        {activeTool === "correlation" && <CorrelationTest />}
-        {activeTool === "stress" && <StressTest />}
-      </main>
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(toolsStructuredData),
+        }}
+      />
+      <ToolsPageClient />
+    </>
   );
 }
+

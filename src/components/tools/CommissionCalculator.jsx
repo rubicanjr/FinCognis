@@ -141,9 +141,9 @@ export default function CommissionCalculator() {
               <p className="font-label text-[11px] font-bold uppercase tracking-[0.28em] text-secondary">
                 FinCognis Araçları
               </p>
-              <h1 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
+              <h2 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
                 Komisyon Hesaplayıcı
-              </h1>
+              </h2>
             </div>
           </div>
 
