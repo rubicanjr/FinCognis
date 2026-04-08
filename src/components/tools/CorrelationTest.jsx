@@ -61,7 +61,7 @@ const WARNING_STYLES = {
   warning: "bg-amber-500/10 border-amber-500/20 text-amber-400",
   neutral: "bg-blue-500/10 border-blue-500/20 text-blue-300",
   success: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-  info:    "bg-gray-500/10 border-gray-500/20 text-gray-400",
+  info:    "bg-surface-container-highest border-outline-variant/20 text-on-surface-variant",
 };
 
 function corrToColor(corr) {
@@ -106,33 +106,26 @@ export default function CorrelationTest() {
   const asset2Data = ASSETS.find((a) => a.id === asset2);
 
   return (
-    <div className="min-h-screen bg-[#050A14] flex items-center justify-center px-4 py-8">
+    <div className="flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#00C896]/10 mb-4">
-            <svg
-              className="w-7 h-7 text-[#00C896]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-secondary/10 mb-4">
+            <span
+              className="material-symbols-outlined text-secondary text-2xl"
+              style={{ fontVariationSettings: "'FILL' 1" }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"
-              />
-            </svg>
+              query_stats
+            </span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-on-surface tracking-tight font-headline">
             Korelasyon Çarpışma Testi
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-on-surface-variant mt-1 font-body">
             İki varlık arasındaki ilişkiyi analiz edin
           </p>
         </div>
 
-        <div className="bg-[#0B1120] border border-white/5 rounded-2xl p-5 space-y-5">
+        <div className="bg-surface-container-low border border-outline-variant/10 rounded-2xl p-5 space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <AssetSelect
               id="asset1-select"
@@ -151,21 +144,11 @@ export default function CorrelationTest() {
           <div className="flex items-center justify-center gap-3 py-1">
             <AssetBadge asset={asset1Data} />
             <div className="flex items-center gap-1">
-              <span className="block w-6 h-px bg-gray-700" />
-              <svg
-                className="w-4 h-4 text-gray-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
-                />
-              </svg>
-              <span className="block w-6 h-px bg-gray-700" />
+              <span className="block w-6 h-px bg-outline-variant/30" />
+              <span className="material-symbols-outlined text-on-surface-variant/40 text-base">
+                swap_horiz
+              </span>
+              <span className="block w-6 h-px bg-outline-variant/30" />
             </div>
             <AssetBadge asset={asset2Data} />
           </div>
@@ -174,29 +157,13 @@ export default function CorrelationTest() {
             id="calculate-btn"
             onClick={handleCalculate}
             disabled={loading}
-            className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer disabled:cursor-wait bg-[#00C896] text-[#050A14] hover:bg-[#00C896]/90 active:scale-[0.98] disabled:opacity-60"
+            className="w-full py-3.5 rounded-xl font-bold font-headline text-sm transition-all duration-200 cursor-pointer disabled:cursor-wait bg-secondary text-on-secondary hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
           >
             {loading ? (
               <span className="inline-flex items-center gap-2">
-                <svg
-                  className="animate-spin w-4 h-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
+                <span className="material-symbols-outlined animate-spin text-base">
+                  progress_activity
+                </span>
                 Hesaplanıyor...
               </span>
             ) : (
@@ -213,20 +180,20 @@ export default function CorrelationTest() {
           }`}
         >
           {result && (
-            <div className="bg-[#0B1120] border border-white/5 rounded-2xl overflow-hidden">
+            <div className="bg-surface-container-low border border-outline-variant/10 rounded-2xl overflow-hidden">
               <div className="px-5 pt-5 pb-4">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider font-label">
                     Korelasyon Katsayısı
                   </span>
-                  <span className="text-[10px] text-gray-600">
+                  <span className="text-[10px] text-on-surface-variant/60">
                     Son 1 yıl (252 işlem günü)
                   </span>
                 </div>
 
                 <div className="flex items-end gap-2 mt-3">
                   <span
-                    className={`text-5xl font-extrabold tracking-tight tabular-nums ${corrToColor(
+                    className={`text-5xl font-extrabold tracking-tight tabular-nums font-headline ${corrToColor(
                       result.corr
                     )}`}
                   >
@@ -242,7 +209,7 @@ export default function CorrelationTest() {
                   </span>
                 </div>
 
-                <div className="mt-4 h-2 bg-white/5 rounded-full overflow-hidden">
+                <div className="mt-4 h-2 bg-surface-container-highest rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ease-out ${corrBarColor(
                       result.corr
@@ -252,8 +219,8 @@ export default function CorrelationTest() {
                 </div>
 
                 <div className="flex justify-between mt-1.5">
-                  <span className="text-[10px] text-gray-700">0%</span>
-                  <span className="text-[10px] text-gray-700">100%</span>
+                  <span className="text-[10px] text-on-surface-variant/40">0%</span>
+                  <span className="text-[10px] text-on-surface-variant/40">100%</span>
                 </div>
               </div>
 
@@ -297,7 +264,7 @@ export default function CorrelationTest() {
                 </div>
               </div>
 
-              <div className="border-t border-white/5 px-5 py-4">
+              <div className="border-t border-outline-variant/10 px-5 py-4">
                 <div
                   className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${
                     WARNING_STYLES[result.warning.level]
@@ -310,7 +277,7 @@ export default function CorrelationTest() {
           )}
         </div>
 
-        <p className="text-center text-[10px] text-gray-700 mt-6">
+        <p className="text-center text-[10px] text-on-surface-variant/50 mt-6 font-body">
           Korelasyon verisi yıllık ortalamadır, yatırım tavsiyesi değildir.
         </p>
       </div>
@@ -323,7 +290,7 @@ function AssetSelect({ id, label, value, onChange }) {
     <div>
       <label
         htmlFor={id}
-        className="block text-[10px] font-medium text-gray-500 mb-1.5 uppercase tracking-wider"
+        className="block text-xs font-bold text-on-surface-variant mb-1.5 uppercase tracking-wider font-label"
       >
         {label}
       </label>
@@ -332,7 +299,7 @@ function AssetSelect({ id, label, value, onChange }) {
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none bg-[#050A14] border border-white/10 rounded-xl px-3 py-3 text-white text-sm font-medium focus:outline-none focus:border-[#00C896]/50 focus:ring-1 focus:ring-[#00C896]/20 transition-all cursor-pointer"
+          className="w-full appearance-none bg-surface border border-outline-variant/20 rounded-xl px-4 py-3 text-on-surface text-sm font-medium focus:outline-none focus:border-secondary/50 focus:ring-1 focus:ring-secondary/20 transition-all cursor-pointer"
         >
           {ASSETS.map((a) => (
             <option key={a.id} value={a.id}>
@@ -340,20 +307,10 @@ function AssetSelect({ id, label, value, onChange }) {
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
-          <svg
-            className="w-3.5 h-3.5 text-gray-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-            />
-          </svg>
+        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+          <span className="material-symbols-outlined text-on-surface-variant text-lg">
+            expand_more
+          </span>
         </div>
       </div>
     </div>
@@ -378,14 +335,14 @@ function AssetBadge({ asset }) {
 
 function MiniStat({ label, value, sub }) {
   return (
-    <div className="bg-[#050A14]/60 rounded-lg py-2.5 px-2">
-      <span className="block text-[9px] text-gray-600 uppercase tracking-wider">
+    <div className="bg-surface-container-highest rounded-lg py-2.5 px-2">
+      <span className="block text-[9px] text-on-surface-variant/60 uppercase tracking-wider font-label">
         {label}
       </span>
-      <span className="block text-xs font-bold text-gray-300 mt-0.5">
+      <span className="block text-xs font-bold text-on-surface mt-0.5">
         {value}
       </span>
-      <span className="block text-[10px] text-gray-600 mt-0.5">{sub}</span>
+      <span className="block text-[10px] text-on-surface-variant/60 mt-0.5">{sub}</span>
     </div>
   );
 }

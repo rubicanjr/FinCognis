@@ -56,37 +56,30 @@ export default function CommissionCalculator() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050A14] flex items-center justify-center px-4 py-8">
+    <div className="flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#00C896]/10 mb-4">
-            <svg
-              className="w-7 h-7 text-[#00C896]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-secondary/10 mb-4">
+            <span
+              className="material-symbols-outlined text-secondary text-2xl"
+              style={{ fontVariationSettings: "'FILL' 1" }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"
-              />
-            </svg>
+              payments
+            </span>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-extrabold text-on-surface tracking-tight font-headline">
             Komisyon Hesaplayıcı
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-on-surface-variant mt-1 font-body">
             İşlem maliyetinizi anında hesaplayın
           </p>
         </div>
 
-        <div className="bg-[#0B1120] border border-white/5 rounded-2xl p-5 space-y-5">
+        <div className="bg-surface-container-low border border-outline-variant/10 rounded-2xl p-5 space-y-5">
           <div>
             <label
               htmlFor="broker-select"
-              className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider"
+              className="block text-xs font-bold text-on-surface-variant mb-2 uppercase tracking-wider font-label"
             >
               Aracı Kurum
             </label>
@@ -95,7 +88,7 @@ export default function CommissionCalculator() {
                 id="broker-select"
                 value={broker}
                 onChange={(e) => setBroker(e.target.value)}
-                className="w-full appearance-none bg-[#050A14] border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm font-medium focus:outline-none focus:border-[#00C896]/50 focus:ring-1 focus:ring-[#00C896]/20 transition-all cursor-pointer"
+                className="w-full appearance-none bg-surface border border-outline-variant/20 rounded-xl px-4 py-3.5 text-on-surface text-sm font-medium focus:outline-none focus:border-secondary/50 focus:ring-1 focus:ring-secondary/20 transition-all cursor-pointer"
               >
                 {brokersData.brokers.map((b) => (
                   <option key={b.name} value={b.name}>
@@ -104,19 +97,9 @@ export default function CommissionCalculator() {
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                <svg
-                  className="w-4 h-4 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19.5 8.25l-7.5 7.5-7.5-7.5"
-                  />
-                </svg>
+                <span className="material-symbols-outlined text-on-surface-variant text-lg">
+                  expand_more
+                </span>
               </div>
             </div>
             {selectedBroker && (
@@ -124,13 +107,13 @@ export default function CommissionCalculator() {
                 <span
                   className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${
                     selectedBroker.type === "crypto"
-                      ? "bg-purple-500/10 text-purple-400"
-                      : "bg-blue-500/10 text-blue-400"
+                      ? "bg-tertiary/10 text-tertiary"
+                      : "bg-secondary/10 text-secondary"
                   }`}
                 >
                   {selectedBroker.type === "crypto" ? "Kripto" : "Hisse"}
                 </span>
-                <span className="text-[11px] text-gray-600">
+                <span className="text-[11px] text-on-surface-variant">
                   Oran: %{(selectedBroker.spotRate * 100).toFixed(2)}
                 </span>
               </div>
@@ -140,7 +123,7 @@ export default function CommissionCalculator() {
           <div>
             <label
               htmlFor="tutar-input"
-              className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wider"
+              className="block text-xs font-bold text-on-surface-variant mb-2 uppercase tracking-wider font-label"
             >
               İşlem Tutarı
             </label>
@@ -152,10 +135,10 @@ export default function CommissionCalculator() {
                 placeholder="0"
                 value={tutar}
                 onChange={handleTutarChange}
-                className="w-full bg-[#050A14] border border-white/10 rounded-xl px-4 py-3.5 text-white text-lg font-semibold placeholder-gray-700 focus:outline-none focus:border-[#00C896]/50 focus:ring-1 focus:ring-[#00C896]/20 transition-all pr-12"
+                className="w-full bg-surface border border-outline-variant/20 rounded-xl px-4 py-3.5 text-on-surface text-lg font-semibold placeholder-outline focus:outline-none focus:border-secondary/50 focus:ring-1 focus:ring-secondary/20 transition-all pr-12"
               />
               <div className="absolute inset-y-0 right-4 flex items-center">
-                <span className="text-xs font-bold text-gray-600">TL</span>
+                <span className="text-xs font-bold text-on-surface-variant">TL</span>
               </div>
             </div>
           </div>
@@ -169,7 +152,7 @@ export default function CommissionCalculator() {
           }`}
         >
           {result && (
-            <div className="bg-[#0B1120] border border-white/5 rounded-2xl overflow-hidden">
+            <div className="bg-surface-container-low border border-outline-variant/10 rounded-2xl overflow-hidden">
               <div className="p-5 space-y-3">
                 <ResultRow label="Komisyon" value={result.komisyon} />
                 <ResultRow label="BSMV (%5)" value={result.bsmv} />
@@ -177,23 +160,23 @@ export default function CommissionCalculator() {
                 <ResultRow label="Takasbank" value={result.takasbank} />
               </div>
 
-              <div className="border-t border-white/5 bg-[#060D18] px-5 py-5">
+              <div className="border-t border-outline-variant/10 bg-surface-container-lowest px-5 py-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-400">
+                  <span className="text-sm font-medium text-on-surface-variant">
                     Toplam Maliyet
                   </span>
                   <div className="text-right">
-                    <span className="text-3xl font-extrabold text-red-500 tracking-tight">
+                    <span className="text-3xl font-extrabold text-error tracking-tight font-headline">
                       {formatTL(result.toplam)}
                     </span>
-                    <span className="text-red-500/60 text-sm font-bold ml-1.5">
+                    <span className="text-error/60 text-sm font-bold ml-1.5">
                       TL
                     </span>
                   </div>
                 </div>
                 {result.toplam > 0 && tutar && (
                   <div className="mt-2 text-right">
-                    <span className="text-[11px] text-gray-600">
+                    <span className="text-[11px] text-on-surface-variant">
                       İşlem tutarının %
                       {(
                         (result.toplam /
@@ -202,7 +185,7 @@ export default function CommissionCalculator() {
                           )) *
                         100
                       ).toFixed(3)}
-                      'i
+                      {"'i"}
                     </span>
                   </div>
                 )}
@@ -211,7 +194,7 @@ export default function CommissionCalculator() {
           )}
         </div>
 
-        <p className="text-center text-[10px] text-gray-700 mt-6">
+        <p className="text-center text-[10px] text-on-surface-variant/50 mt-6 font-body">
           Oranlar bilgilendirme amaçlıdır. Güncel tarifeler için kurumunuza
           başvurun.
         </p>
@@ -223,12 +206,12 @@ export default function CommissionCalculator() {
 function ResultRow({ label, value }) {
   return (
     <div className="flex items-center justify-between group">
-      <span className="text-sm text-gray-500 group-hover:text-gray-400 transition-colors">
+      <span className="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors">
         {label}
       </span>
-      <span className="text-sm font-semibold text-gray-300 tabular-nums">
+      <span className="text-sm font-semibold text-on-surface tabular-nums">
         {formatTL(value)}{" "}
-        <span className="text-gray-600 text-xs">TL</span>
+        <span className="text-on-surface-variant text-xs">TL</span>
       </span>
     </div>
   );
