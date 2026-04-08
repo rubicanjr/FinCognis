@@ -1,50 +1,20 @@
 {
-  "name": "vibecosystem",
-  "version": "3.1.0",
-  "description": "AI software team for Claude Code - 139 agents, 284 skills, 63 hooks",
-  "type": "module",
+  "name": "fincognis",
+  "private": true,
+  "version": "2.0.0",
   "scripts": {
-    "build": "vite build"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
-  "bin": {
-    "vibecosystem": "./bin/cli.mjs"
-  },
-  "files": [
-    "agents/",
-    "skills/",
-    "hooks/dist/",
-    "hooks/hooks.json",
-    "rules/",
-    "profiles/",
-    "tools/vibeco/",
-    "tools/dashboard/",
-    "plugin.json",
-    "bin/",
-    "install.sh",
-    "CLAUDE.md",
-    "AGENTS.md"
-  ],
-  "keywords": [
-    "claude-code",
-    "ai",
-    "agents",
-    "skills",
-    "hooks",
-    "self-learning",
-    "code-review",
-    "tdd",
-    "devops",
-    "security"
-  ],
-  "author": "vibeeval (https://github.com/vibeeval)",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vibeeval/vibecosystem.git"
-  },
-  "homepage": "https://github.com/vibeeval/vibecosystem#readme",
-  "bugs": {
-    "url": "https://github.com/vibeeval/vibecosystem/issues"
+  "dependencies": {
+    "autoprefixer": "^10.4.20",
+    "next": "^14.2.18",
+    "postcss": "^8.4.49",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.17"
   },
   "engines": {
     "node": ">=18"
