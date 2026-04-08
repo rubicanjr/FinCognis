@@ -1,8 +1,24 @@
 node_modules/
-dist/
+.claude/
+.codex/
+.cursor/
+.opencode/
 .next/
-out/
-.DS_Store
-*.local
+# dist/ — pre-built hooks are included for zero-dependency install
+*.db
+*.sqlite
 .env
 .env.*
+*.log
+.DS_Store
+*.bak
+*.backup
+*.orig
+*.swp
+*.pem
+*.key
+.idea/
+.vscode/settings.json
+# Root package-lock.json only (hooks/ needs its own for CI)
+/package-lock.json
+plugin-config.json

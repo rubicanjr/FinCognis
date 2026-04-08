@@ -1,0 +1,30 @@
+services:
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: vibecosystem-crawl4ai
+    ports:
+      - "127.0.0.1:11235:11235"
+    environment:
+      # REQUIRED: Set a token before running (export CRAWL4AI_API_TOKEN=$(openssl rand -hex 32))
+      - CRAWL4AI_API_TOKEN=${CRAWL4AI_API_TOKEN:?Set CRAWL4AI_API_TOKEN before starting}
+      - MAX_CONCURRENT_TASKS=5
+      # Optional: uncomment to enable LLM-based extraction (requires CRAWL4AI_API_TOKEN)
+      # - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - crawl4ai-data:/app/data
+      - crawl4ai-cache:/app/cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+
+volumes:
+  crawl4ai-data:
+  crawl4ai-cache:

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vibecosystem - Agent Monitoring Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            vibe: {
+              bg: '#0a0a0f',
+              card: '#12121a',
+              border: '#1e1e2e',
+              accent: '#8b5cf6',
+              green: '#22c55e',
+              red: '#ef4444',
+              yellow: '#eab308',
+              blue: '#3b82f6',
+              muted: '#6b7280',
+              text: '#e5e7eb',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0f;
+      color: #e5e7eb;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .glow-green { box-shadow: 0 0 12px rgba(34, 197, 94, 0.3); }
+    .glow-red { box-shadow: 0 0 12px rgba(239, 68, 68, 0.3); }
+    .glow-purple { box-shadow: 0 0 12px rgba(139, 92, 246, 0.3); }
+    .glow-blue { box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 6px;
+    }
+    .status-running { background: #eab308; animation: pulse 1.5s infinite; }
+    .status-done { background: #22c55e; }
+    .status-error { background: #ef4444; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-in { animation: slideIn 0.3s ease-out; }
+
+    .feed-item { border-left: 3px solid transparent; padding-left: 12px; }
+    .feed-item.agent_spawn { border-left-color: #8b5cf6; }
+    .feed-item.agent_complete { border-left-color: #22c55e; }
+    .feed-item.agent_error { border-left-color: #ef4444; }
+    .feed-item.tool_call { border-left-color: #3b82f6; }
+    .feed-item.hook_fire { border-left-color: #eab308; }
+
+    .timeline-bar {
+      height: 24px; border-radius: 4px; position: relative;
+      min-width: 20px; cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .timeline-bar:hover { opacity: 0.8; }
+    .timeline-bar.running { background: linear-gradient(90deg, #8b5cf6, #6d28d9); animation: pulse 2s infinite; }
+    .timeline-bar.done { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .timeline-bar.error { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    #feed-container { max-height: 500px; overflow-y: auto; }
+    #error-container { max-height: 400px; overflow-y: auto; }
+    #timeline-container { max-height: 350px; overflow-y: auto; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #12121a; }
+    ::-webkit-scrollbar-thumb { background: #2e2e3e; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3e3e4e; }
+
+    .tab-active {
+      color: #8b5cf6;
+      border-bottom: 2px solid #8b5cf6;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-vibe-border px-6 py-4">
+    <div class="flex items-center justify-between max-w-[1600px] mx-auto">
+      <div class="flex items-center gap-4">
+        <h1 class="text-xl font-bold">
+          <span class="text-vibe-accent">vibe</span><span class="text-vibe-muted">cosystem</span>
+        </h1>
+        <span class="text-xs mono text-vibe-muted bg-vibe-card px-2 py-1 rounded">Agent Monitor v2.0</span>
+        <span id="connection-badge" class="text-xs mono px-2 py-1 rounded bg-red-900/30 text-red-400">
+          DISCONNECTED
+        </span>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Filter -->
+        <select id="agent-filter" class="bg-vibe-card border border-vibe-border rounded px-3 py-1.5 text-sm mono text-vibe-text focus:border-vibe-accent outline-none">
+          <option value="all">All Agents</option>
+        </select>
+        <!-- Pause/Resume -->
+        <button id="pause-btn" onclick="togglePause()" class="bg-vibe-card border border-vibe-border rounded px-3 py-1.5 text-sm mono hover:border-vibe-accent transition-colors">
+          PAUSE
+        </button>
+        <!-- Uptime -->
+        <span id="uptime" class="text-xs mono text-vibe-muted">00:00:00</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="border-b border-vibe-border px-6 py-3">
+    <div class="flex gap-6 max-w-[1600px] mx-auto">
+      <div class="flex items-center gap-2">
+        <span class="text-vibe-muted text-xs">SPAWNS</span>
+        <span id="stat-spawns" class="mono text-lg font-bold text-vibe-accent">0</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-vibe-muted text-xs">COMPLETE</span>
+        <span id="stat-completes" class="mono text-lg font-bold text-vibe-green">0</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-vibe-muted text-xs">ERRORS</span>
+        <span id="stat-errors" class="mono text-lg font-bold text-vibe-red">0</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-vibe-muted text-xs">TOOLS</span>
+        <span id="stat-tools" class="mono text-lg font-bold text-vibe-blue">0</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-vibe-muted text-xs">AVG DURATION</span>
+        <span id="stat-duration" class="mono text-lg font-bold text-vibe-yellow">-</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-vibe-muted text-xs">ERROR RATE</span>
+        <span id="stat-error-rate" class="mono text-lg font-bold text-vibe-red">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="px-6 py-4 max-w-[1600px] mx-auto">
+    <div class="grid grid-cols-12 gap-4">
+
+      <!-- Left: Timeline + Feed (8 cols) -->
+      <div class="col-span-8 space-y-4">
+
+        <!-- Agent Timeline -->
+        <div class="bg-vibe-card border border-vibe-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-vibe-text">Agent Timeline</h2>
+            <span class="text-xs mono text-vibe-muted" id="timeline-count">0 agents</span>
+          </div>
+          <div id="timeline-container" class="space-y-2">
+            <div class="text-center text-vibe-muted text-sm py-8">
+              Waiting for agent events...
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Feed -->
+        <div class="bg-vibe-card border border-vibe-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex gap-4">
+              <button onclick="setFeedTab('all')" class="text-sm font-semibold tab-active" id="tab-all">All Events</button>
+              <button onclick="setFeedTab('agents')" class="text-sm font-semibold text-vibe-muted hover:text-vibe-text" id="tab-agents">Agents Only</button>
+              <button onclick="setFeedTab('errors')" class="text-sm font-semibold text-vibe-muted hover:text-vibe-text" id="tab-errors">Errors</button>
+            </div>
+            <span class="text-xs mono text-vibe-muted" id="feed-count">0 events</span>
+          </div>
+          <div id="feed-container" class="space-y-1">
+            <div class="text-center text-vibe-muted text-sm py-8">
+              Live feed will appear here...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Errors + Agent Stats (4 cols) -->
+      <div class="col-span-4 space-y-4">
+
+        <!-- Error Panel -->
+        <div class="bg-vibe-card border border-vibe-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-vibe-red">Canavar Error Ledger</h2>
+            <button onclick="fetchErrors()" class="text-xs mono text-vibe-muted hover:text-vibe-accent transition-colors">
+              REFRESH
+            </button>
+          </div>
+          <div id="error-container" class="space-y-2">
+            <div class="text-center text-vibe-muted text-sm py-4">Loading errors...</div>
+          </div>
+        </div>
+
+        <!-- Agent Stats Panel -->
+        <div class="bg-vibe-card border border-vibe-border rounded-lg p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-vibe-text">Agent Breakdown</h2>
+          </div>
+          <div id="agent-breakdown" class="space-y-2">
+            <div class="text-center text-vibe-muted text-sm py-4">No agent data yet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script>
+// === State ===
+let ws = null;
+let isPaused = false;
+let currentTab = 'all';
+let allEvents = [];
+let agentTimelines = {};
+let agentTypes = new Set();
+let reconnectTimer = null;
+let uptimeStart = Date.now();
+
+// === WebSocket Connection ===
+function connect() {
+  if (ws && ws.readyState <= 1) return;
+
+  ws = new WebSocket('ws://127.0.0.1:3847');
+
+  ws.onopen = () => {
+    document.getElementById('connection-badge').className =
+      'text-xs mono px-2 py-1 rounded bg-green-900/30 text-green-400';
+    document.getElementById('connection-badge').textContent = 'CONNECTED';
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  };
+
+  ws.onclose = () => {
+    document.getElementById('connection-badge').className =
+      'text-xs mono px-2 py-1 rounded bg-red-900/30 text-red-400';
+    document.getElementById('connection-badge').textContent = 'DISCONNECTED';
+    reconnectTimer = setTimeout(connect, 3000);
+  };
+
+  ws.onerror = () => {};
+
+  ws.onmessage = (msg) => {
+    if (isPaused) return;
+    try {
+      const data = JSON.parse(msg.data);
+      if (data.type === 'init') {
+        handleInit(data);
+      } else {
+        handleEvent(data);
+      }
+    } catch {}
+  };
+}
+
+function handleInit(data) {
+  if (data.events) {
+    data.events.forEach(e => handleEvent(e, true));
+  }
+  if (data.stats) {
+    updateStatsDisplay(data.stats);
+  }
+}
+
+function handleEvent(event, silent) {
+  allEvents.push(event);
+  if (allEvents.length > 500) allEvents.shift();
+
+  // Agent type tracking
+  if (event.agentType) {
+    agentTypes.add(event.agentType);
+    updateAgentFilter();
+  }
+
+  // Timeline tracking
+  if (event.type === 'agent_spawn' || event.type === 'agent_complete' || event.type === 'agent_error') {
+    updateTimeline(event);
+  }
+
+  // Check filter
+  const filter = document.getElementById('agent-filter').value;
+  if (filter !== 'all' && event.agentType !== filter) return;
+
+  if (!silent) {
+    addFeedItem(event);
+    updateLocalStats(event);
+    updateAgentBreakdown();
+  }
+}
+
+// === Stats ===
+let localStats = {
+  spawns: 0, completes: 0, errors: 0, tools: 0, durations: []
+};
+
+function updateLocalStats(event) {
+  switch (event.type) {
+    case 'agent_spawn': localStats.spawns++; break;
+    case 'agent_complete': localStats.completes++; break;
+    case 'agent_error': localStats.errors++; break;
+    case 'tool_call': localStats.tools++; break;
+  }
+  if (event.duration) localStats.durations.push(event.duration);
+
+  document.getElementById('stat-spawns').textContent = localStats.spawns;
+  document.getElementById('stat-completes').textContent = localStats.completes;
+  document.getElementById('stat-errors').textContent = localStats.errors;
+  document.getElementById('stat-tools').textContent = localStats.tools;
+
+  if (localStats.durations.length > 0) {
+    const avg = localStats.durations.reduce((a, b) => a + b, 0) / localStats.durations.length;
+    document.getElementById('stat-duration').textContent = Math.round(avg) + 'ms';
+  }
+
+  const total = localStats.spawns + localStats.completes;
+  const rate = total > 0 ? ((localStats.errors / total) * 100).toFixed(1) : '0.0';
+  document.getElementById('stat-error-rate').textContent = rate + '%';
+}
+
+function updateStatsDisplay(stats) {
+  localStats.spawns = stats.agentSpawns || 0;
+  localStats.completes = stats.agentCompletes || 0;
+  localStats.errors = stats.agentErrors || 0;
+  localStats.tools = stats.toolCalls || 0;
+
+  document.getElementById('stat-spawns').textContent = localStats.spawns;
+  document.getElementById('stat-completes').textContent = localStats.completes;
+  document.getElementById('stat-errors').textContent = localStats.errors;
+  document.getElementById('stat-tools').textContent = localStats.tools;
+
+  if (stats.avgDuration > 0) {
+    document.getElementById('stat-duration').textContent = stats.avgDuration + 'ms';
+  }
+  document.getElementById('stat-error-rate').textContent = (stats.errorRate || '0.0') + '%';
+}
+
+// === Timeline ===
+function updateTimeline(event) {
+  const key = event.agentType || 'unknown';
+  if (!agentTimelines[key]) {
+    agentTimelines[key] = [];
+  }
+
+  if (event.type === 'agent_spawn') {
+    agentTimelines[key].push({
+      start: event.timestamp,
+      end: null,
+      status: 'running',
+      metadata: event.metadata,
+    });
+  } else {
+    // Son running entry'yi bul ve kapat
+    const entries = agentTimelines[key];
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].status === 'running') {
+        entries[i].end = event.timestamp;
+        entries[i].status = event.type === 'agent_error' ? 'error' : 'done';
+        break;
+      }
+    }
+  }
+
+  renderTimeline();
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timeline-container');
+  const types = Object.keys(agentTimelines);
+
+  if (types.length === 0) {
+    container.innerHTML = '<div class="text-center text-vibe-muted text-sm py-8">Waiting for agent events...</div>';
+    return;
+  }
+
+  document.getElementById('timeline-count').textContent = types.length + ' agents';
+
+  // Zaman araligini hesapla
+  let minTime = Infinity, maxTime = -Infinity;
+  types.forEach(type => {
+    agentTimelines[type].forEach(entry => {
+      const start = new Date(entry.start).getTime();
+      const end = entry.end ? new Date(entry.end).getTime() : Date.now();
+      if (start < minTime) minTime = start;
+      if (end > maxTime) maxTime = end;
+    });
+  });
+
+  const totalSpan = Math.max(maxTime - minTime, 1000); // Min 1 saniye
+
+  let html = '';
+  types.forEach(type => {
+    const entries = agentTimelines[type];
+    html += '<div class="flex items-center gap-3">';
+    html += `<span class="text-xs mono text-vibe-muted w-28 shrink-0 truncate" title="${escapeHtml(type)}">${escapeHtml(type)}</span>`;
+    html += '<div class="flex-1 relative h-7 bg-vibe-bg rounded">';
+
+    entries.forEach(entry => {
+      const start = new Date(entry.start).getTime();
+      const end = entry.end ? new Date(entry.end).getTime() : Date.now();
+      const left = ((start - minTime) / totalSpan * 100).toFixed(2);
+      const width = Math.max(((end - start) / totalSpan * 100), 1).toFixed(2);
+      const duration = Math.round((end - start) / 1000);
+      const durationStr = duration < 60 ? duration + 's' : Math.round(duration / 60) + 'm';
+
+      html += `<div class="timeline-bar ${entry.status}" style="position:absolute; left:${left}%; width:${width}%; top:2px;"`;
+      html += ` title="${escapeHtml(type)}: ${durationStr} (${escapeHtml(entry.status)})">`;
+      if (parseFloat(width) > 5) {
+        html += `<span class="text-[10px] mono text-white/80 px-1 leading-6">${durationStr}</span>`;
+      }
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+// === Live Feed ===
+function addFeedItem(event) {
+  const container = document.getElementById('feed-container');
+
+  // Ilk placeholder'i temizle
+  if (container.querySelector('.text-center')) {
+    container.innerHTML = '';
+  }
+
+  // Tab filtresi
+  if (currentTab === 'agents' && !event.type.startsWith('agent_')) return;
+  if (currentTab === 'errors' && event.type !== 'agent_error') return;
+
+  const time = new Date(event.timestamp).toLocaleTimeString('en-US', { hour12: false });
+  const typeLabel = formatEventType(event.type);
+  const typeColor = getTypeColor(event.type);
+  const detail = formatEventDetail(event);
+
+  const div = document.createElement('div');
+  div.className = `feed-item ${event.type} slide-in py-1.5`;
+  div.innerHTML = `
+    <div class="flex items-start gap-2">
+      <span class="mono text-[11px] text-vibe-muted shrink-0">${escapeHtml(time)}</span>
+      <span class="status-dot status-${escapeHtml(event.status || '')}"></span>
+      <span class="text-xs font-medium ${typeColor} shrink-0">${escapeHtml(typeLabel)}</span>
+      ${event.agentType ? `<span class="text-xs mono text-vibe-accent shrink-0">${escapeHtml(event.agentType)}</span>` : ''}
+      <span class="text-xs text-vibe-muted truncate">${escapeHtml(detail)}</span>
+    </div>
+  `;
+
+  container.insertBefore(div, container.firstChild);
+
+  // Max 200 item
+  while (container.children.length > 200) {
+    container.removeChild(container.lastChild);
+  }
+
+  document.getElementById('feed-count').textContent = container.children.length + ' events';
+}
+
+function formatEventType(type) {
+  const map = {
+    agent_spawn: 'SPAWN',
+    agent_complete: 'DONE',
+    agent_error: 'ERROR',
+    tool_call: 'TOOL',
+    hook_fire: 'HOOK',
+  };
+  return map[type] || type.toUpperCase();
+}
+
+function getTypeColor(type) {
+  const map = {
+    agent_spawn: 'text-vibe-accent',
+    agent_complete: 'text-vibe-green',
+    agent_error: 'text-vibe-red',
+    tool_call: 'text-vibe-blue',
+    hook_fire: 'text-vibe-yellow',
+  };
+  return map[type] || 'text-vibe-muted';
+}
+
+function formatEventDetail(event) {
+  const meta = event.metadata || {};
+  if (meta.promptSummary) return meta.promptSummary;
+  if (meta.command) return meta.command.slice(0, 100);
+  if (meta.tool) return `${meta.tool}: ${(meta.detail || '').slice(0, 80)}`;
+  return JSON.stringify(meta).slice(0, 100);
+}
+
+// === Feed Tabs ===
+function setFeedTab(tab) {
+  currentTab = tab;
+  ['all', 'agents', 'errors'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (t === tab) {
+      el.className = 'text-sm font-semibold tab-active';
+    } else {
+      el.className = 'text-sm font-semibold text-vibe-muted hover:text-vibe-text';
+    }
+  });
+
+  // Re-render feed
+  const container = document.getElementById('feed-container');
+  container.innerHTML = '';
+  allEvents.forEach(e => {
+    const filter = document.getElementById('agent-filter').value;
+    if (filter !== 'all' && e.agentType !== filter) return;
+    addFeedItem(e);
+  });
+}
+
+// === Agent Filter ===
+function updateAgentFilter() {
+  const select = document.getElementById('agent-filter');
+  const current = select.value;
+  const types = [...agentTypes].sort();
+
+  // Sadece yeni type varsa guncelle
+  if (select.options.length - 1 === types.length) return;
+
+  select.innerHTML = '<option value="all">All Agents</option>';
+  types.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    select.appendChild(opt);
+  });
+  select.value = current;
+}
+
+// === Agent Breakdown ===
+function updateAgentBreakdown() {
+  const container = document.getElementById('agent-breakdown');
+  const types = Object.keys(agentTimelines);
+
+  if (types.length === 0) {
+    container.innerHTML = '<div class="text-center text-vibe-muted text-sm py-4">No agent data yet</div>';
+    return;
+  }
+
+  let html = '';
+  types.sort().forEach(type => {
+    const entries = agentTimelines[type];
+    const running = entries.filter(e => e.status === 'running').length;
+    const done = entries.filter(e => e.status === 'done').length;
+    const errors = entries.filter(e => e.status === 'error').length;
+    const total = entries.length;
+
+    html += `
+      <div class="flex items-center justify-between py-1.5 border-b border-vibe-border last:border-0">
+        <span class="text-xs mono text-vibe-accent">${escapeHtml(type)}</span>
+        <div class="flex items-center gap-3">
+          ${running > 0 ? `<span class="text-[11px] mono text-vibe-yellow">${running} running</span>` : ''}
+          <span class="text-[11px] mono text-vibe-green">${done} ok</span>
+          ${errors > 0 ? `<span class="text-[11px] mono text-vibe-red">${errors} err</span>` : ''}
+          <span class="text-[11px] mono text-vibe-muted">${total} total</span>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// === Error Panel ===
+async function fetchErrors() {
+  const container = document.getElementById('error-container');
+  try {
+    const res = await fetch('http://127.0.0.1:3848/api/errors');
+    const errors = await res.json();
+
+    if (errors.length === 0) {
+      container.innerHTML = '<div class="text-center text-vibe-muted text-sm py-4">No errors in ledger</div>';
+      return;
+    }
+
+    let html = '';
+    errors.slice(0, 30).forEach(err => {
+      const time = err.ts ? new Date(err.ts).toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+      }) : '-';
+
+      html += `
+        <div class="bg-vibe-bg rounded p-2.5 border border-red-900/20">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs mono text-vibe-red font-medium">${err.agent_type || 'unknown'}</span>
+            <span class="text-[10px] mono text-vibe-muted">${time}</span>
+          </div>
+          <div class="text-xs text-vibe-text mb-1">${escapeHtml(err.error_pattern || err.detail || '-')}</div>
+          ${err.lesson ? `<div class="text-[11px] text-vibe-muted italic">${escapeHtml(err.lesson)}</div>` : ''}
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  } catch {
+    container.innerHTML = '<div class="text-center text-vibe-muted text-sm py-4">Dashboard server not running</div>';
+  }
+}
+
+// === Utilities ===
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function togglePause() {
+  isPaused = !isPaused;
+  const btn = document.getElementById('pause-btn');
+  btn.textContent = isPaused ? 'RESUME' : 'PAUSE';
+  btn.className = isPaused
+    ? 'bg-vibe-accent/20 border border-vibe-accent rounded px-3 py-1.5 text-sm mono text-vibe-accent'
+    : 'bg-vibe-card border border-vibe-border rounded px-3 py-1.5 text-sm mono hover:border-vibe-accent transition-colors';
+}
+
+function updateUptime() {
+  const elapsed = Math.floor((Date.now() - uptimeStart) / 1000);
+  const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+  const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+  const s = (elapsed % 60).toString().padStart(2, '0');
+  document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
+}
+
+// === Init ===
+connect();
+fetchErrors();
+setInterval(updateUptime, 1000);
+setInterval(renderTimeline, 5000); // Running bar'lari guncellemek icin
+setInterval(fetchErrors, 30000); // Error'lari 30 saniyede bir yenile
+
+// Agent filter degistiginde feed'i yenile
+document.getElementById('agent-filter').addEventListener('change', () => setFeedTab(currentTab));
+</script>
+
+</body>
+</html>
