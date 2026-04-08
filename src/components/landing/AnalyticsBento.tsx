@@ -4,26 +4,26 @@ export default function AnalyticsBento() {
   return (
     <section id="analytics" className="mx-auto max-w-7xl px-6 py-24">
       <div className="mb-16 text-left">
-        <p className="mb-4 font-label text-sm font-bold uppercase tracking-[0.2em] text-secondary">Gelismis Analitik</p>
-        <h2 className="font-headline text-4xl font-extrabold text-on-surface md:text-5xl">Veriden icgoruye, aninda.</h2>
+        <p className="mb-4 font-label text-sm font-bold uppercase tracking-[0.2em] text-secondary">FinCognis Araclari</p>
+        <h2 className="font-headline text-4xl font-extrabold text-on-surface md:text-5xl">Karari hizlandiran 3 cekirdek arac.</h2>
       </div>
 
       <div className="grid h-auto grid-cols-1 gap-6 md:h-[600px] md:grid-cols-12">
         <div className="glass-panel group relative flex flex-col justify-between overflow-hidden rounded-3xl p-8 md:col-span-8">
           <div className="relative z-10">
-            <h3 className="mb-4 font-headline text-2xl font-bold">Ongorulu Likidite Motorlari</h3>
+            <h3 className="mb-4 font-headline text-2xl font-bold">Komisyon Hesaplayici</h3>
             <p className="max-w-md text-on-surface-variant">
-              Makine ogrenimiyle nakit akis tahmini yapin. Anomalileri bilancoyu etkilemeden once tespit edin.
+              24 kurum, 8 piyasa ve tum masraf kalemleriyle toplam efektif maliyeti tek ekranda gorun.
             </p>
           </div>
           <div className="relative z-10 mt-8 flex gap-4">
             <div className="rounded-xl bg-surface-container-highest p-4">
-              <p className="mb-1 font-label text-xs font-bold uppercase text-on-tertiary-container">Anlik Akis</p>
-              <p className="font-headline text-2xl font-bold text-secondary">+14,2%</p>
+              <p className="mb-1 font-label text-xs font-bold uppercase text-on-tertiary-container">Kurum Kapsami</p>
+              <p className="font-headline text-2xl font-bold text-secondary">24 Kurum</p>
             </div>
             <div className="rounded-xl bg-surface-container-highest p-4">
-              <p className="mb-1 font-label text-xs font-bold uppercase text-on-tertiary-container">Risk Faktoru</p>
-              <p className="font-headline text-2xl font-bold text-error">Dusuk</p>
+              <p className="mb-1 font-label text-xs font-bold uppercase text-on-tertiary-container">Masraf Katmani</p>
+              <p className="font-headline text-2xl font-bold text-error">8 Kalem</p>
             </div>
           </div>
           <div className="absolute bottom-0 right-0 w-1/2 opacity-20 transition-opacity duration-500 group-hover:opacity-40">
@@ -41,9 +41,9 @@ export default function AnalyticsBento() {
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10">
             <span className="material-symbols-outlined text-secondary">query_stats</span>
           </div>
-          <h3 className="mb-4 font-headline text-2xl font-bold">Duygu Analizi</h3>
+          <h3 className="mb-4 font-headline text-2xl font-bold">Korelasyon Carpismasi Testi</h3>
           <p className="mb-auto text-on-surface-variant">
-            40.000+ haber kaynagi ve sosyal sinyalden piyasa trendlerini izleyin.
+            DCC-GARCH, tail dependence ve kriz replay ile yalanci cesitlendirmeyi erken yakalayin.
           </p>
         </div>
 
@@ -51,19 +51,19 @@ export default function AnalyticsBento() {
           <span className="material-symbols-outlined mb-4 text-5xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
             speed
           </span>
-          <h3 className="font-headline text-xl font-bold">Milisaniye-alti Islem</h3>
-          <p className="mt-2 text-sm text-on-surface-variant">Gercek zamanli portfoy dengeleme icin kurumsal gecikme.</p>
+          <h3 className="font-headline text-xl font-bold">Portfoy Stres Simulatoru</h3>
+          <p className="mt-2 text-sm text-on-surface-variant">Monte Carlo, CVaR ve kriz kutuphanesiyle portfoyun kirilma noktasini olcun.</p>
         </div>
 
         <div className="glass-panel flex flex-col items-center gap-8 rounded-3xl border border-outline-variant/10 p-8 md:col-span-8 md:flex-row">
           <div className="w-full md:w-1/3">
-            <h3 className="mb-4 font-headline text-2xl font-bold">Birlesik API</h3>
-            <p className="text-on-surface-variant">Tek uc nokta ile dakikalar icinde canliya alin.</p>
+            <h3 className="mb-4 font-headline text-2xl font-bold">FinCognis API Ciktilari</h3>
+            <p className="text-on-surface-variant">Arac sonucunu rapor, panel veya operasyon akisina tek formatta aktar.</p>
           </div>
           <div className="w-full overflow-x-auto rounded-xl bg-surface-container-lowest p-4 font-mono text-sm text-secondary-fixed-dim md:w-2/3">
-            <code>GET /v1/intelligence/stream?precision=high</code>
+            <code>GET /v1/tools/stress?scenario=covid_2020</code>
             <br />
-            <code>{`{ "status": "active", "throughput": "8GB/s" }`}</code>
+            <code>{`{ "resilienceScore": 67, "var99": 0.31, "status": "ready" }`}</code>
           </div>
         </div>
       </div>
