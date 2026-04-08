@@ -90,7 +90,36 @@ export function parseLocaleNumber(value: string | number | null | undefined): nu
     return 0;
   }
 
-  const normalized = String(value).replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  const raw = String(value).trim().replace(/\s/g, "");
+  if (!raw) {
+    return 0;
+  }
+
+  const hasComma = raw.includes(",");
+  const hasDot = raw.includes(".");
+
+  let normalized = raw;
+
+  // TR grouped format: 1.234.567,89
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(raw)) {
+    normalized = raw.replace(/\./g, "").replace(",", ".");
+  }
+  // EN grouped format: 1,234,567.89
+  else if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(raw)) {
+    normalized = raw.replace(/,/g, "");
+  } else if (hasComma && !hasDot) {
+    normalized = raw.replace(",", ".");
+  } else if (hasComma && hasDot) {
+    // Mixed format fallback: decimal separator is whichever appears last
+    const lastComma = raw.lastIndexOf(",");
+    const lastDot = raw.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      normalized = raw.replace(/\./g, "").replace(",", ".");
+    } else {
+      normalized = raw.replace(/,/g, "");
+    }
+  }
+
   const parsed = Number.parseFloat(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 }

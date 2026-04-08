@@ -312,7 +312,7 @@ function monteCarloEngine(input: PortfolioInput, normalizedWeights: { assetId: s
       const macroAdj =
         input.macroShock.rateShockPct * -0.0002 +
         input.macroShock.inflationShockPct * -0.00015 +
-        (input.macroShock.dxyStable ? 0 : 0.0002);
+        (input.macroShock.dxyStable ? 0 : -0.0002);
 
       const portReturn = assets.reduce((acc, asset, index) => {
         const w = normalizedWeights[index].value;

@@ -36,7 +36,64 @@ function isValidDataset(value: unknown): value is BrokersDataset {
   }
 
   const data = value as Partial<BrokersDataset>;
-  return Array.isArray(data.categories) && Array.isArray(data.markets) && Array.isArray(data.brokers);
+  if (!Array.isArray(data.categories) || !Array.isArray(data.markets) || !Array.isArray(data.brokers)) {
+    return false;
+  }
+
+  const categoryIds = new Set(data.categories.map((category) => category?.id).filter(Boolean));
+  const marketIds = new Set(data.markets.map((market) => market?.id).filter(Boolean));
+  if (categoryIds.size === 0 || marketIds.size === 0) {
+    return false;
+  }
+
+  const hasValidMarkets = data.markets.every((market) => {
+    if (!market || typeof market !== "object") return false;
+    if (!categoryIds.has(market.categoryId)) return false;
+    const fees = market.defaultFees;
+    if (!fees) return false;
+    return (
+      Number.isFinite(fees.bsmvRate) &&
+      Number.isFinite(fees.bistRate) &&
+      Number.isFinite(fees.takasbankFixed) &&
+      Number.isFinite(fees.spreadRate) &&
+      Number.isFinite(fees.swapDailyRate) &&
+      Number.isFinite(fees.fxConversionRate) &&
+      Number.isFinite(fees.withholdingRate) &&
+      fees.bsmvRate >= 0 &&
+      fees.bistRate >= 0 &&
+      fees.takasbankFixed >= 0 &&
+      fees.spreadRate >= 0 &&
+      fees.swapDailyRate >= 0 &&
+      fees.fxConversionRate >= 0 &&
+      fees.withholdingRate >= 0
+    );
+  });
+  if (!hasValidMarkets) {
+    return false;
+  }
+
+  return data.brokers.every((broker) => {
+    if (!broker || typeof broker !== "object") return false;
+    if (!Array.isArray(broker.supportedCategories) || !Array.isArray(broker.supportedMarkets)) return false;
+    if (!Array.isArray(broker.commissionModel?.tiers) || broker.commissionModel.tiers.length === 0) return false;
+    if (!Number.isFinite(broker.commissionModel.minCommission) || broker.commissionModel.minCommission < 0) return false;
+    if (!broker.supportedCategories.every((id) => categoryIds.has(id))) return false;
+    if (!broker.supportedMarkets.every((id) => marketIds.has(id))) return false;
+
+    let prevMax = -Infinity;
+    for (const tier of broker.commissionModel.tiers) {
+      if (!Number.isFinite(tier.maxMonthlyVolume) || !Number.isFinite(tier.rate)) return false;
+      if (tier.maxMonthlyVolume <= 0 || tier.maxMonthlyVolume < prevMax) return false;
+      if (tier.rate < 0 || tier.rate > 0.05) return false;
+      prevMax = tier.maxMonthlyVolume;
+    }
+
+    if (broker.promotions && !broker.promotions.every((promotion) => Number.isFinite(promotion.rateMultiplier) && promotion.rateMultiplier > 0 && promotion.rateMultiplier <= 2)) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 function parseStoredJson<T>(raw: string | null, fallback: T): T {

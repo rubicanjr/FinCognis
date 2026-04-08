@@ -61,7 +61,7 @@
       "name": "Sabit Getirili Menkul Kiymetler",
       "categoryId": "sabit_getirili",
       "defaultFees": {
-        "bsmvRate": 0.01,
+        "bsmvRate": 0.05,
         "bistRate": 0,
         "takasbankFixed": 0.15,
         "spreadRate": 0.0001,
