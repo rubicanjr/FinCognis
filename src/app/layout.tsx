@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SITE_NAME, SITE_URL, OG_IMAGE_PATH, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
 
 const defaultTitle = `${SITE_NAME} | Finansal Analitik ve Guvenli Islem Platformu`;
@@ -58,8 +59,10 @@ interface RootLayoutProps {
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  // 1) Render global document shell with shared metadata and fonts.
+  // 2) Wrap app in ThemeProvider to enable persistent adaptive theming.
   return (
-    <html lang="tr" className="dark">
+    <html lang="tr">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -78,7 +81,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
           }}
         />
       </head>
-      <body className="bg-surface text-on-surface">{children}</body>
+      <body className="bg-surface text-on-surface">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+.theme-shell[data-theme="dark"] {
+  --surface: 17 20 23;
+  --surface-bright: 55 57 61;
+  --surface-container: 29 32 35;
+  --surface-container-low: 25 28 31;
+  --surface-container-high: 40 42 46;
+  --surface-container-highest: 50 53 57;
+  --surface-container-lowest: 12 14 18;
+  --primary: 198 198 199;
+  --primary-container: 12 14 15;
+  --on-primary: 47 49 49;
+  --secondary: 158 202 255;
+  --secondary-container: 30 149 242;
+  --on-secondary: 0 50 88;
+  --on-surface: 225 226 231;
+  --on-surface-variant: 198 198 203;
+  --outline-variant: 69 71 75;
+  --error: 255 180 171;
+}
+
+.theme-shell[data-theme="light"] {
+  --surface: 249 250 251;
+  --surface-bright: 255 255 255;
+  --surface-container: 243 244 246;
+  --surface-container-low: 246 247 249;
+  --surface-container-high: 237 240 244;
+  --surface-container-highest: 229 233 240;
+  --surface-container-lowest: 255 255 255;
+  --primary: 37 99 235;
+  --primary-container: 219 234 254;
+  --on-primary: 255 255 255;
+  --secondary: 14 116 144;
+  --secondary-container: 186 230 253;
+  --on-secondary: 8 47 73;
+  --on-surface: 15 23 42;
+  --on-surface-variant: 71 85 105;
+  --outline-variant: 203 213 225;
+  --error: 220 38 38;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -10,8 +50,8 @@
 
 body {
   font-family: "Inter", sans-serif;
-  background-color: #111417;
-  color: #e1e2e7;
+  background-color: rgb(var(--surface));
+  color: rgb(var(--on-surface));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -48,8 +88,8 @@ body {
 }
 
 select option {
-  background-color: #0b1120;
-  color: #fff;
+  background-color: rgb(var(--surface-container-lowest));
+  color: rgb(var(--on-surface));
 }
 
 @keyframes fade-in-up {
