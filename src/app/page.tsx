@@ -17,7 +17,7 @@ export const metadata: Metadata = createPageMetadata({
   description: homeDescription,
   path: "/",
   keywords: [
-    "komisyon hesaplayici",
+    "komisyon hesaplayıcı",
     "portföy korelasyon analizi",
     "stres testi",
     "yatırım risk yönetimi",
@@ -68,11 +68,7 @@ const homeStructuredData = {
         price: "0",
         priceCurrency: "TRY",
       },
-      featureList: [
-        "Komisyon Hesaplayici",
-        "Korelasyon Çarpışması Testi",
-        "Portföy Stres Simülatörü",
-      ],
+      featureList: ["Komisyon Hesaplayıcı", "Korelasyon Çarpışması Testi", "Portföy Stres Simülatörü"],
       publisher: {
         "@id": organizationId,
       },

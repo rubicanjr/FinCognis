@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useDeferredValue, useMemo, useState } from "react";
+import { ShieldAlert } from "lucide-react";
 import {
   CRISIS_LIBRARY,
   DEFAULT_WEIGHTS,
@@ -44,7 +45,7 @@ function classLabel(assetClass: StressAssetClass) {
   if (assetClass === "us_equity") return "ABD Hisse";
   if (assetClass === "commodity") return "Emtia";
   if (assetClass === "bond") return "Tahvil";
-  return "Doviz";
+  return "Döviz";
 }
 
 function createWeightDraft() {
@@ -171,14 +172,12 @@ export default function StressTest() {
         <div className="rounded-[28px] bg-surface-container-low p-5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] sm:p-6">
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/15 text-secondary">
-              <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                shield
-              </span>
+              <ShieldAlert className="h-7 w-7" strokeWidth={1.5} />
             </div>
             <div className="min-w-[230px]">
               <p className="font-label text-[11px] font-bold uppercase tracking-[0.24em] text-secondary">FinCognis Risk Lab</p>
               <h2 className="font-headline text-2xl font-extrabold tracking-tight text-on-surface sm:text-3xl">
-                Portfoy Stres Simulasyonu
+                Portföy Stres Simülasyonu
               </h2>
             </div>
           </div>
@@ -188,7 +187,7 @@ export default function StressTest() {
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">1) Ana Parametreler</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-xs text-on-surface-variant sm:col-span-2">
-                  Portfoy Degeri (TL)
+                  Portföy Değeri (TL)
                   <input
                     type="text"
                     inputMode="numeric"
@@ -224,7 +223,7 @@ export default function StressTest() {
                 </label>
 
                 <label className="text-xs text-on-surface-variant">
-                  Yillik cekim orani (%)
+                  Yıllık çekim oranı (%)
                   <input
                     type="number"
                     step="0.5"
@@ -241,7 +240,7 @@ export default function StressTest() {
                 </label>
 
                 <div className="sm:col-span-2">
-                  <p className="mb-2 text-xs text-on-surface-variant">Sok seviyesi</p>
+                  <p className="mb-2 text-xs text-on-surface-variant">Şok seviyesi</p>
                   <div className="grid grid-cols-3 gap-2">
                     {SCENARIO_SET.map((scenario) => (
                       <button
@@ -267,10 +266,10 @@ export default function StressTest() {
             </div>
 
             <div className="rounded-2xl bg-surface p-4">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">2) Hipotetik Makro Soklar</p>
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">2) Hipotetik Makro Şoklar</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-xs text-on-surface-variant">
-                  Faiz degisimi (%)
+                  Faiz değişimi (%)
                   <input
                     type="number"
                     step="0.5"
@@ -285,7 +284,7 @@ export default function StressTest() {
                   />
                 </label>
                 <label className="text-xs text-on-surface-variant">
-                  Enflasyon degisimi (%)
+                  Enflasyon değişimi (%)
                   <input
                     type="number"
                     step="0.5"
@@ -300,7 +299,7 @@ export default function StressTest() {
                   />
                 </label>
                 <label className="text-xs text-on-surface-variant">
-                  BTC sok (%)
+                  BTC şok (%)
                   <input
                     type="number"
                     step="1"
@@ -346,7 +345,7 @@ export default function StressTest() {
                   onClick={() => applyMacroPreset("inflation_spike")}
                   className="rounded-lg bg-surface-container-high px-2 py-2 text-xs font-semibold text-on-surface-variant"
                 >
-                  Enflasyon Soku
+                  Enflasyon Şoku
                 </button>
               </div>
             </div>
@@ -354,18 +353,18 @@ export default function StressTest() {
 
           <div className="mt-4 rounded-2xl bg-surface p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">3) Coklu Varlik Agirliklari</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">3) Çoklu Varlık Ağırlıkları</p>
               <button
                 onClick={setEqualWeights}
                 className="rounded-lg bg-surface-container-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant"
               >
-                Esit Agirlik
+                Eşit Ağırlık
               </button>
               <button
                 onClick={resetDefaults}
                 className="rounded-lg bg-surface-container-high px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant"
               >
-                Varsayilan
+                Varsayılan
               </button>
             </div>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
@@ -377,7 +376,7 @@ export default function StressTest() {
                   </div>
                   <p className="mt-1 truncate text-[11px] text-on-surface-variant">{asset.name}</p>
                   <label className="mt-2 block text-[11px] text-on-surface-variant">
-                    Agirlik (%)
+                    Ağırlık (%)
                     <input
                       type="number"
                       min="0"
@@ -399,10 +398,10 @@ export default function StressTest() {
               ))}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
-              <span className="text-on-surface-variant">Toplam agirlik: %{totalWeight.toFixed(2)}</span>
+              <span className="text-on-surface-variant">Toplam ağırlık: %{totalWeight.toFixed(2)}</span>
               {Math.abs(totalWeight - 100) > 0.5 && (
                 <span className="rounded-md bg-amber-500/15 px-2 py-1 text-amber-300">
-                  Not: Motor agirliklari otomatik normalize eder.
+                  Not: Motor ağırlıkları otomatik normalize eder.
                 </span>
               )}
             </div>
@@ -413,10 +412,10 @@ export default function StressTest() {
               onClick={runSimulation}
               className="rounded-xl bg-secondary px-5 py-3 text-sm font-bold text-on-secondary transition hover:brightness-110"
             >
-              Stres Analizini Calistir
+              Stres Analizini Çalıştır
             </button>
             <p className="text-xs text-on-surface-variant">
-              DCC-GARCH, multivariate t-Copula, Monte Carlo, Kupiec ve phase-shuffled testleri birlikte calisir.
+              DCC-GARCH, multivariate t-Copula, Monte Carlo, Kupiec ve phase-shuffled testleri birlikte çalışır.
             </p>
           </div>
         </div>
@@ -426,4 +425,3 @@ export default function StressTest() {
     </section>
   );
 }
-

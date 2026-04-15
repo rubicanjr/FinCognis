@@ -36,7 +36,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl bg-surface p-4">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-            9) Round-trip Kar/Zarar Simulasyonu
+            9) Round-trip Kar/Zarar Simülasyonu
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-on-surface-variant">
@@ -48,7 +48,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Alis Fiyati ({currency})
+              Alış Fiyatı ({currency})
               <input
                 value={roundTripEntryPriceInput}
                 onChange={(event) => setRoundTripEntryPriceInput(event.target.value)}
@@ -56,7 +56,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Hedef Satis Fiyati ({currency})
+              Hedef Satış Fiyatı ({currency})
               <input
                 value={roundTripTargetPriceInput}
                 onChange={(event) => setRoundTripTargetPriceInput(event.target.value)}
@@ -64,7 +64,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Elde Tutma Gunu
+              Elde Tutma Günü
               <input
                 value={roundTripHoldingDaysInput}
                 onChange={(event) => setRoundTripHoldingDaysInput(event.target.value)}
@@ -80,7 +80,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
               <ScenarioRow label="Net Getiri" value={formatPercent(simulation.netReturnPct, 3)} />
             </div>
           ) : (
-            <p className="mt-4 text-sm text-on-surface-variant">Simulasyon icin adet ve fiyat alanlarini doldurun.</p>
+            <p className="mt-4 text-sm text-on-surface-variant">Simülasyon için adet ve fiyat alanlarını doldurun.</p>
           )}
         </div>
 
@@ -90,7 +90,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-on-surface-variant">
-              Aylik Islem Adedi
+              Aylık İşlem Adedi
               <input
                 value={monthlyTradeCountInput}
                 onChange={(event) => setMonthlyTradeCountInput(event.target.value)}
@@ -98,7 +98,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Projeksiyon Suresi (yil)
+              Projeksiyon Süresi (yıl)
               <input
                 value={projectionYearsInput}
                 onChange={(event) => setProjectionYearsInput(event.target.value)}
@@ -106,7 +106,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Alternatif Yillik Getiri (%)
+              Alternatif Yıllık Getiri (%)
               <input
                 value={annualReturnInput}
                 onChange={(event) => setAnnualReturnInput(event.target.value)}
@@ -114,7 +114,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              BTC Yillik Buyume Varsayimi (%)
+              BTC Yıllık Büyüme Varsayımı (%)
               <input
                 value={btcGrowthInput}
                 onChange={(event) => setBtcGrowthInput(event.target.value)}
@@ -124,20 +124,20 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
           </div>
           {projection ? (
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              <ScenarioRow label="Yillik Maliyet" value={formatMoney(projection.annualCost)} />
+              <ScenarioRow label="Yıllık Maliyet" value={formatMoney(projection.annualCost)} />
               <ScenarioRow label="Toplam Nominal Maliyet" value={formatMoney(projection.totalNominalCost)} />
-              <ScenarioRow label="Bilesik Etki" value={formatMoney(projection.compoundFutureValue)} />
-              <ScenarioRow label="BTC'de Olsaydi" value={formatMoney(projection.btcFutureValue)} />
+              <ScenarioRow label="Bileşik Etki" value={formatMoney(projection.compoundFutureValue)} />
+              <ScenarioRow label="BTC'de Olsaydı" value={formatMoney(projection.btcFutureValue)} />
             </div>
           ) : (
-            <p className="mt-3 text-sm text-on-surface-variant">Hesaplama icin once kurum secin.</p>
+            <p className="mt-3 text-sm text-on-surface-variant">Hesaplama için önce kurum seçin.</p>
           )}
         </div>
       </div>
 
       <div className="mt-4 rounded-2xl bg-surface p-4">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-          11) Senaryo Karsilastirmasi (Maks 3 Kurum)
+          11) Senaryo Karşılaştırması (Maks 3 Kurum)
         </p>
         <div className="grid gap-3 md:grid-cols-3">
           {annualScenarioRows.map((row) => (
@@ -150,7 +150,7 @@ export function AnalyticsPanel({ vm }: AnalyticsPanelProps) {
             </div>
           ))}
           {annualScenarioRows.length === 0 && (
-            <p className="text-sm text-on-surface-variant">Karsilastirma icin tablodan en az bir kurum secin.</p>
+            <p className="text-sm text-on-surface-variant">Karşılaştırma için tablodan en az bir kurum seçin.</p>
           )}
         </div>
       </div>

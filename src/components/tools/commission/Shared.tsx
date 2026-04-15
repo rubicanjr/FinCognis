@@ -45,7 +45,7 @@ export function CostPie({ breakdown, total }: { breakdown: QuoteBreakdown; total
     { id: "takasbank", label: "Takasbank", color: "#a78bfa", value: breakdown.takasbank },
     { id: "spread", label: "Spread", color: "#f97316", value: breakdown.spread },
     { id: "swap", label: "Swap", color: "#14b8a6", value: breakdown.swap },
-    { id: "fxConversion", label: "Doviz", color: "#f43f5e", value: breakdown.fxConversion },
+    { id: "fxConversion", label: "Döviz", color: "#f43f5e", value: breakdown.fxConversion },
     { id: "stopaj", label: "Stopaj", color: "#ef4444", value: breakdown.stopaj },
   ].filter((item) => item.value > 0);
 

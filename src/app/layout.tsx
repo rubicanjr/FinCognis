@@ -4,9 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SITE_NAME, SITE_URL, OG_IMAGE_PATH, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
 
-const defaultTitle = `${SITE_NAME} | Finansal Analitik ve Guvenli Islem Platformu`;
+const defaultTitle = `${SITE_NAME} | Finansal Analitik ve Güvenli İşlem Platformu`;
 const defaultDescription =
-  "FinCognis, komisyon hesaplama, korelasyon analizi ve stres testi araclariyla finansal kararlari hizlandiran, guvenlik odakli bir analiz platformudur.";
+  "FinCognis, komisyon hesaplama, korelasyon analizi ve stres testi araçlarıyla finansal kararları hızlandıran, güvenlik odaklı bir analiz platformudur.";
 
 export const metadata: Metadata = createPageMetadata({
   title: defaultTitle,
@@ -17,8 +17,8 @@ export const metadata: Metadata = createPageMetadata({
     "finansal analiz",
     "komisyon hesaplama",
     "korelasyon analizi",
-    "portfoy stres testi",
-    "fintech Turkiye",
+    "portföy stres testi",
+    "fintech Türkiye",
   ],
 });
 
@@ -68,10 +68,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
         <script

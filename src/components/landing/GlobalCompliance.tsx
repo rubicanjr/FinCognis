@@ -5,21 +5,33 @@ interface ComplianceStat {
 }
 
 const STATS: ComplianceStat[] = [
-  { value: "24", title: "Karsilastirilan Kurum", description: "Komisyon Hesaplayici icinde banka, araci kurum ve kripto borsalari." },
-  { value: "5+", title: "Kriz Senaryosu", description: "Portfoy Stres Simulatoru icin tarihsel sok kutuphanesi." },
-  { value: "8", title: "Piyasa Kategorisi", description: "Araclar genelinde kategori bazli secim ve analiz akisi." },
+  {
+    value: "24",
+    title: "Karşılaştırılan Kurum",
+    description: "Komisyon Hesaplayıcı içinde banka, aracı kurum ve kripto borsaları.",
+  },
+  {
+    value: "5+",
+    title: "Kriz Senaryosu",
+    description: "Portföy Stres Simülatörü için tarihsel şok kütüphanesi.",
+  },
+  {
+    value: "8",
+    title: "Piyasa Kategorisi",
+    description: "Araçlar genelinde kategori bazlı seçim ve analiz akışı.",
+  },
 ];
 
 export default function GlobalCompliance() {
   return (
     <section id="compliance" className="mx-auto max-w-7xl px-6 py-24">
       <div className="mb-16 text-center">
-        <p className="mb-4 font-label text-sm font-bold uppercase tracking-[0.2em] text-secondary">Arac Kapsami</p>
+        <p className="mb-4 font-label text-sm font-bold uppercase tracking-[0.2em] text-secondary">Araç Kapsamı</p>
         <h2 className="mb-6 font-headline text-4xl font-extrabold text-on-surface md:text-5xl">
-          FinCognis, karar kalitesini olcekler.
+          FinCognis, karar kalitesini ölçekler.
         </h2>
         <p className="mx-auto max-w-2xl text-on-surface-variant">
-          Her arac; ayni veri disiplini, acik metrikler ve paylasilabilir sonuc formati ile birlikte calisir.
+          Her araç; aynı veri disiplini, açık metrikler ve paylaşılabilir sonuç formatı ile birlikte çalışır.
         </p>
       </div>
 

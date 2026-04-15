@@ -29,6 +29,7 @@ import {
   parseLocaleNumber,
   toInputValue,
 } from "@/components/tools/commissionHelpers";
+import { normalizeTurkishText } from "@/lib/text/turkish-normalization";
 
 function isValidDataset(value: unknown): value is BrokersDataset {
   if (!value || typeof value !== "object") {
@@ -109,7 +110,46 @@ function parseStoredJson<T>(raw: string | null, fallback: T): T {
   }
 }
 
-const DEFAULT_DATASET = brokersSeed as BrokersDataset;
+function normalizeDatasetText(dataset: BrokersDataset): BrokersDataset {
+  // 1) Normalize category labels and descriptions.
+  const categories = dataset.categories.map((category) => ({
+    ...category,
+    name: normalizeTurkishText(category.name),
+    description: normalizeTurkishText(category.description),
+  }));
+  // 2) Normalize market labels.
+  const markets = dataset.markets.map((market) => ({
+    ...market,
+    name: normalizeTurkishText(market.name),
+  }));
+  // 3) Normalize broker labels and promotion titles.
+  const brokers = dataset.brokers.map((broker) => ({
+    ...broker,
+    name: normalizeTurkishText(broker.name),
+    promotions: broker.promotions?.map((promotion) => ({
+      ...promotion,
+      title: normalizeTurkishText(promotion.title),
+    })),
+  }));
+  // 4) Normalize metadata disclaimer text.
+  const disclaimer = dataset._meta?.disclaimer;
+  const meta = dataset._meta
+    ? {
+        ...dataset._meta,
+        disclaimer: disclaimer ? normalizeTurkishText(disclaimer) : undefined,
+      }
+    : dataset._meta;
+  // 5) Return normalized immutable dataset.
+  return {
+    ...dataset,
+    categories,
+    markets,
+    brokers,
+    _meta: meta,
+  };
+}
+
+const DEFAULT_DATASET = normalizeDatasetText(brokersSeed as BrokersDataset);
 
 export function useCommissionCalculator() {
   const [dataset, setDataset] = useState<BrokersDataset>(DEFAULT_DATASET);
@@ -464,7 +504,7 @@ export function useCommissionCalculator() {
 
     try {
       await navigator.clipboard.writeText(url);
-      setShareStatus("Paylasim linki kopyalandi.");
+      setShareStatus("Paylaşım linki kopyalandı.");
     } catch {
       setShareStatus(url);
     }
@@ -476,16 +516,16 @@ export function useCommissionCalculator() {
         "Kurum",
         "Kategori",
         "Piyasa",
-        "Islem Tipi",
+        "İşlem Tipi",
         "Toplam Maliyet (TRY)",
         "Efektif Maliyet (%)",
         "Komisyon",
         "BSMV",
-        "BIST Payi",
+        "BIST Payı",
         "Takasbank",
         "Spread",
         "Swap",
-        "Doviz Cevrim",
+        "Döviz Çevrim",
         "Stopaj",
       ].join(";"),
       ...quotes.map((quote) =>
@@ -539,19 +579,19 @@ export function useCommissionCalculator() {
           <div class="meta">${new Date().toLocaleString("tr-TR")}</div>
           <p><strong>Kategori:</strong> ${selectedCategory?.name ?? "-"}</p>
           <p><strong>Piyasa:</strong> ${selectedMarket?.name ?? "-"}</p>
-          <p><strong>Secilen Kurum:</strong> ${selectedQuote.brokerName}</p>
+          <p><strong>Seçilen Kurum:</strong> ${selectedQuote.brokerName}</p>
           <p><strong>Toplam Maliyet:</strong> ${formatMoney(selectedQuote.totalCostTry)}</p>
           <p><strong>Efektif Maliyet:</strong> ${formatPercent(selectedQuote.effectiveCostPct)}</p>
-          <h3>Maliyet Kirilimi</h3>
+          <h3>Maliyet Kırılımı</h3>
           <table>
             <tr><th>Kalem</th><th>Tutar (TRY)</th></tr>
             <tr><td>Komisyon</td><td>${selectedQuote.breakdown.commission.toFixed(2)}</td></tr>
             <tr><td>BSMV</td><td>${selectedQuote.breakdown.bsmv.toFixed(2)}</td></tr>
-            <tr><td>BIST Payi</td><td>${selectedQuote.breakdown.bistPayi.toFixed(2)}</td></tr>
+            <tr><td>BIST Payı</td><td>${selectedQuote.breakdown.bistPayi.toFixed(2)}</td></tr>
             <tr><td>Takasbank</td><td>${selectedQuote.breakdown.takasbank.toFixed(2)}</td></tr>
             <tr><td>Spread</td><td>${selectedQuote.breakdown.spread.toFixed(2)}</td></tr>
             <tr><td>Swap</td><td>${selectedQuote.breakdown.swap.toFixed(2)}</td></tr>
-            <tr><td>Doviz Cevrim</td><td>${selectedQuote.breakdown.fxConversion.toFixed(2)}</td></tr>
+            <tr><td>Döviz Çevrim</td><td>${selectedQuote.breakdown.fxConversion.toFixed(2)}</td></tr>
             <tr><td>Stopaj</td><td>${selectedQuote.breakdown.stopaj.toFixed(2)}</td></tr>
           </table>
         </body>
@@ -566,7 +606,7 @@ export function useCommissionCalculator() {
   };
 
   const refreshLiveRates = async () => {
-    setLiveStatus("Canli veriler cekiliyor...");
+    setLiveStatus("Canlı veriler çekiliyor...");
 
     try {
       const response = await fetch("https://open.er-api.com/v6/latest/USD");
@@ -588,9 +628,9 @@ export function useCommissionCalculator() {
         setSpreadRateInput(toInputValue(spreadRate, 6));
       }
 
-      setLiveStatus("Kur ve spread verileri guncellendi.");
+      setLiveStatus("Kur ve spread verileri güncellendi.");
     } catch {
-      setLiveStatus("Canli veri servisine ulasilamadi. Elle giris kullaniliyor.");
+      setLiveStatus("Canlı veri servisine ulaşılamadı. Elle giriş kullanılıyor.");
     }
   };
 
@@ -601,7 +641,7 @@ export function useCommissionCalculator() {
       }\nMesaj: ${feedbackMessage}`
     );
     window.open(
-      `mailto:fincognis@gmail.com?subject=Komisyon Hesaplayici Geri Bildirim&body=${body}`,
+      `mailto:fincognis@gmail.com?subject=Komisyon Hesaplayıcı Geri Bildirim&body=${body}`,
       "_blank"
     );
     setFeedbackMessage("");
@@ -644,8 +684,8 @@ export function useCommissionCalculator() {
       if (!isValidDataset(parsed)) {
         throw new Error("invalid-json");
       }
-      startTransition(() => setDataset(parsed));
-      setAdminStatus("JSON yuklendi ve tarifeler guncellendi.");
+      startTransition(() => setDataset(normalizeDatasetText(parsed)));
+      setAdminStatus("JSON yüklendi ve tarifeler güncellendi.");
     } catch {
       setAdminStatus("JSON dosyasi gecersiz. categories/markets/brokers alanlari gerekli.");
     } finally {
@@ -698,7 +738,7 @@ export function useCommissionCalculator() {
       }
 
       if (!extractedRate) {
-        setAdminStatus("PDF icinden otomatik BIST orani bulunamadi. Metin tabanli PDF veya manuel duzenleme kullanin.");
+        setAdminStatus("PDF içinden otomatik BIST oranı bulunamadı. Metin tabanlı PDF veya manuel düzenleme kullanın.");
         return;
       }
 
@@ -711,7 +751,7 @@ export function useCommissionCalculator() {
             : market
         ),
       }));
-      setAdminStatus(`BIST orani PDF'den algilandi: ${safeRate.toFixed(8)} (${selectedMarket.name}).`);
+      setAdminStatus(`BIST oranı PDF'den algılandı: ${safeRate.toFixed(8)} (${selectedMarket.name}).`);
     } catch {
       setAdminStatus("PDF okunamadi.");
     } finally {

@@ -1,3 +1,5 @@
+import { Fingerprint, ShieldCheck } from "lucide-react";
+
 export default function SecureTransactions() {
   return (
     <section id="security" className="relative overflow-hidden bg-surface-container-low py-24">
@@ -5,36 +7,39 @@ export default function SecureTransactions() {
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 lg:grid-cols-2">
         <div>
-          <p className="mb-4 font-label text-sm font-bold uppercase tracking-[0.2em] text-secondary">Guvenilir Hesaplama</p>
+          <p className="mb-4 font-label text-sm font-bold uppercase tracking-[0.2em] text-secondary">
+            Güvenilir Hesaplama
+          </p>
           <h2 className="mb-6 font-headline text-4xl font-extrabold leading-tight text-on-surface md:text-5xl">
-            FinCognis Guven Katmani.
+            FinCognis Güven Katmanı.
           </h2>
           <p className="mb-10 text-lg leading-relaxed text-on-surface-variant">
-            Komisyon, korelasyon ve stres hesaplari; surumlenmis veri seti, izlenebilir model adimlari ve tekrar uretilebilir sonuc mantigi ile calisir.
+            Komisyon, korelasyon ve stres hesapları; sürümlenmiş veri seti, izlenebilir model adımları ve tekrar üretilebilir
+            sonuç mantığı ile çalışır.
           </p>
 
           <div className="space-y-6">
             <div className="flex items-start gap-4">
               <div className="mt-1 flex-shrink-0 rounded-lg bg-secondary/10 p-2">
-                <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  encrypted
-                </span>
+                <ShieldCheck className="h-5 w-5 text-secondary" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-headline font-bold text-on-surface">Kaynak Verisi Butunlugu</h4>
-                <p className="text-sm text-on-surface-variant">Broker ve piyasa verileri tek sema ile dogrulanir, hatali dosya otomatik reddedilir.</p>
+                <h4 className="font-headline font-bold text-on-surface">Kaynak Verisi Bütünlüğü</h4>
+                <p className="text-sm text-on-surface-variant">
+                  Broker ve piyasa verileri tek şema ile doğrulanır, hatalı dosya otomatik reddedilir.
+                </p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
               <div className="mt-1 flex-shrink-0 rounded-lg bg-secondary/10 p-2">
-                <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  fingerprint
-                </span>
+                <Fingerprint className="h-5 w-5 text-secondary" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-headline font-bold text-on-surface">Model Izlenebilirligi</h4>
-                <p className="text-sm text-on-surface-variant">Her arac ciktiyi kalem kalem aciklar: maliyet kirilimi, risk metrigi ve senaryo etkisi.</p>
+                <h4 className="font-headline font-bold text-on-surface">Model İzlenebilirliği</h4>
+                <p className="text-sm text-on-surface-variant">
+                  Her araç çıktıyı kalem kalem açıklar: maliyet kırılımı, risk metriği ve senaryo etkisi.
+                </p>
               </div>
             </div>
           </div>
@@ -56,7 +61,7 @@ export default function SecureTransactions() {
               <div className="h-12 animate-pulse rounded-xl bg-surface-container-highest" />
               <div className="h-12 rounded-xl bg-surface-container-highest/60" />
               <div className="flex h-32 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/5">
-                <span className="material-symbols-outlined text-4xl text-secondary">fingerprint</span>
+                <Fingerprint className="h-10 w-10 text-secondary" strokeWidth={1.5} />
               </div>
               <div className="h-12 rounded-xl bg-surface-container-highest" />
             </div>

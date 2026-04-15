@@ -2,6 +2,7 @@ import {
   parseThemeConfig,
   type ThemeConfig,
 } from "@/lib/contracts/core-schemas";
+import { getNextThemeConfig } from "@/lib/theme/theme-controller";
 
 const THEME_STORAGE_KEY = "fincognis_theme_config";
 
@@ -29,14 +30,6 @@ export function saveThemeConfigToStorage(config: ThemeConfig): void {
 }
 
 export function toggleThemeMode(config: ThemeConfig): ThemeConfig {
-  // 1) Compute next mode deterministically.
-  const nextMode = config.mode === "dark" ? "light" : "dark";
-  // 2) Return immutable updated config with timestamp.
-  return {
-    ...config,
-    mode: nextMode,
-    isSystemPreferred: false,
-    updatedAt: new Date().toISOString(),
-  };
+  // 1) Delegate mode transition to theme controller.
+  return getNextThemeConfig(config);
 }
-

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Globe, TerminalSquare } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -8,31 +9,27 @@ export default function Footer() {
           <Link href="/" className="font-headline text-lg font-bold text-primary">
             FinCognis
           </Link>
-          <p className="font-body text-sm tracking-wide text-primary/60">© 2026 FinCognis. Guvenli Finansal Zeka.</p>
+          <p className="font-body text-sm tracking-wide text-primary/60">© 2026 FinCognis. Güvenli Finansal Zekâ.</p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-8">
           <a href="#analytics" className="text-primary/60 transition-all duration-200 hover:text-secondary hover:underline">
-            Urun
+            Ürün
           </a>
           <a href="#security" className="text-primary/60 transition-all duration-200 hover:text-secondary hover:underline">
-            Cozumler
+            Çözümler
           </a>
           <a href="#security" className="text-primary/60 transition-all duration-200 hover:text-secondary hover:underline">
-            Guvenlik
+            Güvenlik
           </a>
           <Link href="/tools" className="text-primary/60 transition-all duration-200 hover:text-secondary hover:underline">
-            Araclar
+            Araçlar
           </Link>
         </div>
 
         <div className="flex gap-4">
-          <span className="material-symbols-outlined cursor-pointer text-primary/40 transition-colors hover:text-secondary">
-            public
-          </span>
-          <span className="material-symbols-outlined cursor-pointer text-primary/40 transition-colors hover:text-secondary">
-            terminal
-          </span>
+          <Globe className="cursor-pointer text-primary/40 transition-colors hover:text-secondary" strokeWidth={1.5} />
+          <TerminalSquare className="cursor-pointer text-primary/40 transition-colors hover:text-secondary" strokeWidth={1.5} />
         </div>
       </div>
     </footer>

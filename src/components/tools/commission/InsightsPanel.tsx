@@ -15,7 +15,7 @@ export function InsightsPanel({ vm }: InsightsPanelProps) {
       <div className="rounded-2xl bg-surface p-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-            7) Secilen Kurum Sonuc Detayi
+            7) Seçilen Kurum Sonuç Detayı
           </p>
           <p className="text-xs text-on-surface-variant">{selectedQuote?.brokerName ?? "-"}</p>
         </div>
@@ -48,17 +48,17 @@ export function InsightsPanel({ vm }: InsightsPanelProps) {
               <div className="grid gap-2 sm:grid-cols-2">
                 <CostRow label="Komisyon" value={selectedQuote.breakdown.commission} tip={FEE_INFO.commission} />
                 <CostRow label="BSMV" value={selectedQuote.breakdown.bsmv} tip={FEE_INFO.bsmv} />
-                <CostRow label="BIST Payi" value={selectedQuote.breakdown.bistPayi} tip={FEE_INFO.bistPayi} />
+                <CostRow label="BIST Payı" value={selectedQuote.breakdown.bistPayi} tip={FEE_INFO.bistPayi} />
                 <CostRow label="Takasbank" value={selectedQuote.breakdown.takasbank} tip={FEE_INFO.takasbank} />
                 <CostRow label="Spread" value={selectedQuote.breakdown.spread} tip={FEE_INFO.spread} />
                 <CostRow label="Swap" value={selectedQuote.breakdown.swap} tip={FEE_INFO.swap} />
-                <CostRow label="Doviz Cevrim" value={selectedQuote.breakdown.fxConversion} tip={FEE_INFO.fxConversion} />
+                <CostRow label="Döviz Çevrim" value={selectedQuote.breakdown.fxConversion} tip={FEE_INFO.fxConversion} />
                 <CostRow label="Stopaj" value={selectedQuote.breakdown.stopaj} tip={FEE_INFO.stopaj} />
               </div>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-on-surface-variant">Bu secimde kurum bulunamadi.</p>
+          <p className="text-sm text-on-surface-variant">Bu seçimde kurum bulunamadı.</p>
         )}
       </div>
 
@@ -75,7 +75,7 @@ export function InsightsPanel({ vm }: InsightsPanelProps) {
               </div>
               {worstQuote && (
                 <p className="mt-1 text-[11px] text-on-surface-variant">
-                  En pahaliya gore fark: {formatMoney(worstQuote.totalCostTry - quote.totalCostTry)}
+                  En pahalıya göre fark: {formatMoney(worstQuote.totalCostTry - quote.totalCostTry)}
                 </p>
               )}
             </div>

@@ -1,17 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { resolveToolsAccess } from "@/lib/auth/tools-gateway";
-import type { UserAuth } from "@/lib/contracts/core-schemas";
+import type { AuthSession } from "@/lib/contracts/core-schemas";
 
 describe("resolveToolsAccess", () => {
   it("redirects unauthorized users trying to reach /tools", () => {
-    const guestAuth: UserAuth = {
+    const guestAuth: AuthSession = {
       isAuthenticated: false,
-      userId: null,
-      email: null,
-      role: "guest",
-      sessionToken: null,
-      issuedAt: null,
+      accessToken: null,
+      refreshToken: null,
       expiresAt: null,
+      user: null,
     };
 
     const result = resolveToolsAccess("/tools", guestAuth);
@@ -20,4 +18,3 @@ describe("resolveToolsAccess", () => {
     expect(result.redirectTo).toBe("/tools/login?next=%2Ftools");
   });
 });
-

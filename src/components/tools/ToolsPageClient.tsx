@@ -1,36 +1,30 @@
 "use client";
 
-import {
-  startTransition,
-  useEffect,
-  useMemo,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Network, ShieldAlert, Wallet } from "lucide-react";
+import * as Tabs from "@radix-ui/react-tabs";
+import { AlertCircle, LogOut, Network, ShieldAlert, Wallet } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import CommissionCalculator from "@/components/tools/CommissionCalculator";
 import CorrelationTest from "@/components/tools/CorrelationTest";
 import StressTest from "@/components/tools/StressTest";
 import {
-  clearAuthFromStorage,
-  isAuthActive,
-  readAuthFromStorage,
+  getAuthSessionFromSupabase,
+  signOutFromSupabase,
+  subscribeAuthSession,
 } from "@/lib/auth/auth-session";
-import {
-  parseToolInformationList,
-  type ToolInformationSchema,
-} from "@/lib/contracts/core-schemas";
+import { parseToolDataList, type ToolData } from "@/lib/contracts/core-schemas";
+import { resolveToolsAccess } from "@/lib/auth/tools-gateway";
 import { normalizeTurkishText } from "@/lib/text/turkish-normalization";
+import { createSupabaseBrowserClient, hasSupabasePublicEnv } from "@/utils/supabase";
 
-type ToolId = ToolInformationSchema["id"];
+type ToolId = ToolData["id"];
 
 const TOOL_DATA_SOURCE: unknown = [
   {
     id: "commission",
     title: "Komisyon Analizi",
-    description: "Kurum bazli maliyet karsilastirmasi",
+    description: "Kurum bazlı maliyet karşılaştırması",
     href: "/tools",
     iconKey: "wallet",
     requiresAuth: true,
@@ -38,7 +32,7 @@ const TOOL_DATA_SOURCE: unknown = [
   },
   {
     id: "correlation",
-    title: "Korelasyon Carpismasi",
+    title: "Korelasyon Çarpışması",
     description: "DCC-GARCH + kuyruk riski testi",
     href: "/tools",
     iconKey: "network",
@@ -47,7 +41,7 @@ const TOOL_DATA_SOURCE: unknown = [
   },
   {
     id: "stress",
-    title: "Portfoy Stres Simulasyonu",
+    title: "Portföy Stres Simülatörü",
     description: "Kriz replay ve Monte Carlo",
     href: "/tools",
     iconKey: "shield",
@@ -56,10 +50,10 @@ const TOOL_DATA_SOURCE: unknown = [
   },
 ];
 
-function createToolRegistry(): ToolInformationSchema[] {
-  // 1) Validate unknown source payload with strict schema parsing.
-  const parsed = parseToolInformationList(TOOL_DATA_SOURCE) ?? [];
-  // 2) Normalize Turkish UI strings for stable rendering.
+function createToolRegistry(): ToolData[] {
+  // 1) Parse unknown source payload with strict schema guard.
+  const parsed = parseToolDataList(TOOL_DATA_SOURCE) ?? [];
+  // 2) Normalize Turkish strings for consistent UI quality.
   return parsed.map((tool) => ({
     ...tool,
     title: normalizeTurkishText(tool.title),
@@ -67,60 +61,63 @@ function createToolRegistry(): ToolInformationSchema[] {
   }));
 }
 
-const TOOL_REGISTRY = createToolRegistry();
-
-function renderToolIcon(iconKey: ToolInformationSchema["iconKey"]) {
-  // 1) Return icon component by strict icon key.
+function renderToolIcon(iconKey: ToolData["iconKey"]) {
+  // 1) Return a premium Lucide icon for wallet tool.
   if (iconKey === "wallet") return <Wallet className="h-4 w-4" strokeWidth={1.5} aria-hidden />;
-  // 2) Resolve network icon variant.
+  // 2) Return a premium Lucide icon for correlation tool.
   if (iconKey === "network") return <Network className="h-4 w-4" strokeWidth={1.5} aria-hidden />;
-  // 3) Fallback to stress icon.
+  // 3) Return a premium Lucide icon for stress tool.
   return <ShieldAlert className="h-4 w-4" strokeWidth={1.5} aria-hidden />;
 }
 
-function getDefaultToolId(): ToolId {
-  // 1) Resolve first valid tool from validated registry.
-  const first = TOOL_REGISTRY[0];
-  // 2) Return stable fallback id.
+function getDefaultToolId(registry: ToolData[]): ToolId {
+  // 1) Resolve first valid registry item.
+  const first = registry[0];
+  // 2) Return fallback identifier when list is empty.
   return first?.id ?? "commission";
 }
 
+function parseToolId(value: string): ToolId {
+  // 1) Validate incoming tab value against known tool identifiers.
+  if (value === "commission" || value === "correlation" || value === "stress") return value;
+  // 2) Return deterministic fallback id.
+  return "commission";
+}
+
 export default function ToolsPageClient() {
-  // 1) Initialize routing and active tab state.
+  // 1) Prepare router, Supabase client, and tool registry.
   const router = useRouter();
-  const [activeTool, setActiveTool] = useState<ToolId>(getDefaultToolId);
-  const toolIds = useMemo(() => TOOL_REGISTRY.map((item) => item.id), []);
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const hasSupabaseConfig = useMemo(() => hasSupabasePublicEnv(), []);
+  const toolRegistry = useMemo(() => createToolRegistry(), []);
+  const [activeTool, setActiveTool] = useState<ToolId>(getDefaultToolId(toolRegistry));
 
   useEffect(() => {
-    // 1) Read auth state from local storage.
-    const auth = readAuthFromStorage();
-    // 2) Redirect guests to login.
-    if (!isAuthActive(auth)) {
-      router.replace("/tools/login?next=%2Ftools");
-    }
-  }, [router]);
-
-  function handleLogout() {
-    // 1) Clear local auth session.
-    clearAuthFromStorage();
-    // 2) Redirect user to login route.
-    startTransition(() => {
-      router.replace("/tools/login?next=%2Ftools");
-      router.refresh();
+    // 1) Stop auth checks when Supabase client is unavailable.
+    if (!supabase) return;
+    // 2) Resolve current auth session once on mount.
+    getAuthSessionFromSupabase(supabase).then((session) => {
+      // 3) Apply access gateway decision based on auth state.
+      const decision = resolveToolsAccess("/tools", session);
+      if (decision.action === "redirect" && decision.redirectTo) router.replace(decision.redirectTo);
     });
-  }
+    // 4) Subscribe auth updates to enforce protected route access.
+    return subscribeAuthSession(supabase, (session) => {
+      const decision = resolveToolsAccess("/tools", session);
+      if (decision.action === "redirect" && decision.redirectTo) router.replace(decision.redirectTo);
+    });
+  }, [router, supabase]);
 
-  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, currentTool: ToolId) {
-    // 1) Exit early when key is not part of horizontal navigation.
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+  async function handleLogout() {
+    // 1) Skip sign-out when Supabase client is unavailable.
+    if (!supabase) {
+      startTransition(() => router.replace("/tools/login"));
       return;
     }
-    // 2) Compute next tab index in a cyclic way.
-    const currentIndex = toolIds.indexOf(currentTool);
-    const offset = event.key === "ArrowRight" ? 1 : -1;
-    const nextIndex = (currentIndex + offset + toolIds.length) % toolIds.length;
-    // 3) Activate next tab.
-    setActiveTool(toolIds[nextIndex] ?? currentTool);
+    // 2) End active Supabase session.
+    await signOutFromSupabase(supabase);
+    // 3) Redirect user to login route.
+    startTransition(() => router.replace("/tools/login"));
   }
 
   return (
@@ -133,74 +130,63 @@ export default function ToolsPageClient() {
           </p>
           <h1 className="font-headline text-3xl font-extrabold text-on-surface">Analiz ve Hesaplama</h1>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Giriş doğrulaması aktif. Tüm hesaplamalar tek panelde erişilebilir sekmelerle sunulur.
+            Supabase Auth ile doğrulanan erişim, erişilebilir sekmeli bilgi mimarisi.
           </p>
         </div>
+
+        {!hasSupabaseConfig ? (
+          <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div className="mb-1 flex items-center gap-2 font-semibold">
+              <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
+              Supabase Yapılandırması Eksik
+            </div>
+            NEXT_PUBLIC_SUPABASE_URL ve NEXT_PUBLIC_SUPABASE_ANON_KEY değişkenlerini tanımlayın.
+          </div>
+        ) : null}
 
         <div className="mb-3 flex justify-end">
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-xl border border-outline-variant/25 bg-surface-container-low px-4 py-2 text-xs font-semibold text-on-surface transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-secondary/50 hover:text-secondary"
+            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/25 bg-surface-container-low px-4 py-2 text-xs font-semibold text-on-surface transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-secondary/50 hover:text-secondary"
           >
+            <LogOut className="h-4 w-4" strokeWidth={1.5} />
             Çıkış Yap
           </button>
         </div>
 
-        <div
-          className="flex gap-2 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-1.5"
-          role="tablist"
-          aria-label="FinCognis araç sekmeleri"
+        <Tabs.Root
+          value={activeTool}
+          onValueChange={(value) => setActiveTool(parseToolId(value))}
+          className="space-y-3"
         >
-          {TOOL_REGISTRY.map((tool) => (
-            <button
-              key={tool.id}
-              id={`tool-tab-${tool.id}`}
-              role="tab"
-              aria-selected={activeTool === tool.id}
-              aria-controls={`tool-panel-${tool.id}`}
-              tabIndex={activeTool === tool.id ? 0 : -1}
-              onKeyDown={(event) => handleTabKeyDown(event, tool.id)}
-              onClick={() => setActiveTool(tool.id)}
-              className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 font-headline text-xs font-bold transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                activeTool === tool.id
-                  ? "bg-secondary/15 text-secondary shadow-sm"
-                  : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              {renderToolIcon(tool.iconKey)}
-              <span>{tool.title}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+          <Tabs.List
+            className="grid grid-cols-1 gap-2 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-1.5 md:grid-cols-3"
+            aria-label="FinCognis araç sekmeleri"
+          >
+            {toolRegistry.map((tool) => (
+              <Tabs.Trigger
+                key={tool.id}
+                value={tool.id}
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 font-headline text-xs font-bold text-on-surface-variant transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=active]:bg-secondary/15 data-[state=active]:text-secondary data-[state=active]:shadow-sm"
+              >
+                {renderToolIcon(tool.iconKey)}
+                <span>{tool.title}</span>
+              </Tabs.Trigger>
+            ))}
+          </Tabs.List>
 
-      <main className="pb-16">
-        <section
-          id="tool-panel-commission"
-          role="tabpanel"
-          aria-labelledby="tool-tab-commission"
-          hidden={activeTool !== "commission"}
-        >
-          <CommissionCalculator />
-        </section>
-        <section
-          id="tool-panel-correlation"
-          role="tabpanel"
-          aria-labelledby="tool-tab-correlation"
-          hidden={activeTool !== "correlation"}
-        >
-          <CorrelationTest />
-        </section>
-        <section
-          id="tool-panel-stress"
-          role="tabpanel"
-          aria-labelledby="tool-tab-stress"
-          hidden={activeTool !== "stress"}
-        >
-          <StressTest />
-        </section>
-      </main>
+          <Tabs.Content value="commission">
+            <CommissionCalculator />
+          </Tabs.Content>
+          <Tabs.Content value="correlation">
+            <CorrelationTest />
+          </Tabs.Content>
+          <Tabs.Content value="stress">
+            <StressTest />
+          </Tabs.Content>
+        </Tabs.Root>
+      </div>
     </div>
   );
 }

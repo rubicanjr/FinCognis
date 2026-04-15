@@ -1,88 +1,72 @@
 "use client";
 
-import { startTransition, useEffect, useState, type FormEvent } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, LockKeyhole, Mail } from "lucide-react";
-import { LoginPayloadZodSchema } from "@/lib/contracts/core-schemas";
-import {
-  createAuthenticatedUser,
-  isAuthActive,
-  readAuthFromStorage,
-  saveAuthToStorage,
-} from "@/lib/auth/auth-session";
+import { AlertCircle, ArrowRight, Chrome, ShieldCheck } from "lucide-react";
+import { getAuthSessionFromSupabase, isAuthActive } from "@/lib/auth/auth-session";
+import { startGoogleOAuthFlow } from "@/lib/auth/google-oauth";
+import { createSupabaseBrowserClient, hasSupabasePublicEnv } from "@/utils/supabase";
 
 interface ToolsLoginScreenProps {
   defaultNextPath: string;
 }
 
-interface LoginState {
-  email: string;
-  password: string;
+interface GoogleLoginState {
   pending: boolean;
   error: string;
 }
 
-function createInitialState(): LoginState {
-  // 1) Provide deterministic initial UI state.
-  return { email: "", password: "", pending: false, error: "" };
+function createInitialState(): GoogleLoginState {
+  // 1) Return deterministic initial login state.
+  return { pending: false, error: "" };
 }
 
-function getDemoCredentials() {
-  // 1) Return static demo credentials for static deployment flow.
-  return {
-    email: "demo@fincognis.com",
-    password: "Fincognis2026!",
-  };
+function createRedirectTarget(nextPath: string): string {
+  // 1) Build absolute redirect URL for OAuth callback.
+  return `${window.location.origin}${nextPath}`;
 }
 
 export default function ToolsLoginScreen({ defaultNextPath }: ToolsLoginScreenProps) {
-  // 1) Initialize router, query helpers and component state.
+  // 1) Prepare router and auth client instances.
   const router = useRouter();
-  const [state, setState] = useState<LoginState>(createInitialState);
-  const nextPath = defaultNextPath;
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const hasSupabaseConfig = useMemo(() => hasSupabasePublicEnv(), []);
+  const [state, setState] = useState<GoogleLoginState>(createInitialState);
 
   useEffect(() => {
-    // 1) Read local auth state from storage.
-    const auth = readAuthFromStorage();
-    // 2) Redirect authenticated users to intended route.
-    if (isAuthActive(auth)) {
-      router.replace(nextPath);
-    }
-  }, [nextPath, router]);
+    // 1) Stop auth check when Supabase client is unavailable.
+    if (!supabase) return;
+    // 2) Resolve current auth session from Supabase.
+    getAuthSessionFromSupabase(supabase).then((session) => {
+      // 3) Redirect authenticated users to tools route.
+      if (isAuthActive(session)) router.replace(defaultNextPath);
+    });
+  }, [defaultNextPath, router, supabase]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    // 1) Prevent default browser form submission.
-    event.preventDefault();
-    // 2) Validate unknown payload using Zod schema.
-    const parsed = LoginPayloadZodSchema.safeParse({
-      email: state.email,
-      password: state.password,
-    });
-    if (!parsed.success) {
-      setState((current) => ({ ...current, error: "Lütfen geçerli e-posta ve şifre girin." }));
-      return;
-    }
-    // 3) Verify credentials and persist auth state.
-    const demo = getDemoCredentials();
-    setState((current) => ({ ...current, pending: true, error: "" }));
-    if (
-      parsed.data.email.toLowerCase() !== demo.email ||
-      parsed.data.password !== demo.password
-    ) {
-      setState((current) => ({
-        ...current,
+  async function handleGoogleSignIn() {
+    // 1) Prevent OAuth flow when environment is not configured.
+    if (!supabase) {
+      setState({
         pending: false,
-        error: "Giriş başarısız. Bilgileri kontrol edin.",
-      }));
+        error:
+          "Supabase yapılandırması eksik. NEXT_PUBLIC_SUPABASE_URL ve NEXT_PUBLIC_SUPABASE_ANON_KEY değerlerini tanımlayın.",
+      });
       return;
     }
-    // 4) Save auth and redirect to protected tools route.
-    saveAuthToStorage(createAuthenticatedUser(parsed.data.email.toLowerCase()));
-    startTransition(() => {
-      router.replace(nextPath);
-      router.refresh();
-    });
+    // 2) Mark UI as pending and clear old errors.
+    setState({ pending: true, error: "" });
+    // 3) Trigger OAuth flow with strict redirect target.
+    const result = await startGoogleOAuthFlow(supabase, createRedirectTarget(defaultNextPath));
+    // 4) Return early when provider redirect starts successfully.
+    if (result.ok) return;
+    // 5) Show fallback error state on failure.
+    setState({ pending: false, error: "Google girişi başlatılamadı. Lütfen tekrar deneyin." });
+  }
+
+  function goHome() {
+    // 1) Navigate back to home screen in non-auth flow.
+    startTransition(() => router.replace("/"));
   }
 
   return (
@@ -94,68 +78,54 @@ export default function ToolsLoginScreen({ defaultNextPath }: ToolsLoginScreenPr
           </p>
           <h1 className="font-headline text-3xl font-extrabold text-on-surface">Araçlara Devam Et</h1>
           <p className="text-sm text-on-surface-variant">
-            Komisyon, korelasyon ve stres araçlarına erişim için giriş yapın.
+            Komisyon, Korelasyon ve Stres araçlarına erişmek için Google ile giriş yapın.
           </p>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block text-sm text-on-surface-variant">
-            E-posta
-            <div className="mt-1 flex items-center gap-2 rounded-xl border border-outline-variant/25 bg-surface px-3">
-              <Mail className="h-4 w-4 text-secondary" strokeWidth={1.5} aria-hidden />
-              <input
-                type="email"
-                value={state.email}
-                onChange={(event) =>
-                  setState((current) => ({ ...current, email: event.target.value }))
-                }
-                className="w-full bg-transparent py-3 text-on-surface outline-none"
-                placeholder="demo@fincognis.com"
-                autoComplete="email"
-                required
-              />
+        <div className="space-y-4">
+          {!hasSupabaseConfig ? (
+            <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-xs text-amber-200">
+              <div className="mb-1 flex items-center gap-2 font-semibold">
+                <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
+                Yapılandırma Uyarısı
+              </div>
+              Supabase ortam değişkenleri tanımlanmadan OAuth akışı başlatılamaz.
             </div>
-          </label>
-
-          <label className="block text-sm text-on-surface-variant">
-            Şifre
-            <div className="mt-1 flex items-center gap-2 rounded-xl border border-outline-variant/25 bg-surface px-3">
-              <LockKeyhole className="h-4 w-4 text-secondary" strokeWidth={1.5} aria-hidden />
-              <input
-                type="password"
-                value={state.password}
-                onChange={(event) =>
-                  setState((current) => ({ ...current, password: event.target.value }))
-                }
-                className="w-full bg-transparent py-3 text-on-surface outline-none"
-                placeholder="******"
-                autoComplete="current-password"
-                required
-              />
-            </div>
-          </label>
-
-          {state.error ? (
-            <p className="rounded-lg bg-error/20 px-3 py-2 text-sm text-error">{state.error}</p>
           ) : null}
 
           <button
-            type="submit"
-            disabled={state.pending}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-bold text-on-secondary transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={state.pending || !hasSupabaseConfig}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-on-primary transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {state.pending ? "Giriş yapılıyor..." : "Giriş Yap"}
+            <Chrome className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+            {state.pending ? "Google yönlendirmesi hazırlanıyor..." : "Google ile Giriş Yap"}
             <ArrowRight className="h-4 w-4" strokeWidth={1.5} aria-hidden />
           </button>
-        </form>
 
-        <div className="mt-6 text-center text-xs text-on-surface-variant">
-          Demo girişi: <strong>demo@fincognis.com</strong> / <strong>Fincognis2026!</strong>
-        </div>
-        <div className="mt-2 text-center">
-          <Link href="/" className="text-xs text-secondary underline">
-            Anasayfaya dön
-          </Link>
+          {state.error ? (
+            <p className="rounded-lg bg-error/15 px-3 py-2 text-sm text-error">{state.error}</p>
+          ) : null}
+
+          <div className="rounded-xl border border-outline-variant/20 bg-surface p-3 text-xs text-on-surface-variant">
+            <div className="mb-1 flex items-center gap-2 text-on-surface">
+              <ShieldCheck className="h-4 w-4 text-secondary" strokeWidth={1.5} />
+              OAuth Güvencesi
+            </div>
+            Oturum Supabase Auth üzerinden yönetilir ve erişim /tools girişinde doğrulanır.
+          </div>
+
+          <div className="text-center">
+            <button type="button" onClick={goHome} className="text-xs text-secondary underline">
+              Anasayfaya dön
+            </button>
+          </div>
+          <div className="text-center">
+            <Link href="/tools" className="text-[11px] text-on-surface-variant underline">
+              Oturumunuz açıksa doğrudan araçlara geçebilirsiniz
+            </Link>
+          </div>
         </div>
       </div>
     </section>

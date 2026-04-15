@@ -55,7 +55,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
     <>
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="rounded-2xl bg-surface p-4">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">1) Kategori Secimi</p>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">1) Kategori Seçimi</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {categories.map((category) => (
               <button
@@ -76,7 +76,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
 
         <div className="rounded-2xl bg-surface p-4">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-            2) Islem Parametreleri
+            2) İşlem Parametreleri
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-on-surface-variant">
@@ -95,7 +95,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
             </label>
 
             <label className="text-xs text-on-surface-variant">
-              Islem Tipi
+              İşlem Tipi
               <select
                 value={transactionType}
                 onChange={(event) => setTransactionType(event.target.value as TransactionType)}
@@ -110,7 +110,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
             </label>
 
             <label className="text-xs text-on-surface-variant">
-              Giris Modeli
+              Giriş Modeli
               <select
                 value={inputMode}
                 onChange={(event) => setInputMode(event.target.value as InputMode)}
@@ -144,10 +144,10 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
 
       <div className="mt-4 grid gap-4 rounded-2xl bg-surface p-4 xl:grid-cols-3">
         <div className="space-y-3">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">3) Islem Girisi</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">3) İşlem Girişi</p>
           {inputMode === "amount" ? (
             <label className="block text-xs text-on-surface-variant">
-              Islem Tutari ({currency})
+              İşlem Tutarı ({currency})
               <input
                 value={amountInput}
                 onChange={(event) => setAmountInput(event.target.value)}
@@ -177,7 +177,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-on-surface-variant">
-              Aylik Hacim Profili ({currency})
+              Aylık Hacim Profili ({currency})
               <input
                 value={monthlyVolumeInput}
                 onChange={(event) => setMonthlyVolumeInput(event.target.value)}
@@ -185,7 +185,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Gunluk Hacim ({currency})
+              Günlük Hacim ({currency})
               <input
                 value={dailyVolumeInput}
                 onChange={(event) => setDailyVolumeInput(event.target.value)}
@@ -207,7 +207,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Swap Gun
+              Swap Gün
               <input
                 value={swapDaysInput}
                 onChange={(event) => setSwapDaysInput(event.target.value)}
@@ -215,7 +215,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Spread Orani (ondalik)
+              Spread Oranı (ondalık)
               <input
                 value={spreadRateInput}
                 onChange={(event) => setSpreadRateInput(event.target.value)}
@@ -224,7 +224,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Swap Gunluk Oran
+              Swap Günlük Oran
               <input
                 value={swapRateInput}
                 onChange={(event) => setSwapRateInput(event.target.value)}
@@ -233,7 +233,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Doviz Cevrim Orani
+              Döviz Çevrim Oranı
               <input
                 value={fxRateInput}
                 onChange={(event) => setFxRateInput(event.target.value)}
@@ -242,7 +242,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
               />
             </label>
             <label className="text-xs text-on-surface-variant">
-              Stopaj Orani (%)
+              Stopaj Oranı (%)
               <input
                 value={withholdingRateInput}
                 onChange={(event) => setWithholdingRateInput(event.target.value)}
@@ -263,7 +263,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
         </div>
 
         <div className="space-y-3">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">5) Profil ve Gecmis</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">5) Profil ve Geçmiş</p>
           <label className="block text-xs text-on-surface-variant">
             Hesap Etiketi
             <input
@@ -284,7 +284,7 @@ export function SelectionPanel({ vm }: SelectionPanelProps) {
             onClick={saveHistory}
             className="w-full rounded-xl bg-secondary px-3 py-2 text-sm font-bold text-on-secondary hover:brightness-110"
           >
-            Hesaplamayi Gecmise Kaydet
+            Hesaplamayı Geçmişe Kaydet
           </button>
         </div>
       </div>

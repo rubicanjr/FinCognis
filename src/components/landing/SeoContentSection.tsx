@@ -10,66 +10,65 @@ interface ContentBlock {
 
 export const HOME_FAQ_ITEMS: FaqItem[] = [
   {
-    question: "FinCognis hangi yatirimci profili icin uygundur?",
+    question: "FinCognis hangi yatırımcı profili için uygundur?",
     answer:
-      "FinCognis; bireysel yatirimcilar, portfoy yoneticileri ve veri odakli karar almak isteyen ekipler icin uygundur.",
+      "FinCognis; bireysel yatırımcılar, portföy yöneticileri ve veri odaklı karar almak isteyen ekipler için uygundur.",
   },
   {
-    question: "Komisyon Hesaplayici nasil calisir?",
+    question: "Komisyon Hesaplayıcı nasıl çalışır?",
     answer:
-      "Komisyon Hesaplayici, secilen kurum oranlari ve islem kalemlerine gore toplam maliyeti kalem kalem hesaplar.",
+      "Komisyon Hesaplayıcı, seçilen kurum oranları ve işlem kalemlerine göre toplam maliyeti kalem kalem hesaplar.",
   },
   {
-    question: "Korelasyon analizi portfoyde ne ise yarar?",
+    question: "Korelasyon analizi portföyde ne işe yarar?",
     answer:
-      "Korelasyon analizi, varliklarin birlikte hareket etme egilimini gosterir ve cesitlendirme kalitesini olcmeye yardimci olur.",
+      "Korelasyon analizi, varlıkların birlikte hareket etme eğilimini gösterir ve çeşitlendirme kalitesini ölçmeye yardımcı olur.",
   },
   {
-    question: "Stres testi sonuclari yatirim tavsiyesi yerine gecer mi?",
-    answer:
-      "Hayir. Stres testi olasi riskleri modellemek icindir; kesin sonuc veya yatirim tavsiyesi sunmaz.",
+    question: "Stres testi sonuçları yatırım tavsiyesi yerine geçer mi?",
+    answer: "Hayır. Stres testi olası riskleri modellemek içindir; kesin sonuç veya yatırım tavsiyesi sunmaz.",
   },
   {
-    question: "FinCognis guvenlik tarafinda hangi yaklasimi izler?",
+    question: "FinCognis güvenlik tarafında hangi yaklaşımı izler?",
     answer:
-      "Platform, veri gizliligi, erisim kontrolu ve denetlenebilirlik ilkelerini merkeze alan guvenlik odakli bir mimari izler.",
+      "Platform, veri gizliliği, erişim kontrolü ve denetlenebilirlik ilkelerini merkeze alan güvenlik odaklı bir mimari izler.",
   },
 ];
 
 const SEO_CONTENT_BLOCKS: ContentBlock[] = [
   {
-    title: "Finansal Kararlarda Hiz ve Dogruluk Dengesi",
+    title: "Finansal Kararlarda Hız ve Doğruluk Dengesi",
     paragraphs: [
-      "Finansal piyasalarda fark yaratan unsur veriyi hizli okumak kadar dogru baglamda yorumlamaktir. FinCognis, maliyet analizi, varlik iliskileri ve kriz dayanikliligi gibi karar mekanizmasinin temel katmanlarini tek bir akis icinde birlestirir.",
-      "Kullanicilar farkli ekranlar arasinda gecis yapmak yerine ayni panelde maliyet etkisini, risk yogunlugunu ve senaryo sonucunu birlikte degerlendirebilir.",
+      "Finansal piyasalarda fark yaratan unsur veriyi hızlı okumak kadar doğru bağlamda yorumlamaktır. FinCognis, maliyet analizi, varlık ilişkileri ve kriz dayanıklılığı gibi karar mekanizmasının temel katmanlarını tek bir akış içinde birleştirir.",
+      "Kullanıcılar farklı ekranlar arasında geçiş yapmak yerine aynı panelde maliyet etkisini, risk yoğunluğunu ve senaryo sonucunu birlikte değerlendirebilir.",
     ],
   },
   {
-    title: "Maliyet Seffafligi ve Islem Disiplini",
+    title: "Maliyet Şeffaflığı ve İşlem Disiplini",
     paragraphs: [
-      "Bir stratejinin gercek performansi, alis-satis fiyatinin otesinde toplam islem maliyetiyle belirlenir. Komisyon, vergi ve ek kalemler ihmal edildiginde net getiri yanlis yorumlanabilir.",
-      "FinCognis Komisyon Hesaplayici, kurumlar arasi oran farklarini ayni cati altinda gostererek daha disiplinli karar almaya yardimci olur.",
+      "Bir stratejinin gerçek performansı, alış-satış fiyatının ötesinde toplam işlem maliyetiyle belirlenir. Komisyon, vergi ve ek kalemler ihmal edildiğinde net getiri yanlış yorumlanabilir.",
+      "FinCognis Komisyon Hesaplayıcı, kurumlar arası oran farklarını aynı çatı altında göstererek daha disiplinli karar almaya yardımcı olur.",
     ],
   },
   {
-    title: "Korelasyon ve Risk Dagilimini Birlikte Okumak",
+    title: "Korelasyon ve Risk Dağılımını Birlikte Okumak",
     paragraphs: [
-      "Portfoy yonetiminde tekil varlik secimi kadar varliklarin birbiriyle etkilesimi de onemlidir. Yuksek pozitif korelasyon, toplam riski fark edilmeden artirabilir.",
-      "Korelasyon Carpismasi Testi, teknik bir katsayiyi karar destek sinyaline donusturerek dengeli portfoy kurulumunu kolaylastirir.",
+      "Portföy yönetiminde tekil varlık seçimi kadar varlıkların birbiriyle etkileşimi de önemlidir. Yüksek pozitif korelasyon, toplam riski fark edilmeden artırabilir.",
+      "Korelasyon Çarpışması Testi, teknik bir katsayıyı karar destek sinyaline dönüştürerek dengeli portföy kurulumunu kolaylaştırır.",
     ],
   },
   {
-    title: "Stres Testi ile Senaryo Bazli Planlama",
+    title: "Stres Testi ile Senaryo Bazlı Planlama",
     paragraphs: [
-      "Saglikli risk yonetimi yalnizca ortalama kosullara degil, ekstrem senaryolara da hazirlik gerektirir. Stres testi, olasi kayip etkisini sayisal olarak gosterir.",
-      "Bu yontem pozisyon boyutu, nakit orani ve risk limiti gibi kritik basliklarda daha planli adim atilmasini saglar.",
+      "Sağlıklı risk yönetimi yalnızca ortalama koşullara değil, ekstrem senaryolara da hazırlık gerektirir. Stres testi, olası kayıp etkisini sayısal olarak gösterir.",
+      "Bu yöntem pozisyon boyutu, nakit oranı ve risk limiti gibi kritik başlıklarda daha planlı adım atılmasını sağlar.",
     ],
   },
   {
-    title: "Uzun Vadeli Yaklasim: Olc, Karsilastir, Iyilestir",
+    title: "Uzun Vadeli Yaklaşım: Ölç, Karşılaştır, İyileştir",
     paragraphs: [
-      "Finansal performansi iyilestirmenin en guvenilir yolu karar kalitesini olcmektir. Maliyeti olc, risk iliskisini karsilastir, kriz etkisini simule et ve stratejiyi guncelle.",
-      "FinCognis bu dongusel yaklasimi destekleyen bir karar ekosistemi sunar ve uzun vadeli finansal surdurulebilirligi guclendirir.",
+      "Finansal performansı iyileştirmenin en güvenilir yolu karar kalitesini ölçmektir. Maliyeti ölç, risk ilişkisini karşılaştır, kriz etkisini simüle et ve stratejiyi güncelle.",
+      "FinCognis bu döngüsel yaklaşımı destekleyen bir karar ekosistemi sunar ve uzun vadeli finansal sürdürülebilirliği güçlendirir.",
     ],
   },
 ];
@@ -81,7 +80,7 @@ export default function SeoContentSection() {
         <div>
           <p className="mb-3 font-label text-xs font-bold uppercase tracking-[0.24em] text-secondary">Finansal Rehber</p>
           <h2 className="font-headline text-3xl font-extrabold text-on-surface sm:text-4xl">
-            Finansal analizde tutarli sonuc icin butuncul yaklasim
+            Finansal analizde tutarlı sonuç için bütüncül yaklaşım
           </h2>
         </div>
 
@@ -99,7 +98,7 @@ export default function SeoContentSection() {
         </div>
 
         <div className="rounded-3xl bg-surface px-6 py-6">
-          <h2 className="mb-6 font-headline text-3xl font-extrabold text-on-surface">Sik Sorulan Sorular</h2>
+          <h2 className="mb-6 font-headline text-3xl font-extrabold text-on-surface">Sık Sorulan Sorular</h2>
           <div className="space-y-5">
             {HOME_FAQ_ITEMS.map((item) => (
               <article key={item.question} className="rounded-2xl bg-surface-container-low px-5 py-4">

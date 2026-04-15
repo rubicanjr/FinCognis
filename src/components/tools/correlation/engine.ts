@@ -18,6 +18,7 @@ import {
   LIQUIDITY_TABLE,
   WINDOW_OPTIONS,
 } from "@/components/tools/correlation/universe";
+import { normalizeTurkishText } from "@/lib/text/turkish-normalization";
 import type {
   AssetDefinition,
   CategoryId,
@@ -475,17 +476,17 @@ function createNarrative(assetA: AssetDefinition, correlations: { plain: number;
   if (correlations.down >= 0.8 || tail.coCrashMultiplier >= 7) {
     severity = "critical";
     headline = "Bu iki varlik krizde birbirinin kopyasi gibi davranabilir.";
-    summary = "Asagi yonlu baglilik cok yuksek. Kriz aninda birlikte sert kayip riski var.";
+    summary = "Aşağı yönlü bağlılık çok yüksek. Kriz anında birlikte sert kayıp riski var.";
     flags.push("Downside korelasyon kirmizi bayrak seviyesinde.");
   } else if (correlations.down >= 0.65 || correlations.plain >= 0.75) {
     severity = "high";
-    headline = "Yuksek korelasyon tespit edildi.";
-    summary = "Gercek cesitlendirme etkisi zayif. Pozisyonlar ayni risk faktorunu tasiyor.";
+    headline = "Yüksek korelasyon tespit edildi.";
+    summary = "Gerçek çeşitlendirme etkisi zayıf. Pozisyonlar aynı risk faktörünü taşıyor.";
     flags.push("Korelasyon tavani (%75) bolgesine yakinlasildi.");
   } else if (correlations.down >= 0.45) {
     severity = "medium";
     headline = "Orta seviyede bagimlilik var.";
-    summary = "Portfoy dayanimi var ancak stres rejimlerinde birlikte hareket belirginlesebilir.";
+    summary = "Portföy dayanımı var ancak stres rejimlerinde birlikte hareket belirginleşebilir.";
   }
 
   if (!backtestPass) {
@@ -567,6 +568,19 @@ export function runCorrelationAnalysis({ assetAId, assetBId, portfolioIds, windo
   const heatmap = buildHeatmap(uniquePortfolioIds, dataset.returnsByAsset);
   const liquidityProfiles = buildLiquidityProfiles(uniquePortfolioIds);
   const stressVar = runStressVarMonteCarlo(uniquePortfolioIds, dataset.returnsByAsset);
+  const narrative = createNarrative(assetA, { plain: pearson, down: downsideCorrelation }, tail, backtest.pass);
+  const normalizedNarrative = {
+    ...narrative,
+    headline: normalizeTurkishText(narrative.headline),
+    summary: normalizeTurkishText(narrative.summary),
+    alternatives: narrative.alternatives.map((item) => normalizeTurkishText(item)),
+    flags: narrative.flags.map((item) => normalizeTurkishText(item)),
+  };
+  const normalizedCrisisReplay = crisisReplay.map((scenario) => ({
+    ...scenario,
+    title: normalizeTurkishText(scenario.title),
+    description: normalizeTurkishText(scenario.description),
+  }));
 
   const sourceIndex = uniquePortfolioIds.indexOf(assetA.id);
   const matrix = uniquePortfolioIds.map((rowId) =>
@@ -615,7 +629,7 @@ export function runCorrelationAnalysis({ assetAId, assetBId, portfolioIds, windo
       worstGap: Math.min(quantile(gapA.slice(-windowSize), 0.01), quantile(gapB.slice(-windowSize), 0.01)),
     },
     backtest,
-    crisisReplay,
+    crisisReplay: normalizedCrisisReplay,
     heatmap,
     contagion: {
       sourceAssetId: assetA.id,
@@ -624,7 +638,7 @@ export function runCorrelationAnalysis({ assetAId, assetBId, portfolioIds, windo
       edges,
     },
     stressVar,
-    narrative: createNarrative(assetA, { plain: pearson, down: downsideCorrelation }, tail, backtest.pass),
+    narrative: normalizedNarrative,
     liquidityProfiles,
   };
 }
