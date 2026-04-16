@@ -3,7 +3,7 @@ import { Fingerprint, ShieldCheck } from "lucide-react";
 export default function SecureTransactions() {
   return (
     <section id="security" className="relative overflow-hidden bg-surface-container-low py-24">
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 bg-secondary/5 blur-[120px]" />
+      <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 bg-info-container blur-[120px]" />
 
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 lg:grid-cols-2">
         <div>
@@ -20,7 +20,7 @@ export default function SecureTransactions() {
 
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex-shrink-0 rounded-lg bg-secondary/10 p-2">
+              <div className="mt-1 flex-shrink-0 rounded-lg bg-info-container p-2">
                 <ShieldCheck className="h-5 w-5 text-secondary" strokeWidth={1.5} />
               </div>
               <div>
@@ -32,7 +32,7 @@ export default function SecureTransactions() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex-shrink-0 rounded-lg bg-secondary/10 p-2">
+              <div className="mt-1 flex-shrink-0 rounded-lg bg-info-container p-2">
                 <Fingerprint className="h-5 w-5 text-secondary" strokeWidth={1.5} />
               </div>
               <div>
@@ -46,24 +46,24 @@ export default function SecureTransactions() {
         </div>
 
         <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-secondary/10 blur-3xl" />
-          <div className="glass-panel relative rounded-3xl border border-outline-variant/20 p-8">
+          <div className="absolute inset-0 rounded-full bg-info-container blur-3xl" />
+          <div className="glass-panel relative rounded-3xl p-8">
             <div className="mb-8 flex items-center justify-between">
               <div className="flex gap-2">
                 <div className="h-3 w-3 rounded-full bg-error" />
-                <div className="h-3 w-3 rounded-full bg-tertiary" />
-                <div className="h-3 w-3 rounded-full bg-secondary" />
+                <div className="h-3 w-3 rounded-full bg-warning" />
+                <div className="h-3 w-3 rounded-full bg-success" />
               </div>
               <span className="font-mono text-xs text-on-surface-variant">KASA_AKTIF_S01</span>
             </div>
 
             <div className="space-y-4">
-              <div className="h-12 animate-pulse rounded-xl bg-surface-container-highest" />
-              <div className="h-12 rounded-xl bg-surface-container-highest/60" />
-              <div className="flex h-32 items-center justify-center rounded-xl border border-secondary/20 bg-secondary/5">
+              <div className="h-12 animate-pulse rounded-xl border border-outline-variant/30 bg-surface-container-high" />
+              <div className="h-12 rounded-xl border border-outline-variant/30 bg-surface-container-high" />
+              <div className="flex h-32 items-center justify-center rounded-xl border border-outline-variant/35 bg-surface-container">
                 <Fingerprint className="h-10 w-10 text-secondary" strokeWidth={1.5} />
               </div>
-              <div className="h-12 rounded-xl bg-surface-container-highest" />
+              <div className="h-12 rounded-xl border border-outline-variant/30 bg-surface-container-high" />
             </div>
           </div>
         </div>

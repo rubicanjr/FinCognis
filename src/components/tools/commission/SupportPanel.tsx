@@ -165,7 +165,7 @@ export function SupportPanel({ vm }: SupportPanelProps) {
         )}
       </div>
 
-      <p className="px-2 text-center text-[11px] leading-6 text-on-surface-variant/70">
+      <p className="px-2 text-center text-[11px] leading-6 text-on-surface-variant">
         {dataset._meta?.disclaimer} Son güncelleme: {dataset._meta?.lastUpdated}. Kategori: {selectedCategory?.name}
         . Piyasa: {selectedMarket?.name}. Aktif kurum: {formatCompactNumber(filteredBrokers.length)}.
       </p>

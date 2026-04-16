@@ -131,7 +131,7 @@ export default function CorrelationTest() {
   return (
     <section className="px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="rounded-[28px] bg-surface-container-low p-5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] sm:p-6">
+        <div className="rounded-[28px] border border-outline-variant/35 bg-surface-container-low p-5 shadow-xl shadow-surface-container-high/30 sm:p-6">
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/15 text-secondary">
               <LineChart className="h-7 w-7" strokeWidth={1.5} />
@@ -157,7 +157,7 @@ export default function CorrelationTest() {
           ) : null}
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl bg-surface p-4">
+            <div className="rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">1) Kategori Seçimi</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {CATEGORY_OPTIONS.map((category) => (
@@ -171,13 +171,13 @@ export default function CorrelationTest() {
                     }`}
                   >
                     <p className="font-semibold">{category.label}</p>
-                    <p className="mt-1 text-[11px] opacity-80">{category.universeHint}</p>
+                    <p className="mt-1 text-[11px] text-on-surface-variant">{category.universeHint}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-2xl bg-surface p-4">
+            <div className="rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">2) Varlık ve Zaman Ayarı</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-xs text-on-surface-variant">
@@ -230,7 +230,7 @@ export default function CorrelationTest() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-surface p-4">
+          <div className="mt-4 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
               3) Dinamik Model Sonucu ve Asimetrik Korelasyon
             </p>
@@ -250,7 +250,7 @@ export default function CorrelationTest() {
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl bg-surface p-4">
+            <div className="rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">4) Kuyruk ve Gap Riski</p>
               <RiskRow label="Lower Tail Dependence" value={fmtPercent(analysis.tail.lowerTailDependence)} />
               <RiskRow label="Upper Tail Dependence" value={fmtPercent(analysis.tail.upperTailDependence)} />
@@ -263,7 +263,7 @@ export default function CorrelationTest() {
               <RiskRow label="En kötü gap" value={fmtPercent(analysis.jumpGap.worstGap)} />
             </div>
 
-            <div className="rounded-2xl bg-surface p-4">
+            <div className="rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">5) Backtest + Kupiec</p>
               <RiskRow label="Güven düzeyi" value={`${(analysis.backtest.confidenceLevel * 100).toFixed(0)}%`} />
               <RiskRow label="Gözlem sayısı" value={`${analysis.backtest.observations}`} />
@@ -273,7 +273,7 @@ export default function CorrelationTest() {
               <RiskRow label="Kupiec p-değeri" value={analysis.backtest.kupiecPValue.toFixed(3)} />
               <div
                 className={`mt-3 rounded-xl px-3 py-2 text-sm font-semibold ${
-                  analysis.backtest.pass ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+                  analysis.backtest.pass ? "bg-success-container text-success" : "bg-error-container text-error"
                 }`}
               >
                 {analysis.backtest.pass
@@ -283,7 +283,7 @@ export default function CorrelationTest() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-surface p-4">
+          <div className="mt-4 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">6) Crisis Replay</p>
             <div className="grid gap-3 md:grid-cols-3">
               {analysis.crisisReplay.map((scenario) => (
@@ -302,7 +302,7 @@ export default function CorrelationTest() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-surface p-4">
+          <div className="mt-4 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
               7) Portföy Isı Haritası + Likidite + Stres VaR
             </p>
@@ -318,7 +318,7 @@ export default function CorrelationTest() {
                   }`}
                 >
                   <p className="font-semibold">{asset.ticker}</p>
-                  <p className="text-[11px] opacity-80">{asset.name}</p>
+                  <p className="text-[11px] text-on-surface-variant">{asset.name}</p>
                 </button>
               ))}
             </div>
@@ -337,7 +337,7 @@ export default function CorrelationTest() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-surface p-4">
+          <div className="mt-4 rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">8) Bulaşıcılık Haritası</p>
             <ContagionMap contagion={analysis.contagion} />
           </div>
@@ -347,10 +347,10 @@ export default function CorrelationTest() {
             <div
               className={`rounded-xl px-4 py-3 ${
                 analysis.narrative.severity === "critical"
-                  ? "bg-red-500/15 text-red-300"
+                  ? "bg-error-container text-error"
                   : analysis.narrative.severity === "high"
-                    ? "bg-amber-500/15 text-amber-300"
-                    : "bg-emerald-500/15 text-emerald-300"
+                    ? "bg-warning-container text-warning"
+                    : "bg-success-container text-success"
               }`}
             >
               <p className="font-semibold">{analysis.narrative.headline}</p>
@@ -359,7 +359,7 @@ export default function CorrelationTest() {
             {analysis.narrative.flags.length > 0 ? (
               <div className="mt-3 space-y-1">
                 {analysis.narrative.flags.map((flag) => (
-                  <p key={flag} className="text-xs text-red-300">
+                  <p key={flag} className="text-xs text-error">
                     • {flag}
                   </p>
                 ))}
@@ -374,7 +374,7 @@ export default function CorrelationTest() {
           </div>
         </div>
 
-        <p className="px-2 text-center text-[11px] leading-6 text-on-surface-variant/70">
+        <p className="px-2 text-center text-[11px] leading-6 text-on-surface-variant">
           {selectedAssetA?.ticker} vs {selectedAssetB?.ticker} analizi non-stationary 25+ yıllık sentetik veriyle, DCC-GARCH
           + t-Copula + Monte Carlo kombinasyonuyla üretilmiştir.
         </p>

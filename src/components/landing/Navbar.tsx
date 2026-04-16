@@ -10,7 +10,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 z-50 w-full bg-surface/80 shadow-[0px_24px_48px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+    <nav className="fixed top-0 z-50 w-full border-b border-outline-variant/35 bg-surface-container-low/95 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <ShieldCheck className="h-5 w-5 text-primary" strokeWidth={1.5} />
@@ -21,22 +21,13 @@ export default function Navbar() {
           <a href="#analytics" className="font-headline font-semibold text-secondary transition-colors duration-300">
             Ürün
           </a>
-          <a
-            href="#security"
-            className="font-headline text-primary/70 transition-colors duration-300 hover:text-secondary"
-          >
+          <a href="#security" className="font-headline text-on-surface-variant transition-colors duration-300 hover:text-secondary">
             Çözümler
           </a>
-          <a
-            href="#security"
-            className="font-headline text-primary/70 transition-colors duration-300 hover:text-secondary"
-          >
+          <a href="#security" className="font-headline text-on-surface-variant transition-colors duration-300 hover:text-secondary">
             Güvenlik
           </a>
-          <a
-            href="#compliance"
-            className="font-headline text-primary/70 transition-colors duration-300 hover:text-secondary"
-          >
+          <a href="#compliance" className="font-headline text-on-surface-variant transition-colors duration-300 hover:text-secondary">
             Fiyatlandırma
           </a>
         </div>
@@ -45,7 +36,7 @@ export default function Navbar() {
           <ThemeToggleButton />
           <Link
             href="/tools"
-            className="hidden rounded-lg border border-outline-variant/30 bg-transparent px-4 py-2.5 text-sm font-bold text-on-surface transition-all hover:bg-surface-bright sm:inline-flex"
+            className="hidden rounded-lg border border-outline-variant/45 bg-surface-container-lowest px-4 py-2.5 text-sm font-bold text-on-surface transition-all hover:bg-surface-container-high sm:inline-flex"
           >
             Araçlar
           </Link>
@@ -53,7 +44,7 @@ export default function Navbar() {
             Başla
           </button>
           <button
-            className="ml-1 text-primary md:hidden"
+            className="ml-1 text-on-surface md:hidden"
             onClick={() => setMobileOpen((current) => !current)}
             aria-label="Menüyü aç"
           >
@@ -63,34 +54,34 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="space-y-4 border-t border-outline-variant/10 bg-surface-container-low/95 px-6 py-6 backdrop-blur-xl md:hidden">
+        <div className="space-y-4 border-t border-outline-variant/30 bg-surface-container-low px-6 py-6 md:hidden">
           <a href="#analytics" className="block font-headline font-semibold text-secondary" onClick={() => setMobileOpen(false)}>
             Ürün
           </a>
           <a
             href="#security"
-            className="block font-headline text-primary/70 hover:text-secondary"
+            className="block font-headline text-on-surface-variant hover:text-secondary"
             onClick={() => setMobileOpen(false)}
           >
             Çözümler
           </a>
           <a
             href="#security"
-            className="block font-headline text-primary/70 hover:text-secondary"
+            className="block font-headline text-on-surface-variant hover:text-secondary"
             onClick={() => setMobileOpen(false)}
           >
             Güvenlik
           </a>
           <a
             href="#compliance"
-            className="block font-headline text-primary/70 hover:text-secondary"
+            className="block font-headline text-on-surface-variant hover:text-secondary"
             onClick={() => setMobileOpen(false)}
           >
             Fiyatlandırma
           </a>
           <Link
             href="/tools"
-            className="block border-t border-outline-variant/10 pt-2 font-headline font-bold text-secondary"
+            className="block border-t border-outline-variant/30 pt-2 font-headline font-bold text-secondary"
             onClick={() => setMobileOpen(false)}
           >
             Araçlar

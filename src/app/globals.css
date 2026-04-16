@@ -2,44 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-.theme-shell[data-theme="dark"] {
-  --surface: 17 20 23;
-  --surface-bright: 55 57 61;
-  --surface-container: 29 32 35;
-  --surface-container-low: 25 28 31;
-  --surface-container-high: 40 42 46;
-  --surface-container-highest: 50 53 57;
-  --surface-container-lowest: 12 14 18;
-  --primary: 198 198 199;
-  --primary-container: 12 14 15;
-  --on-primary: 47 49 49;
-  --secondary: 158 202 255;
-  --secondary-container: 30 149 242;
-  --on-secondary: 0 50 88;
-  --on-surface: 225 226 231;
-  --on-surface-variant: 198 198 203;
-  --outline-variant: 69 71 75;
-  --error: 255 180 171;
-}
-
-.theme-shell[data-theme="light"] {
-  --surface: 249 250 251;
+:root {
+  --surface: 248 250 252;
   --surface-bright: 255 255 255;
-  --surface-container: 243 244 246;
-  --surface-container-low: 246 247 249;
-  --surface-container-high: 237 240 244;
-  --surface-container-highest: 229 233 240;
+  --surface-container: 241 245 249;
+  --surface-container-low: 248 250 252;
+  --surface-container-high: 226 232 240;
+  --surface-container-highest: 203 213 225;
   --surface-container-lowest: 255 255 255;
   --primary: 37 99 235;
   --primary-container: 219 234 254;
   --on-primary: 255 255 255;
-  --secondary: 14 116 144;
+  --secondary: 14 165 233;
   --secondary-container: 186 230 253;
   --on-secondary: 8 47 73;
   --on-surface: 15 23 42;
-  --on-surface-variant: 71 85 105;
+  --on-surface-variant: 51 65 85;
   --outline-variant: 203 213 225;
   --error: 220 38 38;
+  --error-container: 254 226 226;
+  --warning: 217 119 6;
+  --warning-container: 254 243 199;
+  --success: 22 163 74;
+  --success-container: 220 252 231;
+  --info: 2 132 199;
+  --info-container: 224 242 254;
+  --chart-commission: 22 163 74;
+  --chart-bsmv: 37 99 235;
+  --chart-bist: 217 119 6;
+  --chart-takasbank: 124 58 237;
+  --chart-spread: 234 88 12;
+  --chart-swap: 13 148 136;
+  --chart-fx: 225 29 72;
+  --chart-stopaj: 220 38 38;
+}
+
+.theme-shell[data-theme="dark"] {
+  --surface: 2 6 23;
+  --surface-bright: 15 23 42;
+  --surface-container: 15 23 42;
+  --surface-container-low: 15 23 42;
+  --surface-container-high: 30 41 59;
+  --surface-container-highest: 51 65 85;
+  --surface-container-lowest: 2 6 23;
+  --primary: 96 165 250;
+  --primary-container: 30 64 175;
+  --on-primary: 239 246 255;
+  --secondary: 125 211 252;
+  --secondary-container: 3 105 161;
+  --on-secondary: 224 242 254;
+  --on-surface: 241 245 249;
+  --on-surface-variant: 203 213 225;
+  --outline-variant: 51 65 85;
+  --error: 248 113 113;
+  --error-container: 127 29 29;
+  --warning: 251 191 36;
+  --warning-container: 113 63 18;
+  --success: 74 222 128;
+  --success-container: 20 83 45;
+  --info: 56 189 248;
+  --info-container: 12 74 110;
+}
+
+.theme-shell[data-theme="light"] {
+  --surface: 248 250 252;
+  --surface-bright: 255 255 255;
+  --surface-container: 241 245 249;
+  --surface-container-low: 248 250 252;
+  --surface-container-high: 226 232 240;
+  --surface-container-highest: 203 213 225;
+  --surface-container-lowest: 255 255 255;
+  --primary: 37 99 235;
+  --primary-container: 219 234 254;
+  --on-primary: 255 255 255;
+  --secondary: 14 165 233;
+  --secondary-container: 224 242 254;
+  --on-secondary: 8 47 73;
+  --on-surface: 15 23 42;
+  --on-surface-variant: 51 65 85;
+  --outline-variant: 203 213 225;
+  --error: 220 38 38;
+  --error-container: 254 226 226;
+  --warning: 217 119 6;
+  --warning-container: 254 243 199;
+  --success: 22 163 74;
+  --success-container: 220 252 231;
+  --info: 2 132 199;
+  --info-container: 224 242 254;
 }
 
 * {
@@ -57,31 +106,37 @@ body {
 }
 
 ::selection {
-  background-color: rgba(158, 202, 255, 0.3);
+  background-color: rgb(var(--secondary-container));
+  color: rgb(var(--on-surface));
 }
 
 .font-headline {
-  font-family: "Manrope", sans-serif;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
 }
 
 .glass-panel {
-  background: rgba(29, 32, 35, 0.6);
+  background: linear-gradient(
+    140deg,
+    rgb(var(--surface-container-high) / 0.92),
+    rgb(var(--surface-container) / 0.82)
+  );
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(198, 198, 199, 0.1);
+  border: 1px solid rgb(var(--outline-variant) / 0.6);
+  box-shadow: 0 24px 48px -28px rgb(var(--surface) / 0.7);
 }
 
 .spotlight-bg {
   background: radial-gradient(
     circle at 50% -20%,
-    rgba(158, 202, 255, 0.08) 0%,
-    rgba(17, 20, 23, 0) 60%
+    rgb(var(--secondary-container) / 0.28) 0%,
+    rgb(var(--surface) / 0) 62%
   );
 }
 
 .grid-pattern {
   background-image: radial-gradient(
-    rgba(198, 198, 199, 0.05) 1px,
+    rgb(var(--outline-variant) / 0.22) 1px,
     transparent 1px
   );
   background-size: 40px 40px;

@@ -169,7 +169,7 @@ export default function StressTest() {
   return (
     <section className="px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-7xl space-y-4">
-        <div className="rounded-[28px] bg-surface-container-low p-5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] sm:p-6">
+        <div className="rounded-[28px] border border-outline-variant/35 bg-surface-container-low p-5 shadow-xl shadow-surface-container-high/30 sm:p-6">
           <div className="mb-5 flex flex-wrap items-center gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary/15 text-secondary">
               <ShieldAlert className="h-7 w-7" strokeWidth={1.5} />
@@ -400,7 +400,7 @@ export default function StressTest() {
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
               <span className="text-on-surface-variant">Toplam ağırlık: %{totalWeight.toFixed(2)}</span>
               {Math.abs(totalWeight - 100) > 0.5 && (
-                <span className="rounded-md bg-amber-500/15 px-2 py-1 text-amber-300">
+                <span className="rounded-md bg-warning-container px-2 py-1 text-warning">
                   Not: Motor ağırlıkları otomatik normalize eder.
                 </span>
               )}

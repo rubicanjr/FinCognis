@@ -71,7 +71,7 @@ export default function ToolsLoginScreen({ defaultNextPath }: ToolsLoginScreenPr
 
   return (
     <section className="flex min-h-screen items-center justify-center bg-surface px-4 py-16">
-      <div className="w-full max-w-lg rounded-3xl border border-outline-variant/20 bg-surface-container-low p-6 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] sm:p-8">
+      <div className="w-full max-w-lg rounded-3xl border border-outline-variant/30 bg-surface-container-low p-6 shadow-xl shadow-surface-container-high/30 sm:p-8">
         <div className="mb-8 space-y-3 text-center">
           <p className="font-label text-xs font-bold uppercase tracking-[0.24em] text-secondary">
             FinCognis Güvenli Giriş
@@ -84,8 +84,8 @@ export default function ToolsLoginScreen({ defaultNextPath }: ToolsLoginScreenPr
 
         <div className="space-y-4">
           {!hasSupabaseConfig ? (
-            <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-xs text-amber-200">
-              <div className="mb-1 flex items-center gap-2 font-semibold">
+            <div className="rounded-xl border border-warning/35 bg-warning-container/70 p-3 text-xs text-on-surface">
+              <div className="mb-1 flex items-center gap-2 font-semibold text-warning">
                 <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
                 Yapılandırma Uyarısı
               </div>
@@ -105,15 +105,15 @@ export default function ToolsLoginScreen({ defaultNextPath }: ToolsLoginScreenPr
           </button>
 
           {state.error ? (
-            <p className="rounded-lg bg-error/15 px-3 py-2 text-sm text-error">{state.error}</p>
+            <p className="rounded-lg border border-error/40 bg-error-container/60 px-3 py-2 text-sm text-error">{state.error}</p>
           ) : null}
 
-          <div className="rounded-xl border border-outline-variant/20 bg-surface p-3 text-xs text-on-surface-variant">
+          <div className="rounded-xl border border-outline-variant/30 bg-surface p-3 text-xs text-on-surface-variant">
             <div className="mb-1 flex items-center gap-2 text-on-surface">
               <ShieldCheck className="h-4 w-4 text-secondary" strokeWidth={1.5} />
               OAuth Güvencesi
             </div>
-            Oturum Supabase Auth üzerinden yönetilir ve erişim /tools girişinde doğrulanır.
+            Oturum Supabase Auth üzerinden yönetilir ve erişim `/tools` girişinde doğrulanır.
           </div>
 
           <div className="text-center">

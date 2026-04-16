@@ -47,7 +47,7 @@ const SEO_CONTENT_BLOCKS: ContentBlock[] = [
     title: "Maliyet Şeffaflığı ve İşlem Disiplini",
     paragraphs: [
       "Bir stratejinin gerçek performansı, alış-satış fiyatının ötesinde toplam işlem maliyetiyle belirlenir. Komisyon, vergi ve ek kalemler ihmal edildiğinde net getiri yanlış yorumlanabilir.",
-      "FinCognis Komisyon Hesaplayıcı, kurumlar arası oran farklarını aynı çatı altında göstererek daha disiplinli karar almaya yardımcı olur.",
+      "FinCognis Komisyon Hesaplayıcı, kurumlar arasındaki oran farklarını aynı çatı altında göstererek daha disiplinli karar almaya yardımcı olur.",
     ],
   },
   {
@@ -86,7 +86,7 @@ export default function SeoContentSection() {
 
         <div className="space-y-10">
           {SEO_CONTENT_BLOCKS.map((block) => (
-            <article key={block.title} className="rounded-3xl bg-surface-container-high/70 px-6 py-6">
+            <article key={block.title} className="rounded-3xl border border-outline-variant/35 bg-surface-container-lowest px-6 py-6 shadow-sm">
               <h3 className="mb-4 font-headline text-2xl font-bold text-on-surface">{block.title}</h3>
               <div className="space-y-4 text-base leading-8 text-on-surface-variant">
                 {block.paragraphs.map((paragraph) => (
@@ -97,11 +97,11 @@ export default function SeoContentSection() {
           ))}
         </div>
 
-        <div className="rounded-3xl bg-surface px-6 py-6">
+        <div className="rounded-3xl border border-outline-variant/35 bg-surface-container-lowest px-6 py-6 shadow-sm">
           <h2 className="mb-6 font-headline text-3xl font-extrabold text-on-surface">Sık Sorulan Sorular</h2>
           <div className="space-y-5">
             {HOME_FAQ_ITEMS.map((item) => (
-              <article key={item.question} className="rounded-2xl bg-surface-container-low px-5 py-4">
+              <article key={item.question} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low px-5 py-4">
                 <h3 className="font-headline text-xl font-bold text-on-surface">{item.question}</h3>
                 <p className="mt-2 text-sm leading-7 text-on-surface-variant">{item.answer}</p>
               </article>

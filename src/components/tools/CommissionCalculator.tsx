@@ -14,7 +14,7 @@ export default function CommissionCalculator() {
   return (
     <section className="px-4 py-8 sm:px-6">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
-        <div className="rounded-[28px] bg-surface-container-low p-5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)] sm:p-6">
+        <div className="rounded-[28px] border border-outline-variant/35 bg-surface-container-low p-5 shadow-xl shadow-surface-container-high/30 sm:p-6">
           <TopPanel vm={vm} />
           <SelectionPanel vm={vm} />
           <ComparisonPanel vm={vm} />

@@ -92,6 +92,11 @@ export default function ToolsPageClient() {
   const toolRegistry = useMemo(() => createToolRegistry(), []);
   const [activeTool, setActiveTool] = useState<ToolId>(getDefaultToolId(toolRegistry));
 
+  const activeToolMeta = useMemo(
+    () => toolRegistry.find((tool) => tool.id === activeTool),
+    [activeTool, toolRegistry]
+  );
+
   useEffect(() => {
     // 1) Stop auth checks when Supabase client is unavailable.
     if (!supabase) return;
@@ -130,17 +135,17 @@ export default function ToolsPageClient() {
           </p>
           <h1 className="font-headline text-3xl font-extrabold text-on-surface">Analiz ve Hesaplama</h1>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Supabase Auth ile doğrulanan erişim, erişilebilir sekmeli bilgi mimarisi.
+            Supabase Auth ile doğrulanan erişim ve sekmeli bilgi mimarisi.
           </p>
         </div>
 
         {!hasSupabaseConfig ? (
-          <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-            <div className="mb-1 flex items-center gap-2 font-semibold">
+          <div className="mb-4 rounded-2xl border border-warning/40 bg-warning-container/65 p-4 text-sm text-on-surface">
+            <div className="mb-1 flex items-center gap-2 font-semibold text-warning">
               <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
               Supabase Yapılandırması Eksik
             </div>
-            NEXT_PUBLIC_SUPABASE_URL ve NEXT_PUBLIC_SUPABASE_ANON_KEY değişkenlerini tanımlayın.
+            <code>NEXT_PUBLIC_SUPABASE_URL</code> ve <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> değişkenlerini tanımlayın.
           </div>
         ) : null}
 
@@ -148,7 +153,7 @@ export default function ToolsPageClient() {
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/25 bg-surface-container-low px-4 py-2 text-xs font-semibold text-on-surface transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-secondary/50 hover:text-secondary"
+            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2 text-xs font-semibold text-on-surface transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-secondary hover:text-secondary"
           >
             <LogOut className="h-4 w-4" strokeWidth={1.5} />
             Çıkış Yap
@@ -161,20 +166,26 @@ export default function ToolsPageClient() {
           className="space-y-3"
         >
           <Tabs.List
-            className="grid grid-cols-1 gap-2 rounded-2xl border border-outline-variant/10 bg-surface-container-low p-1.5 md:grid-cols-3"
+            className="grid grid-cols-1 gap-2 rounded-2xl border border-outline-variant/35 bg-surface-container-low p-2 md:grid-cols-3"
             aria-label="FinCognis araç sekmeleri"
           >
             {toolRegistry.map((tool) => (
               <Tabs.Trigger
                 key={tool.id}
                 value={tool.id}
-                className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 font-headline text-xs font-bold text-on-surface-variant transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=active]:bg-secondary/15 data-[state=active]:text-secondary data-[state=active]:shadow-sm"
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent bg-surface-container-lowest px-3 py-2.5 font-headline text-xs font-bold text-on-surface-variant transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=active]:border-outline-variant data-[state=active]:bg-surface-container-high data-[state=active]:text-on-surface data-[state=active]:shadow-sm"
               >
                 {renderToolIcon(tool.iconKey)}
                 <span>{tool.title}</span>
               </Tabs.Trigger>
             ))}
           </Tabs.List>
+
+          <div className="rounded-2xl border border-outline-variant/30 bg-surface-container-low px-4 py-3">
+            <p className="text-xs uppercase tracking-[0.16em] text-secondary">Aktif Araç</p>
+            <p className="mt-1 font-headline text-lg font-bold text-on-surface">{activeToolMeta?.title}</p>
+            <p className="text-sm text-on-surface-variant">{activeToolMeta?.description}</p>
+          </div>
 
           <Tabs.Content value="commission">
             <CommissionCalculator />
