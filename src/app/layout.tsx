@@ -8,6 +8,10 @@ const defaultTitle = `${SITE_NAME} | Finansal Analitik ve Güvenli İşlem Platf
 const defaultDescription =
   "FinCognis, komisyon hesaplama, korelasyon analizi ve stres testi araçlarıyla finansal kararları hızlandıran, güvenlik odaklı bir analiz platformudur.";
 
+const THEME_STORAGE_KEY = "fincognis_theme_config";
+
+const THEME_INIT_SCRIPT = `(function(){try{var mode='dark';var raw=localStorage.getItem('${THEME_STORAGE_KEY}');if(raw){var parsed=JSON.parse(raw);if(parsed&&(parsed.mode==='dark'||parsed.mode==='light')){mode=parsed.mode;}}else if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches){mode='light';}var root=document.documentElement;root.setAttribute('data-theme',mode);root.classList.toggle('dark',mode==='dark');root.classList.toggle('light',mode==='light');}catch(error){var fallbackRoot=document.documentElement;fallbackRoot.setAttribute('data-theme','dark');fallbackRoot.classList.add('dark');fallbackRoot.classList.remove('light');}})();`;
+
 export const metadata: Metadata = createPageMetadata({
   title: defaultTitle,
   description: defaultDescription,
@@ -60,9 +64,14 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   // 1) Render global document shell with shared metadata and fonts.
-  // 2) Wrap app in ThemeProvider to enable persistent adaptive theming.
+  // 2) Set root-level theme classes/attributes before hydration.
+  // 3) Wrap app in ThemeProvider for persistent adaptive theming.
   return (
-    <html lang="tr">
+    <html
+      lang="tr"
+      suppressHydrationWarning
+      className="h-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 bg-surface text-on-surface"
+    >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -70,6 +79,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -77,7 +87,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           }}
         />
       </head>
-      <body className="bg-surface text-on-surface">
+      <body className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 bg-surface text-on-surface">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

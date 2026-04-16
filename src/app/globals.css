@@ -37,7 +37,8 @@
   --chart-stopaj: 220 38 38;
 }
 
-.theme-shell[data-theme="dark"] {
+html[data-theme="dark"],
+html.dark {
   --surface: 2 6 23;
   --surface-bright: 15 23 42;
   --surface-container: 15 23 42;
@@ -64,7 +65,8 @@
   --info-container: 12 74 110;
 }
 
-.theme-shell[data-theme="light"] {
+html[data-theme="light"],
+html.light {
   --surface: 248 250 252;
   --surface-bright: 255 255 255;
   --surface-container: 241 245 249;
@@ -103,6 +105,13 @@ body {
   color: rgb(var(--on-surface));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  min-height: 100%;
+  background-color: rgb(var(--surface));
+  color: rgb(var(--on-surface));
 }
 
 ::selection {

@@ -58,6 +58,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     saveThemeConfigToStorage(config);
   }, [config]);
 
+  useEffect(() => {
+    // 1) Resolve root html element for global theme attributes.
+    const root = document.documentElement;
+    // 2) Publish typed theme mode as document-level data attribute.
+    root.setAttribute("data-theme", config.mode);
+    // 3) Toggle Tailwind-compatible mode classes at root scope.
+    root.classList.toggle("dark", config.mode === "dark");
+    root.classList.toggle("light", config.mode === "light");
+  }, [config.mode]);
+
   const value = useMemo<ThemeContextValue>(
     () => ({
       config,
@@ -71,13 +81,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [config]
   );
 
-  return (
-    <ThemeContext.Provider value={value}>
-      <div data-theme={config.mode} className={`theme-shell min-h-screen ${config.mode === "dark" ? "dark" : ""}`}>
-        {children}
-      </div>
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useThemeContext(): ThemeContextValue {
