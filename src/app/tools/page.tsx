@@ -1,21 +1,21 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import ToolsPageClient from "@/components/tools/ToolsPageClient";
 import { SITE_NAME, SITE_URL, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
 
-const toolsTitle = `${SITE_NAME} Araçlar | Komisyon, Korelasyon ve Stres Testi`;
+const toolsTitle = `${SITE_NAME} Araçlar | Portföy Karar Motoru`;
 const toolsDescription =
-  "FinCognis araçlar sayfasında komisyon maliyeti hesaplayın, varlık korelasyonunu ölçün ve farklı kriz senaryolarında portföy stres testi uygulayın.";
+  "FinCognis araçlar sayfasında serbest metin yatırım sorularını, risk yoğunluğu ve korelasyon etkisi odağında anlaşılır bir karar çerçevesiyle değerlendirin.";
 
 export const metadata: Metadata = createPageMetadata({
   title: toolsTitle,
   description: toolsDescription,
   path: "/tools",
   keywords: [
-    "komisyon hesaplama aracı",
-    "korelasyon testi",
-    "portföy stres testi",
-    "yatırım araçları",
-    "FinCognis tools",
+    "portföy karar motoru",
+    "risk yoğunluğu analizi",
+    "korelasyon etkisi",
+    "yatırım sorusu analizi",
+    "FinCognis araçlar",
   ],
 });
 
@@ -62,7 +62,6 @@ const toolsStructuredData = {
 };
 
 export default function ToolsPage() {
-  // 1) Render static tools shell.
   return (
     <>
       <script

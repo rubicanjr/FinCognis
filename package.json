@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --hostname 0.0.0.0 --port 4173",
+    "start:local": "npm run build && npm run start",
+    "start:windows": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 -Port 4173",
+    "start:windows:rebuild": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 -Port 4173 -Rebuild",
+    "start:windows:keepalive": "powershell -ExecutionPolicy Bypass -File scripts/start-local-keepalive.ps1 -Port 4173",
     "lint": "next lint",
     "test": "vitest run"
   },

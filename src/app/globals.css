@@ -182,3 +182,8 @@ select option {
 .animate-fade-in-up-delay-3 {
   animation: fade-in-up 0.8s ease-out 0.45s both;
 }
+
+svg.lucide {
+  stroke-width: 1.5px !important;
+  vector-effect: non-scaling-stroke;
+}

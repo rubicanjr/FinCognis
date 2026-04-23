@@ -1,0 +1,43 @@
+﻿import { NextResponse } from "next/server";
+import { AssetClass } from "@/components/tools/correlation/universal-asset-comparison";
+import {
+  AnalyzeRequestSchema,
+  AnalyzeResponseSchema,
+} from "@/lib/contracts/universal-asset-schemas";
+import { marketDataGateway } from "@/lib/gateways/market-data-gateway";
+import { analyzeUniversalAssets } from "@/lib/services/universal-asset-analysis-service";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => null);
+  const parsed = AnalyzeRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid analyze payload.", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const analyzed = await analyzeUniversalAssets(parsed.data.assets, marketDataGateway);
+  const unknownList = analyzed
+    .filter((asset) => asset.class === AssetClass.Unknown)
+    .map((asset) => asset.originalInput);
+
+  const responsePayload = AnalyzeResponseSchema.parse({
+    assets: analyzed,
+    warnings: [
+      ...(unknownList.length > 0
+        ? [
+            {
+              level: "warning" as const,
+              message: `Tanınmayan varlıklar: ${unknownList.join(", ")}. Geçerli varlıklar analiz edildi.`,
+            },
+          ]
+        : []),
+    ],
+  });
+
+  return NextResponse.json(responsePayload, { status: 200 });
+}
+

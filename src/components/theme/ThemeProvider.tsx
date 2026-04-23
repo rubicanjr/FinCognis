@@ -59,13 +59,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [config]);
 
   useEffect(() => {
-    // 1) Resolve root html element for global theme attributes.
+    // 1) Apply theme directly on root html element to prevent nested theme bleed.
     const root = document.documentElement;
-    // 2) Publish typed theme mode as document-level data attribute.
     root.setAttribute("data-theme", config.mode);
-    // 3) Toggle Tailwind-compatible mode classes at root scope.
-    root.classList.toggle("dark", config.mode === "dark");
-    root.classList.toggle("light", config.mode === "light");
+    root.classList.remove("dark", "light");
+    root.classList.add(config.mode);
   }, [config.mode]);
 
   const value = useMemo<ThemeContextValue>(
