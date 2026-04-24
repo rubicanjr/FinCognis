@@ -41,6 +41,8 @@ export default function ToolsLoginScreen({ defaultNextPath }: ToolsLoginScreenPr
     getAuthSessionFromSupabase(supabase).then((session) => {
       // 3) Redirect authenticated users to tools route.
       if (isAuthActive(session)) router.replace(defaultNextPath);
+    }).catch(() => {
+      // Ignore auth bootstrap failures in embedded browsers.
     });
   }, [defaultNextPath, router, supabase]);
 

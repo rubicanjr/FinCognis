@@ -2,6 +2,10 @@
 import ToolsPageClient from "@/components/tools/ToolsPageClient";
 import { SITE_NAME, SITE_URL, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
 
+// Prevent stale HTML from referencing expired hashed CSS/JS chunks.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const toolsTitle = `${SITE_NAME} Araçlar | Portföy Karar Motoru`;
 const toolsDescription =
   "FinCognis araçlar sayfasında serbest metin yatırım sorularını, risk yoğunluğu ve korelasyon etkisi odağında anlaşılır bir karar çerçevesiyle değerlendirin.";

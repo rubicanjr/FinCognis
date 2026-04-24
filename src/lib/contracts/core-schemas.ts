@@ -108,6 +108,20 @@ function pickFullName(userMetadata: z.infer<typeof UserMetadataSchema> | undefin
   return userMetadata?.name ?? null;
 }
 
+function sanitizeAvatarUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    // Validate URL shape and normalize invalid values to null.
+    // eslint-disable-next-line no-new
+    new URL(trimmed);
+    return trimmed;
+  } catch {
+    return null;
+  }
+}
+
 export function createGuestSession(): AuthSession {
   // 1) Return a strict guest session contract.
   return {
@@ -166,10 +180,10 @@ export function createAuthSessionFromSupabasePayload(payload: unknown): AuthSess
       id: parsed.data.user.id,
       email: parsed.data.user.email,
       fullName,
-      avatarUrl: parsed.data.user.user_metadata?.avatar_url ?? null,
+      avatarUrl: sanitizeAvatarUrl(parsed.data.user.user_metadata?.avatar_url ?? null),
       provider: parseProvider(parsed.data.user.app_metadata?.provider),
     },
   };
-  return AuthSessionSchema.parse(authSession);
+  const validated = AuthSessionSchema.safeParse(authSession);
+  return validated.success ? validated.data : createGuestSession();
 }
-

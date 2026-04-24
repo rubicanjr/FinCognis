@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  --color-accent-blue: #0a84ff;
   --surface: 248 250 252;
   --surface-bright: 255 255 255;
   --surface-container: 241 245 249;
@@ -100,7 +101,7 @@ html.light {
 }
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-body), "Inter", sans-serif;
   background-color: rgb(var(--surface));
   color: rgb(var(--on-surface));
   -webkit-font-smoothing: antialiased;
@@ -120,7 +121,17 @@ body {
 }
 
 .font-headline {
-  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-family: var(--font-editorial-serif), "Cormorant Garamond", Georgia, serif;
+}
+
+.font-display {
+  font-family: var(--font-display), "Rajdhani", "Inter", sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.font-data {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  letter-spacing: 0.01em;
 }
 
 .glass-panel {
@@ -181,6 +192,21 @@ select option {
 
 .animate-fade-in-up-delay-3 {
   animation: fade-in-up 0.8s ease-out 0.45s both;
+}
+
+@keyframes fade-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in-left {
+  animation: fade-in-left 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 svg.lucide {

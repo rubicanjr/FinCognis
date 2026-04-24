@@ -1,6 +1,6 @@
-﻿param(
+param(
   [int]$Port = 4173,
-  [switch]$Rebuild
+  [switch]$SkipBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -40,16 +40,16 @@ if ($listeners) {
   }
 }
 
-if ($Rebuild -or -not (Test-Path -LiteralPath (Join-Path $projectRoot ".next"))) {
-  Write-Host "[start-local] Next.js build baslatiliyor..."
+if (-not $SkipBuild) {
+  Write-Host "[start-local] Next.js build baslatiliyor (guvenli mod: her acilista rebuild)..."
   cmd /c npm run build
   if ($LASTEXITCODE -ne 0) {
     Write-Host "[start-local] Build basarisiz."
     exit $LASTEXITCODE
   }
 } else {
-  Write-Host "[start-local] Build atlandi (mevcut .next kullaniliyor)."
+  Write-Host "[start-local] Build atlandi (SkipBuild)."
 }
 
 Write-Host "[start-local] Sunucu baslatiliyor: http://127.0.0.1:$Port/tools"
-cmd /c npm run start
+cmd /c npm run start -- -p $Port

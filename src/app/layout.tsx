@@ -1,5 +1,6 @@
 ﻿import type { ReactNode } from "react";
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Inter, Rajdhani } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SITE_NAME, SITE_URL, OG_IMAGE_PATH, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
@@ -24,6 +25,26 @@ export const metadata: Metadata = createPageMetadata({
 
 const organizationId = `${SITE_URL}#organization`;
 const websiteId = `${SITE_URL}#website`;
+
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const cormorantGaramond = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-editorial-serif",
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+const rajdhani = Rajdhani({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-display",
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
 
 const globalStructuredData = {
   "@context": "https://schema.org",
@@ -63,16 +84,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="tr"
       suppressHydrationWarning
-      className="h-full min-h-full bg-surface text-on-surface"
+      className={`${inter.variable} ${cormorantGaramond.variable} ${rajdhani.variable} h-full min-h-full bg-surface text-on-surface`}
       style={{ backgroundColor: "rgb(var(--surface))", color: "rgb(var(--on-surface))" }}
     >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -89,5 +104,3 @@ export default function RootLayout({ children }: RootLayoutProps) {
     </html>
   );
 }
-
-

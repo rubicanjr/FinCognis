@@ -31,14 +31,19 @@ export function createSupabaseBrowserClient(): SupabaseClient | null {
   const env = readSupabasePublicEnv();
   // 3) Return null when env values are missing.
   if (!env) return null;
-  // 4) Initialize and memoize browser client.
-  browserClient = createClient(env.supabaseUrl, env.supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  });
-  // 5) Return initialized client.
-  return browserClient;
+  // 4) Initialize and memoize browser client with safe fallback.
+  try {
+    browserClient = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+    // 5) Return initialized client.
+    return browserClient;
+  } catch {
+    // 6) Return null when browser runtime cannot construct Supabase client.
+    return null;
+  }
 }

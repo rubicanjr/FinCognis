@@ -27,8 +27,18 @@ function getSystemPreference(): "dark" | "light" {
   if (typeof window === "undefined") {
     return "dark";
   }
-  // 2) Resolve browser preference with a deterministic fallback.
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  // 2) Fallback safely when matchMedia is unavailable in restricted webviews.
+  if (typeof window.matchMedia !== "function") {
+    return "dark";
+  }
+  // 3) Resolve browser preference with deterministic fallback guards.
+  try {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    if (typeof mediaQuery?.matches !== "boolean") return "dark";
+    return mediaQuery.matches ? "dark" : "light";
+  } catch {
+    return "dark";
+  }
 }
 
 function getDefaultThemeConfig(): ThemeConfig {
@@ -60,10 +70,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 1) Apply theme directly on root html element to prevent nested theme bleed.
-    const root = document.documentElement;
-    root.setAttribute("data-theme", config.mode);
-    root.classList.remove("dark", "light");
-    root.classList.add(config.mode);
+    try {
+      const root = document.documentElement;
+      root.setAttribute("data-theme", config.mode);
+      root.classList.remove("dark", "light");
+      root.classList.add(config.mode);
+    } catch {
+      // Ignore theme DOM failures in restricted embedded browsers.
+    }
   }, [config.mode]);
 
   const value = useMemo<ThemeContextValue>(
@@ -85,9 +99,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 export function useThemeContext(): ThemeContextValue {
   // 1) Read context once.
   const context = useContext(ThemeContext);
-  // 2) Throw explicit error when provider is missing.
+  // 2) Return no-op fallback when provider is missing.
   if (!context) {
-    throw new Error("useThemeContext must be used within ThemeProvider.");
+    return {
+      config: {
+        mode: "dark",
+        isSystemPreferred: true,
+        updatedAt: new Date().toISOString(),
+      },
+      toggleMode: () => undefined,
+    };
   }
   // 3) Return typed context.
   return context;

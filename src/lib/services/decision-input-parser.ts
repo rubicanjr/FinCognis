@@ -81,7 +81,7 @@ function canonicalizeText(value: string): string {
 }
 
 function stripPunctuation(value: string): string {
-  return value.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+  return value.replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function removeStopWords(tokens: string[]): string[] {

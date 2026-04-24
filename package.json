@@ -5,23 +5,24 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start --hostname 0.0.0.0 --port 4173",
-    "start:local": "npm run build && npm run start",
+    "start": "next start --hostname 0.0.0.0",
+    "start:local": "npm run build && npm run start -- -p 4173",
     "start:windows": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 -Port 4173",
-    "start:windows:rebuild": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 -Port 4173 -Rebuild",
+    "start:windows:fast": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 -Port 4173 -SkipBuild",
     "start:windows:keepalive": "powershell -ExecutionPolicy Bypass -File scripts/start-local-keepalive.ps1 -Port 4173",
     "lint": "next lint",
     "test": "vitest run"
   },
   "dependencies": {
     "@radix-ui/react-tabs": "^1.1.13",
+    "@supabase/supabase-js": "^2.57.4",
     "autoprefixer": "^10.4.20",
     "lucide-react": "^0.542.0",
     "next": "^14.2.18",
     "postcss": "^8.4.49",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@supabase/supabase-js": "^2.57.4",
+    "recharts": "^3.8.1",
     "tailwindcss": "^3.4.17",
     "zod": "^4.1.11"
   },
