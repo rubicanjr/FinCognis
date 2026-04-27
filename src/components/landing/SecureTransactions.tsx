@@ -2,20 +2,20 @@ import { Fingerprint, ShieldCheck } from "lucide-react";
 
 export default function SecureTransactions() {
   return (
-    <section id="security" className="relative overflow-hidden py-20">
+    <section id="metrik-rehberi" className="relative overflow-hidden py-20">
       <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 bg-[#22b7ff]/20 blur-[120px]" />
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-4 sm:px-6 lg:grid-cols-2">
         <div>
           <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">
-            Güvenilir Hesaplama
+            Metrik Rehberi
           </p>
           <h2 className="mb-6 font-display text-4xl font-semibold leading-tight tracking-[0.01em] text-slate-50 md:text-5xl">
-            FinCognis Güven Katmanı.
+            Metrikleri sade ve anlaşılır okuyun.
           </h2>
           <p className="mb-10 text-lg leading-relaxed text-slate-300">
-            Komisyon, korelasyon ve stres hesapları; sürümlenmiş veri seti, izlenebilir model adımları ve tekrar üretilebilir
-            sonuç mantığı ile çalışır.
+            Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü aynı çerçevede gösterilir.
+            Amaç karar öncesi araştırma alanını daraltmaktır.
           </p>
 
           <div className="space-y-6">
@@ -24,9 +24,9 @@ export default function SecureTransactions() {
                 <ShieldCheck className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Kaynak Verisi Bütünlüğü</h4>
+                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Risk Düzeyi</h4>
                 <p className="text-sm text-slate-300">
-                  Broker ve piyasa verileri tek şema ile doğrulanır, hatalı dosya otomatik reddedilir.
+                  Varlığın fiyat dalgalanmasının göreli yoğunluğunu gösterir.
                 </p>
               </div>
             </div>
@@ -36,9 +36,9 @@ export default function SecureTransactions() {
                 <Fingerprint className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Model İzlenebilirliği</h4>
+                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Portföy Dengeleme Gücü</h4>
                 <p className="text-sm text-slate-300">
-                  Her araç çıktıyı kalem kalem açıklar: maliyet kırılımı, risk metriği ve senaryo etkisi.
+                  Varlığın diğer varlıklarla ilişkisinden doğan dengeleme etkisini özetler.
                 </p>
               </div>
             </div>

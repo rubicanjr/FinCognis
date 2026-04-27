@@ -5,8 +5,14 @@ import Link from "next/link";
 import { Menu, ShieldCheck, X } from "lucide-react";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 
+const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean }> = [
+  { label: "Karşılaştırma Modu", href: "/#karsilastir", highlighted: true },
+  { label: "Profil Keşif Modu", href: "/#profil-kesif" },
+  { label: "Metrik Rehberi", href: "/#metrik-rehberi" },
+  { label: "Uyum Bildirimi", href: "/#uyum-bildirimi" },
+];
+
 export default function Navbar() {
-  // 1) Keep mobile drawer visibility in local component state.
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -18,18 +24,17 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <a href="#analytics" className="font-display font-semibold tracking-[0.02em] text-[#8ddfff] transition-colors duration-300">
-            Ürün
-          </a>
-          <a href="#security" className="font-display text-slate-300 transition-colors duration-300 hover:text-[#8ddfff]">
-            Çözümler
-          </a>
-          <a href="#security" className="font-display text-slate-300 transition-colors duration-300 hover:text-[#8ddfff]">
-            Güvenlik
-          </a>
-          <a href="#compliance" className="font-display text-slate-300 transition-colors duration-300 hover:text-[#8ddfff]">
-            Fiyatlandırma
-          </a>
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`font-display transition-colors duration-300 ${
+                item.highlighted ? "font-semibold tracking-[0.02em] text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center gap-3">
@@ -40,9 +45,12 @@ export default function Navbar() {
           >
             Araçlar
           </Link>
-          <button className="rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-5 py-2.5 font-display text-sm font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95">
+          <Link
+            href="/tools"
+            className="rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-5 py-2.5 font-display text-sm font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95"
+          >
             Başla
-          </button>
+          </Link>
           <button
             className="ml-1 text-slate-100 md:hidden"
             onClick={() => setMobileOpen((current) => !current)}
@@ -55,36 +63,29 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="space-y-4 border-t border-[#22b7ff]/25 bg-[#030915]/90 px-6 py-6 backdrop-blur-xl md:hidden">
-          <a href="#analytics" className="block font-display font-semibold text-[#8ddfff]" onClick={() => setMobileOpen(false)}>
-            Ürün
-          </a>
-          <a
-            href="#security"
-            className="block font-display text-slate-300 hover:text-[#8ddfff]"
-            onClick={() => setMobileOpen(false)}
-          >
-            Çözümler
-          </a>
-          <a
-            href="#security"
-            className="block font-display text-slate-300 hover:text-[#8ddfff]"
-            onClick={() => setMobileOpen(false)}
-          >
-            Güvenlik
-          </a>
-          <a
-            href="#compliance"
-            className="block font-display text-slate-300 hover:text-[#8ddfff]"
-            onClick={() => setMobileOpen(false)}
-          >
-            Fiyatlandırma
-          </a>
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`block font-display ${item.highlighted ? "font-semibold text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"}`}
+              onClick={() => setMobileOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
           <Link
             href="/tools"
             className="block border-t border-[#22b7ff]/25 pt-2 font-display font-semibold text-[#8ddfff]"
             onClick={() => setMobileOpen(false)}
           >
             Araçlar
+          </Link>
+          <Link
+            href="/tools"
+            className="block font-display text-slate-300 hover:text-[#8ddfff]"
+            onClick={() => setMobileOpen(false)}
+          >
+            Başla
           </Link>
         </div>
       )}

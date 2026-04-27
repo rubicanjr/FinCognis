@@ -6,32 +6,32 @@ interface ComplianceStat {
 
 const STATS: ComplianceStat[] = [
   {
-    value: "24",
-    title: "Karşılaştırılan Kurum",
-    description: "Komisyon Hesaplayıcı içinde banka, aracı kurum ve kripto borsaları.",
+    value: "2",
+    title: "Çalışma Modu",
+    description: "Karşılaştırma ve Profil Keşif akışlarıyla karar öncesi görünürlük.",
   },
   {
-    value: "5+",
-    title: "Kriz Senaryosu",
-    description: "Portföy Stres Simülatörü için tarihsel şok kütüphanesi.",
+    value: "4",
+    title: "Temel Metrik",
+    description: "Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı, Portföy Dengeleme Gücü.",
   },
   {
-    value: "8",
-    title: "Piyasa Kategorisi",
-    description: "Araçlar genelinde kategori bazlı seçim ve analiz akışı.",
+    value: "0–100",
+    title: "Profil Uyum Skoru",
+    description: "Seçilen profile göre varlık yakınlığını sınıflandıran karşılaştırmalı puan.",
   },
 ];
 
 export default function GlobalCompliance() {
   return (
-    <section id="compliance" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section id="uyum-bildirimi" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <div className="mb-16 text-center">
-        <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Araç Kapsamı</p>
+        <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Uyum ve Bilgilendirme</p>
         <h2 className="mb-6 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
-          FinCognis, karar kalitesini ölçer.
+          FinCognis, karar öncesi araştırma aracıdır.
         </h2>
         <p className="mx-auto max-w-2xl text-slate-300">
-          Her araç; aynı veri disiplini, açık metrikler ve paylaşılabilir sonuç formatı ile birlikte çalışır.
+          Bu içerik yatırım tavsiyesi değildir. Çıktılar genel nitelikli karşılaştırmalı analiz ve profil eşleştirmesi sunar.
         </p>
       </div>
 

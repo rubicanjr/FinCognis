@@ -72,7 +72,7 @@ const NEUTRAL_FALLBACK_TEXT =
 
 type PanelMode = "compare" | "discover";
 type MatrixMetricLabel = "Risk" | "Getiri" | "Likidite" | "Çeşitlendirme";
-type MetricDisplayLabel = "Risk" | "Getiri" | "Likidite" | "Çeşitlendirme";
+type MetricDisplayLabel = "Risk Düzeyi" | "Kazanç Potansiyeli" | "Nakde Çevirme Kolaylığı" | "Portföy Dengeleme Gücü";
 
 interface ComparisonMatrix {
   assets: string[];
@@ -89,7 +89,7 @@ interface MetricConfig {
 }
 
 type RadarPoint = {
-  metric: MatrixMetricLabel;
+  metric: MetricDisplayLabel;
 } & Record<string, number | string>;
 
 interface DiscoveryCriteria {
@@ -111,13 +111,13 @@ interface DiscoveryRow {
 }
 
 const METRIC_CONFIG: MetricConfig[] = [
-  { key: "risk", matrixLabel: "Risk", displayLabel: "Risk" },
-  { key: "return", matrixLabel: "Getiri", displayLabel: "Getiri" },
-  { key: "liquidity", matrixLabel: "Likidite", displayLabel: "Likidite" },
+  { key: "risk", matrixLabel: "Risk", displayLabel: "Risk Düzeyi" },
+  { key: "return", matrixLabel: "Getiri", displayLabel: "Kazanç Potansiyeli" },
+  { key: "liquidity", matrixLabel: "Likidite", displayLabel: "Nakde Çevirme Kolaylığı" },
   {
     key: "diversification",
     matrixLabel: "Çeşitlendirme",
-    displayLabel: "Çeşitlendirme",
+    displayLabel: "Portföy Dengeleme Gücü",
   },
 ];
 
@@ -355,7 +355,7 @@ function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {
 
 function toRadarData(matrix: ComparisonMatrix): RadarPoint[] {
   return matrix.metrics.map((metric) => {
-    const point: RadarPoint = { metric: metric.label };
+    const point: RadarPoint = { metric: metricDisplayLabel(metric.label) };
 
     matrix.assets.forEach((assetSymbol) => {
       point[assetSymbol] = metric.values[assetSymbol] ?? 0;
@@ -367,7 +367,7 @@ function toRadarData(matrix: ComparisonMatrix): RadarPoint[] {
 
 function metricDisplayLabel(metricLabel: MatrixMetricLabel): MetricDisplayLabel {
   const match = METRIC_CONFIG.find((item) => item.matrixLabel === metricLabel);
-  return match ? match.displayLabel : "Risk";
+  return match ? match.displayLabel : "Risk Düzeyi";
 }
 
 function radarSeriesColor(assetSymbol: string, index: number): string {
@@ -428,9 +428,9 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
 
       if (Math.abs(riskDelta) >= 0.8 || Math.abs(returnDelta) >= 0.8) {
         lines.unshift(
-          `${first} ve ${second} arasında risk/getiri dengesi ayrışmaktadır: ${
+          `${first} ve ${second} arasında risk düzeyi/kazanç potansiyeli dengesi ayrışmaktadır: ${
             returnDelta >= 0 ? first : second
-          } getiri tarafında daha güçlü görünürken, ${riskDelta >= 0 ? second : first} daha düşük risk profiline yakındır.`
+          } kazanç potansiyeli tarafında daha güçlü görünürken, ${riskDelta >= 0 ? second : first} daha düşük risk profiline yakındır.`
         );
       }
     }
@@ -468,13 +468,13 @@ function profileDescription(row: Omit<DiscoveryRow, "shortExplanation">): string
     notes.push("Bu varlık düşük oynaklık profiline daha yakındır.");
   }
   if (row.liquidity >= 7) {
-    notes.push("Likidite açısından güçlü görünmektedir.");
+    notes.push("Nakde çevirme kolaylığı açısından güçlü görünmektedir.");
   }
   if (row.diversification >= 7) {
-    notes.push("Çeşitlendirme katkısı görece yüksektir.");
+    notes.push("Portföy dengeleme gücü görece yüksektir.");
   }
   if (row.return >= 7) {
-    notes.push("Getiri potansiyeli görece yüksektir.");
+    notes.push("Kazanç potansiyeli görece yüksektir.");
   }
 
   if (row.profileFitScore >= 75) {
@@ -856,8 +856,9 @@ export default function UniversalAssetComparisonPanel() {
                 <div className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2">
                   <p className="font-display text-[11px] text-slate-300">Ağırlık dağılımı</p>
                   <p className="mt-1 font-data text-xs text-[#8ddfff]">
-                    Risk %{selectedPreset.weights.risk} | Likidite %{selectedPreset.weights.liquidity} | Getiri %
-                    {selectedPreset.weights.return} | Çeşitlendirme %{selectedPreset.weights.diversification}
+                    Risk Düzeyi %{selectedPreset.weights.risk} | Nakde Çevirme Kolaylığı %
+                    {selectedPreset.weights.liquidity} | Kazanç Potansiyeli %{selectedPreset.weights.return} | Portföy
+                    Dengeleme Gücü %{selectedPreset.weights.diversification}
                   </p>
                 </div>
                 <label className="space-y-1">
@@ -875,7 +876,7 @@ export default function UniversalAssetComparisonPanel() {
                   </select>
                 </label>
                 <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Getiri beklentisi</span>
+                  <span className="font-display text-[11px] text-slate-300">Kazanç potansiyeli beklentisi</span>
                   <select
                     value={criteria.returnExpectation}
                     onChange={(event) => handleCriteriaChange("returnExpectation", event.target.value)}
@@ -889,7 +890,7 @@ export default function UniversalAssetComparisonPanel() {
                   </select>
                 </label>
                 <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Likidite ihtiyacı</span>
+                  <span className="font-display text-[11px] text-slate-300">Nakde çevirme kolaylığı ihtiyacı</span>
                   <select
                     value={criteria.liquidityNeed}
                     onChange={(event) => handleCriteriaChange("liquidityNeed", event.target.value)}
@@ -903,7 +904,7 @@ export default function UniversalAssetComparisonPanel() {
                   </select>
                 </label>
                 <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Çeşitlendirme hedefi</span>
+                  <span className="font-display text-[11px] text-slate-300">Portföy dengeleme hedefi</span>
                   <select
                     value={criteria.diversificationGoal}
                     onChange={(event) => handleCriteriaChange("diversificationGoal", event.target.value)}
@@ -1080,7 +1081,8 @@ export default function UniversalAssetComparisonPanel() {
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Profil Keşif Çıktısı</p>
                 <p className="mt-2 text-sm text-slate-200">Seçilen kriterlere göre bu profile yakın varlıklar.</p>
                 <p className="mt-1 text-xs text-slate-300">
-                  Bu varlıklar, mevcut veri setinde benzer risk/likidite/çeşitlendirme özellikleri göstermektedir.
+                  Bu varlıklar, mevcut veri setinde benzer risk düzeyi, nakde çevirme kolaylığı ve portföy dengeleme
+                  özellikleri göstermektedir.
                 </p>
                 <p className="mt-1 text-xs text-slate-300">
                   Bu liste yatırım tavsiyesi değil, genel karşılaştırmalı profil eşleştirmesidir.
@@ -1103,13 +1105,13 @@ export default function UniversalAssetComparisonPanel() {
                           Risk Düzeyi
                         </th>
                         <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Getiri Potansiyeli
+                          Kazanç Potansiyeli
                         </th>
                         <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Likidite
+                          Nakde Çevirme Kolaylığı
                         </th>
                         <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Çeşitlendirme Gücü
+                          Portföy Dengeleme Gücü
                         </th>
                         <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
                           Profil Uyum Skoru

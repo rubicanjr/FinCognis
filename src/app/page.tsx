@@ -8,21 +8,21 @@ import Footer from "@/components/landing/Footer";
 import SeoContentSection, { HOME_FAQ_ITEMS } from "@/components/landing/SeoContentSection";
 import { SITE_NAME, SITE_URL, OG_IMAGE_PATH, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
 
-const homeTitle = `${SITE_NAME} | Finansal Analitik, Komisyon ve Risk Araçları`;
+const homeTitle = `${SITE_NAME} | Varlık Karşılaştırma ve Profil Keşif Aracı`;
 const homeDescription =
-  "FinCognis ile komisyon maliyeti hesaplayın, varlık korelasyonunu ölçün ve stres testleriyle portföy riskini yönetin. Türkçe finansal analiz platformu.";
+  "FinCognis ile varlıkları Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü metriklerinde karşılaştırın; profil keşif akışıyla araştırma alanınızı daraltın.";
 
 export const metadata: Metadata = createPageMetadata({
   title: homeTitle,
   description: homeDescription,
   path: "/",
   keywords: [
-    "komisyon hesaplayıcı",
-    "portföy korelasyon analizi",
-    "stres testi",
-    "yatırım risk yönetimi",
-    "finansal araçlar",
-    "fintech analiz platformu",
+    "varlık karşılaştırma",
+    "profil keşif",
+    "risk düzeyi analizi",
+    "nakde çevirme kolaylığı",
+    "portföy dengeleme gücü",
+    "finansal karar destek",
   ],
 });
 
@@ -68,7 +68,7 @@ const homeStructuredData = {
         price: "0",
         priceCurrency: "TRY",
       },
-      featureList: ["Komisyon Hesaplayıcı", "Korelasyon Çarpışması Testi", "Portföy Stres Simülatörü"],
+      featureList: ["Karşılaştırma Modu", "Profil Keşif Modu", "Profil Uyum Skoru", "Karşılaştırmalı Metrik Analizi"],
       publisher: {
         "@id": organizationId,
       },

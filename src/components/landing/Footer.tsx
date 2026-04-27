@@ -13,17 +13,20 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-8">
-          <a href="#analytics" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Ürün
-          </a>
-          <a href="#security" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Çözümler
-          </a>
-          <a href="#security" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Güvenlik
-          </a>
+          <Link href="/#karsilastir" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Karşılaştırma Modu
+          </Link>
+          <Link href="/#profil-kesif" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Profil Keşif Modu
+          </Link>
+          <Link href="/#metrik-rehberi" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Metrik Rehberi
+          </Link>
+          <Link href="/#uyum-bildirimi" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Uyum Bildirimi
+          </Link>
           <Link href="/tools" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Araçlar
+            Araçlar (/tools)
           </Link>
         </div>
 

@@ -44,8 +44,8 @@ export const PROFILE_DISCOVERY_PRESET_ORDER: ProfilePresetKey[] = [
 export const PROFILE_DISCOVERY_PRESETS: Record<ProfilePresetKey, ProfilePresetDefinition> = {
   low_risk_high_liquidity: {
     key: "low_risk_high_liquidity",
-    label: "Daha düşük risk + yüksek likidite",
-    summary: "Risk hassasiyeti ve likidite ihtiyacı yüksek profiller için genel eşleştirme.",
+    label: "Daha düşük risk düzeyi + yüksek nakde çevirme kolaylığı",
+    summary: "Risk hassasiyeti ve nakde çevirme ihtiyacı yüksek profiller için genel eşleştirme.",
     weights: { risk: 45, liquidity: 35, return: 10, diversification: 10 },
     defaults: {
       riskSensitivity: "high",
@@ -56,8 +56,8 @@ export const PROFILE_DISCOVERY_PRESETS: Record<ProfilePresetKey, ProfilePresetDe
   },
   high_liquidity: {
     key: "high_liquidity",
-    label: "Daha yüksek likidite",
-    summary: "Likidite odaklı karar öncesi tarama görünümü.",
+    label: "Daha yüksek nakde çevirme kolaylığı",
+    summary: "Nakde çevirme kolaylığı odaklı karar öncesi tarama görünümü.",
     weights: { risk: 20, liquidity: 45, return: 20, diversification: 15 },
     defaults: {
       riskSensitivity: "medium",
@@ -68,8 +68,8 @@ export const PROFILE_DISCOVERY_PRESETS: Record<ProfilePresetKey, ProfilePresetDe
   },
   strong_diversification: {
     key: "strong_diversification",
-    label: "Daha güçlü çeşitlendirme katkısı",
-    summary: "Çeşitlendirme katkısı yüksek olabilecek profiller için karşılaştırmalı sınıflandırma.",
+    label: "Daha güçlü portföy dengeleme katkısı",
+    summary: "Portföy dengeleme gücü yüksek olabilecek profiller için karşılaştırmalı sınıflandırma.",
     weights: { risk: 20, liquidity: 15, return: 15, diversification: 50 },
     defaults: {
       riskSensitivity: "medium",
@@ -80,8 +80,8 @@ export const PROFILE_DISCOVERY_PRESETS: Record<ProfilePresetKey, ProfilePresetDe
   },
   high_return_potential: {
     key: "high_return_potential",
-    label: "Daha yüksek getiri potansiyeli",
-    summary: "Getiri odaklı profiller için genel eşleştirme.",
+    label: "Daha yüksek kazanç potansiyeli",
+    summary: "Kazanç potansiyeli odaklı profiller için genel eşleştirme.",
     weights: { risk: 20, liquidity: 15, return: 50, diversification: 15 },
     defaults: {
       riskSensitivity: "low",
@@ -93,7 +93,7 @@ export const PROFILE_DISCOVERY_PRESETS: Record<ProfilePresetKey, ProfilePresetDe
   balanced: {
     key: "balanced",
     label: "Dengeli profil",
-    summary: "Risk, getiri, likidite ve çeşitlendirme arasında dengeli görünüm.",
+    summary: "Risk düzeyi, kazanç potansiyeli, nakde çevirme kolaylığı ve portföy dengeleme gücü arasında dengeli görünüm.",
     weights: { risk: 25, liquidity: 25, return: 25, diversification: 25 },
     defaults: {
       riskSensitivity: "medium",
@@ -116,7 +116,7 @@ export const PROFILE_DISCOVERY_PRESETS: Record<ProfilePresetKey, ProfilePresetDe
   },
   portfolio_diversification_focused: {
     key: "portfolio_diversification_focused",
-    label: "Portföy çeşitlendirme odaklı",
+    label: "Portföy dengeleme odaklı",
     summary: "Portföy dağılım etkisi odaklı genel profil eşleştirmesi.",
     weights: { risk: 20, liquidity: 15, return: 15, diversification: 50 },
     defaults: {

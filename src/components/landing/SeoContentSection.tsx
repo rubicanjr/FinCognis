@@ -10,65 +10,59 @@ interface ContentBlock {
 
 export const HOME_FAQ_ITEMS: FaqItem[] = [
   {
-    question: "FinCognis hangi yatırımcı profili için uygundur?",
+    question: "FinCognis’te Karşılaştırma Modu ne sunar?",
     answer:
-      "FinCognis; bireysel yatırımcılar, portföy yöneticileri ve veri odaklı karar almak isteyen ekipler için uygundur.",
+      "Karşılaştırma Modu, seçtiğiniz varlıkları aynı tabloda yan yana gösterir ve Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı, Portföy Dengeleme Gücü metrikleriyle kıyaslar.",
   },
   {
-    question: "Komisyon Hesaplayıcı nasıl çalışır?",
+    question: "Profil Keşif Modu nasıl çalışır?",
     answer:
-      "Komisyon Hesaplayıcı, seçilen kurum oranları ve işlem kalemlerine göre toplam maliyeti kalem kalem hesaplar.",
+      "Önce profil kriteri seçilir, sonra sistem veri setindeki profile yakın varlıkları listeler. Çıktılar genel nitelikli karşılaştırmalı profil eşleştirmesidir.",
   },
   {
-    question: "Korelasyon analizi portföyde ne işe yarar?",
+    question: "Profil Uyum Skoru neyi ifade eder?",
     answer:
-      "Korelasyon analizi, varlıkların birlikte hareket etme eğilimini gösterir ve çeşitlendirme kalitesini ölçmeye yardımcı olur.",
+      "Profil Uyum Skoru 0–100 aralığında hesaplanır. Skor yükseldikçe seçilen kriterlerle metriklerin genel uyumu artar.",
   },
   {
-    question: "Stres testi sonuçları yatırım tavsiyesi yerine geçer mi?",
-    answer: "Hayır. Stres testi olası riskleri modellemek içindir; kesin sonuç veya yatırım tavsiyesi sunmaz.",
+    question: "Bu sonuçlar yatırım tavsiyesi midir?",
+    answer:
+      "Hayır. FinCognis yatırım tavsiyesi vermez; yalnızca karar öncesi araştırma ve karşılaştırmalı profil eşleştirmesi sunar.",
   },
   {
-    question: "FinCognis güvenlik tarafında hangi yaklaşımı izler?",
+    question: "Kullanılan veri dinamik mi?",
     answer:
-      "Platform, veri gizliliği, erişim kontrolü ve denetlenebilirlik ilkelerini merkeze alan güvenlik odaklı bir mimari izler.",
+      "Evet. Araçta sentetik/sabit akış yerine dinamik veri katmanı kullanılır; sonuçlar bu veri çerçevesinde güncellenir.",
   },
 ];
 
 const SEO_CONTENT_BLOCKS: ContentBlock[] = [
   {
-    title: "Finansal Kararlarda Hız ve Doğruluk Dengesi",
+    title: "Karar Öncesi Karşılaştırma Çerçevesi",
     paragraphs: [
-      "Finansal piyasalarda fark yaratan unsur veriyi hızlı okumak kadar doğru bağlamda yorumlamaktır. FinCognis, maliyet analizi, varlık ilişkileri ve kriz dayanıklılığı gibi karar mekanizmasının temel katmanlarını tek bir akış içinde birleştirir.",
-      "Kullanıcılar farklı ekranlar arasında geçiş yapmak yerine aynı panelde maliyet etkisini, risk yoğunluğunu ve senaryo sonucunu birlikte değerlendirebilir.",
+      "FinCognis, varlık kıyasını tek metrikle değil dört temel metrik ekseniyle sunar: Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü.",
+      "Bu yapı, farklı varlık türlerini aynı çerçevede okuyarak karar öncesi araştırma alanını daha hızlı daraltmanıza yardımcı olur.",
     ],
   },
   {
-    title: "Maliyet Şeffaflığı ve İşlem Disiplini",
+    title: "Profil Keşif ile Araştırma Alanını Daraltma",
     paragraphs: [
-      "Bir stratejinin gerçek performansı, alış-satış fiyatının ötesinde toplam işlem maliyetiyle belirlenir. Komisyon, vergi ve ek kalemler ihmal edildiğinde net getiri yanlış yorumlanabilir.",
-      "FinCognis Komisyon Hesaplayıcı, kurumlar arasındaki oran farklarını aynı çatı altında göstererek daha disiplinli karar almaya yardımcı olur.",
+      "Profil Keşif Modu, doğrudan varlık ismi girmeden önce profil hedefini seçmenizi sağlar ve profile yakın varlıkları karşılaştırmalı tabloda listeler.",
+      "Bu yaklaşım, bilgi yükünü azaltır ve kullanıcıyı kısa sürede daha anlamlı bir inceleme kümesine yönlendirir.",
     ],
   },
   {
-    title: "Korelasyon ve Risk Dağılımını Birlikte Okumak",
+    title: "Metriklerin Aynı Dilde Okunması",
     paragraphs: [
-      "Portföy yönetiminde tekil varlık seçimi kadar varlıkların birbiriyle etkileşimi de önemlidir. Yüksek pozitif korelasyon, toplam riski fark edilmeden artırabilir.",
-      "Korelasyon Çarpışması Testi, teknik bir katsayıyı karar destek sinyaline dönüştürerek dengeli portföy kurulumunu kolaylaştırır.",
+      "Platformdaki tüm karşılaştırmalar kullanıcı dostu etiketlerle sunulur: Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı, Portföy Dengeleme Gücü.",
+      "Bu tutarlı dil, teknik terim karmaşasını azaltır ve farklı ekranlardaki sonuçları daha hızlı yorumlamanızı sağlar.",
     ],
   },
   {
-    title: "Stres Testi ile Senaryo Bazlı Planlama",
+    title: "Uyumlu ve Nötr Çıktı Prensibi",
     paragraphs: [
-      "Sağlıklı risk yönetimi yalnızca ortalama koşullara değil, ekstrem senaryolara da hazırlık gerektirir. Stres testi, olası kayıp etkisini sayısal olarak gösterir.",
-      "Bu yöntem pozisyon boyutu, nakit oranı ve risk limiti gibi kritik başlıklarda daha planlı adım atılmasını sağlar.",
-    ],
-  },
-  {
-    title: "Uzun Vadeli Yaklaşım: Ölç, Karşılaştır, İyileştir",
-    paragraphs: [
-      "Finansal performansı iyileştirmenin en güvenilir yolu karar kalitesini ölçmektir. Maliyeti ölç, risk ilişkisini karşılaştır, kriz etkisini simüle et ve stratejiyi güncelle.",
-      "FinCognis bu döngüsel yaklaşımı destekleyen bir karar ekosistemi sunar ve uzun vadeli finansal sürdürülebilirliği güçlendirir.",
+      "FinCognis, sonuç metinlerinde yönlendirici yatırım dili kullanmaz. Çıktılar yalnızca genel nitelikli karşılaştırmalı analiz üretir.",
+      "Amaç, kişisel karar süreçlerini desteklemek için şeffaf bir bilgi katmanı sunmaktır; alım-satım önerisi sunmak değildir.",
     ],
   },
 ];
@@ -78,9 +72,9 @@ export default function SeoContentSection() {
     <section className="px-4 py-20 sm:px-6">
       <div className="mx-auto w-full max-w-5xl space-y-12">
         <div>
-          <p className="mb-3 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Finansal Rehber</p>
+          <p className="mb-3 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Karar Öncesi Rehber</p>
           <h2 className="font-display text-3xl font-semibold tracking-[0.01em] text-slate-50 sm:text-4xl">
-            Finansal analizde tutarlı sonuç için bütüncül yaklaşım
+            Karşılaştırma ve profil eşleştirmesini birlikte okuyun
           </h2>
         </div>
 

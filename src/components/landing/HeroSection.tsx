@@ -12,6 +12,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 interface SidebarItem {
   icon: LucideIcon;
@@ -28,24 +29,24 @@ interface MetricCard {
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-  { icon: LayoutDashboard, label: "Genel Bakış", active: true },
-  { icon: CandlestickChart, label: "Piyasalar" },
-  { icon: Wallet, label: "Portföy" },
-  { icon: ArrowLeftRight, label: "İşlemler" },
-  { icon: BarChart3, label: "Analitik" },
-  { icon: ShieldCheck, label: "Güvenlik" },
+  { icon: LayoutDashboard, label: "Karşılaştırma Modu", active: true },
+  { icon: CandlestickChart, label: "Profil Keşif Modu" },
+  { icon: Wallet, label: "Profil Eşleşme Tablosu" },
+  { icon: ArrowLeftRight, label: "Radar Karşılaştırma" },
+  { icon: BarChart3, label: "Metrik Rehberi" },
+  { icon: ShieldCheck, label: "Uyum Bildirimi" },
 ];
 
 const METRIC_CARDS: MetricCard[] = [
-  { icon: Landmark, label: "Toplam Varlık", value: "₺2.847.320", change: "+12.4%", up: true },
-  { icon: TrendingUp, label: "Günlük Hacim", value: "₺184.5K", change: "+8.2%", up: true },
-  { icon: ArrowLeftRight, label: "Açık Pozisyon", value: "24", change: "-3", up: false },
-  { icon: ShieldCheck, label: "Risk Skoru", value: "72/100", change: "Yüksek", up: true },
+  { icon: ShieldCheck, label: "Risk Düzeyi", value: "4.8 / 10", change: "Düşük-Olgun", up: true },
+  { icon: TrendingUp, label: "Kazanç Potansiyeli", value: "7.2 / 10", change: "Görece Güçlü", up: true },
+  { icon: Landmark, label: "Nakde Çevirme Kolaylığı", value: "8.4 / 10", change: "Yüksek", up: true },
+  { icon: ArrowLeftRight, label: "Portföy Dengeleme Gücü", value: "6.3 / 10", change: "Dengeli", up: true },
 ];
 
 export default function HeroSection() {
   return (
-    <header className="relative flex min-h-[795px] flex-col items-center justify-center overflow-hidden px-4 pb-24 pt-32 sm:px-6">
+    <header id="karsilastir" className="relative flex min-h-[795px] flex-col items-center justify-center overflow-hidden px-4 pb-24 pt-32 sm:px-6">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -59,25 +60,31 @@ export default function HeroSection() {
         <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5">
           <BadgeCheck className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
           <span className="font-display text-[11px] font-semibold tracking-[0.1em] text-[#dff4ff]">
-            Finansal Kararı Hızlandıran Altyapı
+            FinCognis Karşılaştırma ve Profil Keşif Katmanı
           </span>
         </div>
 
         <h1 className="animate-fade-in-up-delay-1 mb-6 font-display text-5xl font-semibold leading-[1.05] tracking-[0.01em] text-slate-50 sm:text-6xl md:text-8xl">
-          Hassas Finansal <span className="text-[#8ddfff]">Zekâ</span>
+          Varlıkları Aynı Çerçevede <span className="text-[#8ddfff]">Karşılaştırın</span>
         </h1>
 
         <p className="animate-fade-in-up-delay-2 mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl md:text-2xl">
-          Yüksek frekanslı analitik ve kurumsal güvenlik katmanı ile operasyonlarınızı güvenle ölçeklendirin.
+          Yatırım tavsiyesi değil; risk, getiri, likidite ve çeşitlendirme metriklerine göre genel profil eşleştirmesi.
         </p>
 
         <div className="animate-fade-in-up-delay-3 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <button className="w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 font-display text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto">
-            Platformu Keşfet
-          </button>
-          <button className="w-full rounded-xl border border-white/12 bg-slate-900/55 px-8 py-4 font-display text-lg font-semibold text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] active:scale-95 sm:w-auto">
-            Dokümantasyon
-          </button>
+          <Link
+            href="/tools"
+            className="w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-display text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
+          >
+            Karşılaştırmayı Aç
+          </Link>
+          <Link
+            href="/#profil-kesif"
+            className="w-full rounded-xl border border-white/12 bg-slate-900/55 px-8 py-4 text-center font-display text-lg font-semibold text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] active:scale-95 sm:w-auto"
+          >
+            Profil Keşfi İncele
+          </Link>
         </div>
       </div>
 

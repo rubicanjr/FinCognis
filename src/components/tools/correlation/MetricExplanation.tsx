@@ -1,28 +1,28 @@
 ﻿"use client";
 
 interface MetricExplanationItem {
-  title: "Risk" | "Getiri" | "Likidite" | "Çeşitlendirme";
+  title: "Risk Düzeyi" | "Kazanç Potansiyeli" | "Nakde Çevirme Kolaylığı" | "Portföy Dengeleme Gücü";
   description: string;
 }
 
 const METRIC_EXPLANATIONS: MetricExplanationItem[] = [
   {
-    title: "Risk",
+    title: "Risk Düzeyi",
     description:
       "Varlığın fiyatındaki dalgalanma (volatilite) ve ani kayıp ihtimalidir. Tarihsel fiyat hareketlerinin standart sapması ile hesaplanır.",
   },
   {
-    title: "Getiri",
+    title: "Kazanç Potansiyeli",
     description:
       "Varlığın geçmiş verilere göre kazandırma potansiyelidir. Belirli periyotlardaki büyüme oranlarının ortalaması alınarak ölçülür.",
   },
   {
-    title: "Likidite",
+    title: "Nakde Çevirme Kolaylığı",
     description:
       "Varlığın değer kaybetmeden ne kadar hızlı nakde çevrilebileceğidir. İşlem hacmi ve piyasa derinliği ile hesaplanır.",
   },
   {
-    title: "Çeşitlendirme",
+    title: "Portföy Dengeleme Gücü",
     description:
       "Bu varlığın portföyünüzdeki diğer varlıklarla ne kadar \"zıt\" hareket ettiğidir. Korelasyon katsayıları kullanılarak ölçülür; zıt hareket edenler riski dengelediği için yüksek puan alır.",
   },
