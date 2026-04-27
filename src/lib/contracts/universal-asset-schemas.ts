@@ -29,9 +29,17 @@ export const AssetCatalogItemSchema = z.object({
   aliases: z.array(z.string().min(1)),
 });
 
+export const LiveDataMetaSchema = z.object({
+  mode: z.literal("realtime_gateway"),
+  provider: z.string().min(1),
+  fetchedAtIso: z.string().datetime(),
+  note: z.string().min(1),
+});
+
 export const AssetsApiResponseSchema = z.object({
   assets: z.array(AssetCatalogItemSchema),
   aliasDictionary: z.record(z.string(), z.string()),
+  meta: LiveDataMetaSchema.optional(),
 });
 
 export const AnalyzeRequestSchema = z.object({
@@ -47,6 +55,7 @@ export const AnalyzeRequestSchema = z.object({
 export const AnalyzeResponseSchema = z.object({
   assets: z.array(NormalizedAssetSchema),
   warnings: z.array(AssetParserWarningSchema),
+  meta: LiveDataMetaSchema,
 });
 
 export const DecisionIntentSchema = z.enum(["ADD", "COMPARE", "REPLACE"]);

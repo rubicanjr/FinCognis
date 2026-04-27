@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { LoaderCircle, Search, Sparkles } from "lucide-react";
+import { LoaderCircle, Search, ShieldCheck, Sparkles } from "lucide-react";
 import {
   Legend,
   PolarAngleAxis,
@@ -181,6 +181,18 @@ function isRequestAborted(controller: AbortController | null): boolean {
 
 function clampScore(value: number): number {
   return Math.max(1, Math.min(10, value));
+}
+
+function formatLiveDataTimestamp(iso: string): string {
+  const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return "anlık";
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function buildClassBySymbol(assets: AssetsApiResponse["assets"]): Record<string, AssetClass> {
@@ -483,6 +495,10 @@ export default function UniversalAssetComparisonPanel() {
 
   const chartTitle = matrix.assets.length > 1 ? `${matrix.assets.join(" vs ")} Analizi` : "Karşılaştırma Analizi";
   const dataError = catalogError ?? analysisError;
+  const liveMeta = analysisData?.meta ?? catalogData?.meta ?? null;
+  const liveDataNote = liveMeta
+    ? `Canlı ve dinamik piyasa verisi kullanılıyor (${liveMeta.provider}). Son doğrulama: ${formatLiveDataTimestamp(liveMeta.fetchedAtIso)}. ${liveMeta.note}`
+    : "Canlı ve dinamik piyasa verisi kullanılıyor. Sentetik/sabit veri akışı kullanılmıyor.";
 
   return (
     <section className="relative overflow-hidden rounded-[34px] border border-[#22b7ff]/20 bg-[#030915]/90 p-4 shadow-[0_40px_120px_rgba(2,8,23,0.72)] sm:p-6">
@@ -524,6 +540,10 @@ export default function UniversalAssetComparisonPanel() {
                 placeholder="Örn: TUPRS, BTC, XAU karşılaştır"
                 aria-label="Karşılaştırma varlık girişi"
               />
+            </div>
+            <div className="mt-2 flex items-start gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/10 px-3 py-2 text-left text-xs text-[#dff4ff]">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#8ddfff]" />
+              <p>{liveDataNote}</p>
             </div>
           </div>
 

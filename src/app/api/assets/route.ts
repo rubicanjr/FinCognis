@@ -11,6 +11,12 @@ export async function GET() {
   const payload = AssetsApiResponseSchema.parse({
     assets: marketDataGateway.getSupportedAssets(),
     aliasDictionary: buildDefaultAliasDictionary(),
+    meta: {
+      mode: "realtime_gateway",
+      provider: "Yahoo Finance MarketDataGateway",
+      fetchedAtIso: new Date().toISOString(),
+      note: "Katalog canlı piyasa ağ geçidiyle senkronize edilir.",
+    },
   });
   return NextResponse.json(payload, { status: 200 });
 }

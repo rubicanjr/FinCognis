@@ -36,6 +36,13 @@ export async function POST(request: Request) {
           ]
         : []),
     ],
+    meta: {
+      mode: "realtime_gateway",
+      provider: "Yahoo Finance MarketDataGateway",
+      fetchedAtIso: new Date().toISOString(),
+      note:
+        "Skorlar canlı piyasa akışından üretilir. Veri kapsamı olmayan sembollerde sınıf-bazlı varsayımlar kullanılabilir.",
+    },
   });
 
   return NextResponse.json(responsePayload, { status: 200 });
