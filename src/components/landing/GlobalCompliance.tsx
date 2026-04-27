@@ -24,13 +24,13 @@ const STATS: ComplianceStat[] = [
 
 export default function GlobalCompliance() {
   return (
-    <section id="compliance" className="mx-auto max-w-7xl px-6 py-24">
+    <section id="compliance" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <div className="mb-16 text-center">
-        <p className="mb-4 font-label text-sm font-bold uppercase tracking-[0.2em] text-secondary">Araç Kapsamı</p>
-        <h2 className="mb-6 font-headline text-4xl font-extrabold text-on-surface md:text-5xl">
+        <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Araç Kapsamı</p>
+        <h2 className="mb-6 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
           FinCognis, karar kalitesini ölçer.
         </h2>
-        <p className="mx-auto max-w-2xl text-on-surface-variant">
+        <p className="mx-auto max-w-2xl text-slate-300">
           Her araç; aynı veri disiplini, açık metrikler ve paylaşılabilir sonuç formatı ile birlikte çalışır.
         </p>
       </div>
@@ -39,11 +39,11 @@ export default function GlobalCompliance() {
         {STATS.map((stat) => (
           <div
             key={stat.value}
-            className="rounded-2xl border border-outline-variant/35 bg-surface-container-lowest p-8 shadow-sm transition-all duration-300 hover:scale-[1.01] hover:border-secondary"
+            className="rounded-2xl border border-white/10 bg-slate-950/60 p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/60"
           >
-            <h4 className="mb-4 font-headline text-5xl font-extrabold text-primary">{stat.value}</h4>
-            <p className="mb-2 font-headline font-bold text-on-surface">{stat.title}</p>
-            <p className="text-sm text-on-surface-variant">{stat.description}</p>
+            <h4 className="mb-4 font-data text-5xl font-semibold text-[#8ddfff]">{stat.value}</h4>
+            <p className="mb-2 font-display text-lg font-semibold tracking-[0.01em] text-slate-100">{stat.title}</p>
+            <p className="text-sm text-slate-300">{stat.description}</p>
           </div>
         ))}
       </div>

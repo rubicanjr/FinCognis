@@ -75,20 +75,20 @@ const SEO_CONTENT_BLOCKS: ContentBlock[] = [
 
 export default function SeoContentSection() {
   return (
-    <section className="bg-surface-container-low px-6 py-20">
+    <section className="px-4 py-20 sm:px-6">
       <div className="mx-auto w-full max-w-5xl space-y-12">
         <div>
-          <p className="mb-3 font-label text-xs font-bold uppercase tracking-[0.24em] text-secondary">Finansal Rehber</p>
-          <h2 className="font-headline text-3xl font-extrabold text-on-surface sm:text-4xl">
+          <p className="mb-3 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Finansal Rehber</p>
+          <h2 className="font-display text-3xl font-semibold tracking-[0.01em] text-slate-50 sm:text-4xl">
             Finansal analizde tutarlı sonuç için bütüncül yaklaşım
           </h2>
         </div>
 
         <div className="space-y-10">
           {SEO_CONTENT_BLOCKS.map((block) => (
-            <article key={block.title} className="rounded-3xl border border-outline-variant/35 bg-surface-container-lowest px-6 py-6 shadow-sm">
-              <h3 className="mb-4 font-headline text-2xl font-bold text-on-surface">{block.title}</h3>
-              <div className="space-y-4 text-base leading-8 text-on-surface-variant">
+            <article key={block.title} className="rounded-2xl border border-white/10 bg-slate-950/60 px-6 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl">
+              <h3 className="mb-4 font-display text-2xl font-semibold tracking-[0.01em] text-slate-100">{block.title}</h3>
+              <div className="space-y-4 text-base leading-8 text-slate-300">
                 {block.paragraphs.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
@@ -97,13 +97,13 @@ export default function SeoContentSection() {
           ))}
         </div>
 
-        <div className="rounded-3xl border border-outline-variant/35 bg-surface-container-lowest px-6 py-6 shadow-sm">
-          <h2 className="mb-6 font-headline text-3xl font-extrabold text-on-surface">Sık Sorulan Sorular</h2>
+        <div className="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] px-6 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl">
+          <h2 className="mb-6 font-display text-3xl font-semibold tracking-[0.01em] text-slate-50">Sık Sorulan Sorular</h2>
           <div className="space-y-5">
             {HOME_FAQ_ITEMS.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-outline-variant/30 bg-surface-container-low px-5 py-4">
-                <h3 className="font-headline text-xl font-bold text-on-surface">{item.question}</h3>
-                <p className="mt-2 text-sm leading-7 text-on-surface-variant">{item.answer}</p>
+              <article key={item.question} className="rounded-xl border border-white/12 bg-slate-900/55 px-5 py-4 backdrop-blur-xl">
+                <h3 className="font-display text-xl font-semibold tracking-[0.01em] text-slate-100">{item.question}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-300">{item.answer}</p>
               </article>
             ))}
           </div>

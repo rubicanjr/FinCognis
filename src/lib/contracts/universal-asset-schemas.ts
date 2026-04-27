@@ -49,7 +49,7 @@ export const AnalyzeRequestSchema = z.object({
       originalInput: z.string().min(1),
       class: AssetClassSchema,
     })
-  ).max(10),
+  ).max(40),
 });
 
 export const AnalyzeResponseSchema = z.object({
