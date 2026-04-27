@@ -3,15 +3,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { LoaderCircle, Search, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
 import {
-  Legend,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-} from "recharts";
-import {
   AnalyzeResponseSchema,
   AssetsApiResponseSchema,
   type AnalyzeRequest,
@@ -37,7 +28,6 @@ import {
 } from "@/lib/compliance/investment-language-guard";
 
 const ACCENT_BLUE = "#22b7ff";
-const ACCENT_PURPLE = "#a855f7";
 
 const EXAMPLE_INPUTS = [
   "TUPRS ve BTC karşılaştır",
@@ -72,7 +62,6 @@ const NEUTRAL_FALLBACK_TEXT =
 
 type PanelMode = "compare" | "discover";
 type MatrixMetricLabel = "Risk" | "Getiri" | "Likidite" | "Çeşitlendirme";
-type MetricDisplayLabel = "Risk Düzeyi" | "Kazanç Potansiyeli" | "Nakde Çevirme Kolaylığı" | "Portföy Dengeleme Gücü";
 
 interface ComparisonMatrix {
   assets: string[];
@@ -85,12 +74,7 @@ interface ComparisonMatrix {
 interface MetricConfig {
   key: keyof UniversalMetrics;
   matrixLabel: MatrixMetricLabel;
-  displayLabel: MetricDisplayLabel;
 }
-
-type RadarPoint = {
-  metric: MetricDisplayLabel;
-} & Record<string, number | string>;
 
 interface DiscoveryCriteria {
   riskSensitivity: PreferenceLevel;
@@ -110,14 +94,23 @@ interface DiscoveryRow {
   shortExplanation: string;
 }
 
+interface CompareCardData {
+  symbol: string;
+  risk: number;
+  return: number;
+  liquidity: number;
+  diversification: number;
+  totalScore: number;
+  balanceScore: number;
+}
+
 const METRIC_CONFIG: MetricConfig[] = [
-  { key: "risk", matrixLabel: "Risk", displayLabel: "Risk Düzeyi" },
-  { key: "return", matrixLabel: "Getiri", displayLabel: "Kazanç Potansiyeli" },
-  { key: "liquidity", matrixLabel: "Likidite", displayLabel: "Nakde Çevirme Kolaylığı" },
+  { key: "risk", matrixLabel: "Risk" },
+  { key: "return", matrixLabel: "Getiri" },
+  { key: "liquidity", matrixLabel: "Likidite" },
   {
     key: "diversification",
     matrixLabel: "Çeşitlendirme",
-    displayLabel: "Portföy Dengeleme Gücü",
   },
 ];
 
@@ -149,33 +142,11 @@ const CLASS_LABELS: Record<AssetClass, string> = {
   [AssetClass.Unknown]: "Diğer",
 };
 
-const RADAR_COLOR_BY_SYMBOL: Record<string, string> = {
-  TUPRS: "#22b7ff",
-  BTC: "#f97316",
-  XAU: "#d4af59",
-  XPD: "#8b5cf6",
-  ASELS: "#14b8a6",
-};
-
-const RADAR_FALLBACK_COLORS = ["#22b7ff", "#38bdf8", "#f97316", "#8b5cf6", "#14b8a6", "#6366f1", "#22c55e", "#ec4899"];
-
 const PANEL_CARD =
   "rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-4 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]";
 
 const GLASS_CHIP =
   "border border-white/12 bg-slate-950/55 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(148,163,184,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(2,6,23,0.55)]";
-
-const CHART_NUMBER_TICK = {
-  fill: "rgb(226 232 240)",
-  fontSize: 11,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Courier New, monospace",
-};
-
-const CHART_LABEL_TICK = {
-  fill: "rgb(203 213 225)",
-  fontSize: 11,
-  fontFamily: "var(--font-display), Rajdhani, Inter, sans-serif",
-};
 
 const HEATMAP_TONES = [
   "text-[#9ddcff] bg-[#22b7ff]/18 border-[#22b7ff]/35",
@@ -353,27 +324,6 @@ function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {
   return { assets: symbols, metrics };
 }
 
-function toRadarData(matrix: ComparisonMatrix): RadarPoint[] {
-  return matrix.metrics.map((metric) => {
-    const point: RadarPoint = { metric: metricDisplayLabel(metric.label) };
-
-    matrix.assets.forEach((assetSymbol) => {
-      point[assetSymbol] = metric.values[assetSymbol] ?? 0;
-    });
-
-    return point;
-  });
-}
-
-function metricDisplayLabel(metricLabel: MatrixMetricLabel): MetricDisplayLabel {
-  const match = METRIC_CONFIG.find((item) => item.matrixLabel === metricLabel);
-  return match ? match.displayLabel : "Risk Düzeyi";
-}
-
-function radarSeriesColor(assetSymbol: string, index: number): string {
-  return RADAR_COLOR_BY_SYMBOL[assetSymbol] ?? RADAR_FALLBACK_COLORS[index % RADAR_FALLBACK_COLORS.length];
-}
-
 function heatCellTone(metricLabel: MatrixMetricLabel, score: number): string {
   const decisionScore = metricLabel === "Risk" ? 11 - score : score;
   const toneIndex = decisionScore >= 8 ? 0 : decisionScore >= 5 ? 1 : 2;
@@ -389,54 +339,34 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
     return ["Karşılaştırma içgörüsü için en az iki varlık girin."];
   }
 
-  const lines: string[] = [];
+  const riskMetric = matrix.metrics.find((metric) => metric.label === "Risk");
+  const returnMetric = matrix.metrics.find((metric) => metric.label === "Getiri");
 
-  matrix.metrics.forEach((metric) => {
-    const ranked = matrix.assets
-      .map((asset) => ({
-        asset,
-        score: matrix.metrics.find((candidate) => candidate.label === metric.label)?.values[asset] ?? 0,
-      }))
-      .sort((left, right) => right.score - left.score);
-
-    const strongest = ranked[0];
-    const weakest = ranked[ranked.length - 1];
-    const spread = strongest.score - weakest.score;
-
-    if (spread >= 1) {
-      lines.push(
-        `${metricDisplayLabel(metric.label)} tarafında ${strongest.asset} daha güçlü görünmektedir (${strongest.score.toFixed(
-          1
-        )}/10), ${weakest.asset} daha düşük görünmektedir (${weakest.score.toFixed(1)}/10).`
-      );
-    }
-  });
-
-  if (lines.length === 0) {
-    return ["Varlıklar metriklerde birbirine yakın; dengeli bir dağılım görünmektedir."];
+  if (!riskMetric || !returnMetric) {
+    return ["Karşılaştırma içgörüsü için metrik verisi eksik."];
   }
 
-  if (matrix.assets.length >= 2) {
-    const first = matrix.assets[0];
-    const second = matrix.assets[1];
-    const riskMetric = matrix.metrics.find((metric) => metric.label === "Risk");
-    const returnMetric = matrix.metrics.find((metric) => metric.label === "Getiri");
+  const returnLeader = matrix.assets
+    .map((asset) => ({ asset, score: returnMetric.values[asset] ?? 0 }))
+    .sort((left, right) => right.score - left.score)[0];
+  const lowRiskLeader = matrix.assets
+    .map((asset) => ({ asset, score: riskMetric.values[asset] ?? 10 }))
+    .sort((left, right) => left.score - right.score)[0];
 
-    if (riskMetric && returnMetric) {
-      const riskDelta = (riskMetric.values[first] ?? 0) - (riskMetric.values[second] ?? 0);
-      const returnDelta = (returnMetric.values[first] ?? 0) - (returnMetric.values[second] ?? 0);
+  const volatilityText = (riskMetric.values[returnLeader.asset] ?? 0) >= 7 ? "yüksek oynaklık" : "orta oynaklık";
+  const lines = [
+    `${returnLeader.asset} → kazanç potansiyeli yüksek, ${volatilityText} profiline yakındır.`,
+    `${lowRiskLeader.asset} → daha dengeli ve daha stabil profile yakındır.`,
+    `Profil uyumu açısından, yüksek oynaklık toleransı için ${returnLeader.asset}; denge odaklı profil için ${lowRiskLeader.asset} öne çıkmaktadır.`,
+  ];
 
-      if (Math.abs(riskDelta) >= 0.8 || Math.abs(returnDelta) >= 0.8) {
-        lines.unshift(
-          `${first} ve ${second} arasında risk düzeyi/kazanç potansiyeli dengesi ayrışmaktadır: ${
-            returnDelta >= 0 ? first : second
-          } kazanç potansiyeli tarafında daha güçlü görünürken, ${riskDelta >= 0 ? second : first} daha düşük risk profiline yakındır.`
-        );
-      }
-    }
-  }
+  return sanitizeNeutralNarratives(lines, NEUTRAL_FALLBACK_TEXT);
+}
 
-  return sanitizeNeutralNarratives(lines.slice(0, 3), NEUTRAL_FALLBACK_TEXT);
+function profileRiskBand(level: PreferenceLevel): string {
+  if (level === "high") return "Düşük risk";
+  if (level === "medium") return "Orta risk";
+  return "Yüksek risk";
 }
 
 function isProfilePresetKey(value: string): value is ProfilePresetKey {
@@ -664,18 +594,46 @@ export default function UniversalAssetComparisonPanel() {
       }, {}),
     [matrix]
   );
-  const radarData = useMemo(() => toRadarData(matrix), [matrix]);
   const insightLines = useMemo(() => generateCompareInsightLines(matrix), [matrix]);
+  const compareCards = useMemo<CompareCardData[]>(
+    () =>
+      matrix.assets.map((assetSymbol) => {
+        const risk = matrix.metrics.find((metric) => metric.label === "Risk")?.values[assetSymbol] ?? 0;
+        const returnScore = matrix.metrics.find((metric) => metric.label === "Getiri")?.values[assetSymbol] ?? 0;
+        const liquidity = matrix.metrics.find((metric) => metric.label === "Likidite")?.values[assetSymbol] ?? 0;
+        const diversification = matrix.metrics.find((metric) => metric.label === "Çeşitlendirme")?.values[assetSymbol] ?? 0;
+        const balanceScore = (riskQuality(risk) + returnScore + liquidity + diversification) / 4;
 
-  const highestTotal = useMemo(() => {
-    if (matrix.assets.length === 0) return null;
-    return Math.max(...matrix.assets.map((assetSymbol) => totalByAsset[assetSymbol] ?? 0));
-  }, [matrix.assets, totalByAsset]);
-
-  const leadingAssets = useMemo(() => {
-    if (highestTotal === null) return new Set<string>();
-    return new Set(matrix.assets.filter((assetSymbol) => (totalByAsset[assetSymbol] ?? 0) === highestTotal));
-  }, [highestTotal, matrix.assets, totalByAsset]);
+        return {
+          symbol: assetSymbol,
+          risk,
+          return: returnScore,
+          liquidity,
+          diversification,
+          totalScore: totalByAsset[assetSymbol] ?? 0,
+          balanceScore,
+        };
+      }),
+    [matrix.assets, matrix.metrics, totalByAsset]
+  );
+  const bestBalancedAsset = useMemo(() => {
+    if (compareCards.length === 0) return null;
+    const sorted = [...compareCards].sort((left, right) => right.balanceScore - left.balanceScore);
+    return sorted[0] ?? null;
+  }, [compareCards]);
+  const bestBalancedReason = useMemo(() => {
+    if (!bestBalancedAsset) return "";
+    const factors = [
+      { label: "düşük risk düzeyi", score: riskQuality(bestBalancedAsset.risk) },
+      { label: "yüksek kazanç potansiyeli", score: bestBalancedAsset.return },
+      { label: "güçlü nakde çevirme kolaylığı", score: bestBalancedAsset.liquidity },
+      { label: "yüksek portföy dengeleme gücü", score: bestBalancedAsset.diversification },
+    ]
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 2)
+      .map((item) => item.label);
+    return factors.join(" + ");
+  }, [bestBalancedAsset]);
 
   const selectedPreset = PROFILE_DISCOVERY_PRESETS[selectedPresetKey];
 
@@ -727,12 +685,25 @@ export default function UniversalAssetComparisonPanel() {
   }, [criteria, discoveryData, selectedPreset]);
 
   const profileTopRows = useMemo(() => discoveryRows.slice(0, 10), [discoveryRows]);
+  const profileBandLabel = useMemo(() => profileRiskBand(criteria.riskSensitivity), [criteria.riskSensitivity]);
+  const suitableProfileRows = useMemo(() => {
+    const highFit = profileTopRows.filter((row) => row.profileFitScore >= 70).slice(0, 4);
+    if (highFit.length > 0) return highFit;
+    return profileTopRows.slice(0, 3);
+  }, [profileTopRows]);
+  const higherRiskRows = useMemo(
+    () =>
+      discoveryRows
+        .filter((row) => row.risk >= 7)
+        .sort((left, right) => right.risk - left.risk)
+        .slice(0, 4),
+    [discoveryRows]
+  );
 
   const title = mode === "compare" ? "Varlıkları Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Varlıkları Keşfedin";
   const subtitle =
-    "Yatırım tavsiyesi değil; risk, getiri, likidite ve çeşitlendirme metriklerine göre genel profil eşleştirmesi.";
+    "Yatırım tavsiyesi değil; Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü metriklerine göre genel profil eşleştirmesi.";
 
-  const chartTitle = matrix.assets.length > 1 ? `${matrix.assets.join(" vs ")} Analizi` : "Karşılaştırma Analizi";
   const dataError = catalogError ?? (mode === "compare" ? analysisError : discoveryError);
   const liveMeta = (mode === "compare" ? analysisData?.meta : discoveryData?.meta) ?? catalogData?.meta ?? null;
   const liveDataNote = liveMeta
@@ -813,10 +784,11 @@ export default function UniversalAssetComparisonPanel() {
                   value={rawInput}
                   onChange={(event) => setRawInput(event.target.value)}
                   className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-400"
-                  placeholder="Örn: TUPRS, BTC, XAU karşılaştır"
+                  placeholder="Karşılaştırmak istediğin varlıkları yaz (örn: altın, bitcoin, thy)"
                   aria-label="Karşılaştırma varlık girişi"
                 />
               </div>
+              <p className="mt-2 px-1 text-xs text-slate-300">Karar vermeden önce farklarını gör.</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {EXAMPLE_INPUTS.map((input) => (
@@ -946,129 +918,61 @@ export default function UniversalAssetComparisonPanel() {
           {mode === "compare" ? (
             <>
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Karşılaştırma Niyeti</p>
-                <p className="mt-1 font-display text-2xl font-semibold tracking-[0.01em] text-slate-50">{chartTitle}</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Tek Ekranda Karar Özeti</p>
+                {bestBalancedAsset ? (
+                  <>
+                    <p className="mt-1 font-display text-xl font-semibold text-slate-50 sm:text-2xl">
+                      Bu karşılaştırmada en dengeli varlık: <span className="text-[#8ddfff]">{bestBalancedAsset.symbol}</span>
+                    </p>
+                    <p className="mt-2 text-sm text-slate-300">Sebep: {bestBalancedReason}.</p>
+                  </>
+                ) : (
+                  <p className="mt-1 text-sm text-slate-300">Karşılaştırma için en az bir varlık girin.</p>
+                )}
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Radar Karşılaştırma</p>
-                <div className="mt-3 h-[360px] rounded-xl border border-white/10 bg-slate-950/50 p-3 backdrop-blur-xl">
-                  {matrix.assets.length < 2 ? (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-300">
-                      Radar görünümü için en az iki varlık gerekli.
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={radarData} outerRadius="72%">
-                        <PolarGrid stroke="rgb(148 163 184 / 0.2)" />
-                        <PolarAngleAxis dataKey="metric" tick={CHART_LABEL_TICK} />
-                        <PolarRadiusAxis angle={30} domain={[0, 10]} tick={CHART_NUMBER_TICK} />
-                        {matrix.assets.map((assetSymbol, index) => {
-                          const seriesColor = radarSeriesColor(assetSymbol, index);
-                          return (
-                            <Radar
-                              key={`radar:${assetSymbol}`}
-                              name={assetSymbol}
-                              dataKey={assetSymbol}
-                              stroke={seriesColor}
-                              fill={seriesColor}
-                              fillOpacity={0.15}
-                              strokeWidth={2}
-                            />
-                          );
-                        })}
-                        <Legend
-                          wrapperStyle={{
-                            color: "rgb(226 232 240)",
-                            fontSize: 11,
-                            fontFamily: "var(--font-display), Rajdhani, Inter, sans-serif",
-                            letterSpacing: "0.03em",
-                          }}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  )}
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Karşılaştırılan Varlık Kartları</p>
+                <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {compareCards.map((card, index) => (
+                    <article key={`compare-card:${card.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
+                      <h4 className="font-display text-lg font-semibold text-slate-100">{card.symbol}</h4>
+                      <div className="mt-3 space-y-2 text-sm">
+                        <div className="flex items-center justify-between text-slate-200">
+                          <span>Risk Düzeyi</span>
+                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Risk", card.risk)}`}>{card.risk.toFixed(1)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-200">
+                          <span>Kazanç Potansiyeli</span>
+                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Getiri", card.return)}`}>{card.return.toFixed(1)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-200">
+                          <span>Nakde Çevirme Kolaylığı</span>
+                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Likidite", card.liquidity)}`}>{card.liquidity.toFixed(1)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-200">
+                          <span>Portföy Dengeleme Gücü</span>
+                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Çeşitlendirme", card.diversification)}`}>
+                            {card.diversification.toFixed(1)}
+                          </span>
+                        </div>
+                        <div className="mt-3 border-t border-white/10 pt-2">
+                          <div className="flex items-center justify-between text-slate-100">
+                            <span className="font-display text-xs">Skor</span>
+                            <span className="font-data text-base font-semibold">{card.totalScore.toFixed(1)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Heatmap Karşılaştırma Tablosu</p>
-                <div className="mt-3 overflow-x-auto">
-                  <table className="w-full min-w-[620px] border-separate border-spacing-2 text-sm">
-                    <thead>
-                      <tr>
-                        <th className={`rounded-md px-3 py-2 text-left font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Metrik
-                        </th>
-                        {matrix.assets.map((assetSymbol) => (
-                          <th
-                            key={`head:${assetSymbol}`}
-                            className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-100 ${GLASS_CHIP}`}
-                          >
-                            {assetSymbol}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {matrix.metrics.map((metric, rowIndex) => (
-                        <tr key={`row:${metric.label}`} className="animate-fade-in-left" style={rowAnimationStyle(rowIndex)}>
-                          <td className={`rounded-md px-3 py-2 font-display text-[11px] tracking-[0.04em] text-slate-100 ${GLASS_CHIP}`}>
-                            {metricDisplayLabel(metric.label)}
-                          </td>
-                          {matrix.assets.map((assetSymbol) => {
-                            const score = metric.values[assetSymbol] ?? 0;
-                            return (
-                              <td
-                                key={`cell:${metric.label}:${assetSymbol}`}
-                                className={`rounded-md px-3 py-2 text-center font-data text-base font-semibold ${GLASS_CHIP} ${heatCellTone(metric.label, score)}`}
-                              >
-                                {score.toFixed(1)}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                      <tr className="animate-fade-in-left" style={rowAnimationStyle(matrix.metrics.length)}>
-                        <td className={`rounded-md border-t border-slate-700 px-3 py-2 font-display text-sm font-bold tracking-[0.05em] text-slate-100 ${GLASS_CHIP}`}>
-                          Toplam Puan
-                        </td>
-                        {matrix.assets.map((assetSymbol) => {
-                          const total = totalByAsset[assetSymbol] ?? 0;
-                          const isLeader = leadingAssets.has(assetSymbol);
-
-                          return (
-                            <td
-                              key={`cell:total:${assetSymbol}`}
-                              className={`rounded-md border-t border-slate-700 px-3 py-2 text-center font-data font-bold ${GLASS_CHIP} ${
-                                isLeader ? "text-[#22b7ff]" : "text-slate-100"
-                              }`}
-                            >
-                              {isLeader ? (
-                                <span className="inline-flex items-center gap-2 font-display text-2xl leading-none tracking-[0.02em]">
-                                  ◆ Öncü {total.toFixed(1)}
-                                </span>
-                              ) : (
-                                <span className="text-lg">{total.toFixed(1)}</span>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Karar İçgörüsü</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Karar İçgörüsü (Kısa)</p>
                 <div className="mt-3 space-y-2">
-                  {insightLines.map((line) => (
-                    <p
-                      key={line}
-                      className={`${GLASS_CHIP} rounded-lg border-l-2 px-3 py-2 text-sm text-slate-100`}
-                      style={{ borderLeftColor: ACCENT_PURPLE }}
-                    >
+                  {insightLines.slice(0, 3).map((line, index) => (
+                    <p key={`insight:${index}`} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-sm text-slate-100`}>
                       {line}
                     </p>
                   ))}
@@ -1079,66 +983,44 @@ export default function UniversalAssetComparisonPanel() {
             <>
               <div className={PANEL_CARD}>
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Profil Keşif Çıktısı</p>
-                <p className="mt-2 text-sm text-slate-200">Seçilen kriterlere göre bu profile yakın varlıklar.</p>
+                <p className="mt-2 text-sm text-slate-200">Senin profilin: <span className="font-display font-semibold text-[#8ddfff]">{profileBandLabel}</span></p>
                 <p className="mt-1 text-xs text-slate-300">
-                  Bu varlıklar, mevcut veri setinde benzer risk düzeyi, nakde çevirme kolaylığı ve portföy dengeleme
-                  özellikleri göstermektedir.
-                </p>
-                <p className="mt-1 text-xs text-slate-300">
-                  Bu liste yatırım tavsiyesi değil, genel karşılaştırmalı profil eşleştirmesidir.
+                  Bu liste yatırım tavsiyesi değildir; genel karşılaştırmalı profil eşleştirmesidir.
                 </p>
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Profil Eşleştirme Tablosu</p>
-                <div className="mt-3 overflow-x-auto">
-                  <table className="w-full min-w-[920px] border-separate border-spacing-2 text-sm">
-                    <thead>
-                      <tr>
-                        <th className={`rounded-md px-3 py-2 text-left font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Varlık
-                        </th>
-                        <th className={`rounded-md px-3 py-2 text-left font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Varlık Sınıfı
-                        </th>
-                        <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Risk Düzeyi
-                        </th>
-                        <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Kazanç Potansiyeli
-                        </th>
-                        <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Nakde Çevirme Kolaylığı
-                        </th>
-                        <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Portföy Dengeleme Gücü
-                        </th>
-                        <th className={`rounded-md px-3 py-2 text-center font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Profil Uyum Skoru
-                        </th>
-                        <th className={`rounded-md px-3 py-2 text-left font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300 ${GLASS_CHIP}`}>
-                          Kısa Açıklama
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {profileTopRows.map((row, index) => (
-                        <tr key={`profile:${row.symbol}`} className="animate-fade-in-left" style={rowAnimationStyle(index)}>
-                          <td className={`rounded-md px-3 py-2 font-display text-sm font-semibold text-slate-100 ${GLASS_CHIP}`}>{row.symbol}</td>
-                          <td className={`rounded-md px-3 py-2 font-display text-sm text-slate-200 ${GLASS_CHIP}`}>{row.assetClassLabel}</td>
-                          <td className={`rounded-md px-3 py-2 text-center font-data text-sm text-slate-100 ${GLASS_CHIP}`}>{row.risk.toFixed(1)}</td>
-                          <td className={`rounded-md px-3 py-2 text-center font-data text-sm text-slate-100 ${GLASS_CHIP}`}>{row.return.toFixed(1)}</td>
-                          <td className={`rounded-md px-3 py-2 text-center font-data text-sm text-slate-100 ${GLASS_CHIP}`}>{row.liquidity.toFixed(1)}</td>
-                          <td className={`rounded-md px-3 py-2 text-center font-data text-sm text-slate-100 ${GLASS_CHIP}`}>{row.diversification.toFixed(1)}</td>
-                          <td className={`rounded-md px-3 py-2 text-center font-data text-base font-semibold ${GLASS_CHIP} ${row.profileFitScore >= 75 ? "text-[#8ddfff]" : "text-slate-100"}`}>
-                            {row.profileFitScore.toFixed(1)}
-                          </td>
-                          <td className={`rounded-md px-3 py-2 font-display text-xs text-slate-200 ${GLASS_CHIP}`}>{row.shortExplanation}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Uygun Varlıklar</p>
+                <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {suitableProfileRows.map((row, index) => (
+                    <article key={`suitable:${row.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-display text-lg font-semibold text-slate-100">{row.symbol}</h4>
+                        <span className="rounded-md border border-[#22b7ff]/35 bg-[#22b7ff]/14 px-2 py-1 font-data text-xs text-[#8ddfff]">
+                          Uyum {row.profileFitScore.toFixed(1)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-300">{row.assetClassLabel}</p>
+                      <p className="mt-2 text-sm text-slate-200">{row.shortExplanation}</p>
+                    </article>
+                  ))}
                 </div>
+              </div>
+
+              <div className={PANEL_CARD}>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Daha Riskli Varlıklar</p>
+                {higherRiskRows.length > 0 ? (
+                  <ul className="mt-3 space-y-2">
+                    {higherRiskRows.map((row) => (
+                      <li key={`riskier:${row.symbol}`} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-sm text-slate-100`}>
+                        <span className="font-display font-semibold">{row.symbol}</span> · Risk Düzeyi {row.risk.toFixed(1)} ·{" "}
+                        {row.shortExplanation}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-300">Belirgin yüksek riskli varlık bulunmuyor.</p>
+                )}
               </div>
             </>
           )}
