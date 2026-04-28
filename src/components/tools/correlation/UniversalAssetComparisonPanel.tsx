@@ -93,6 +93,7 @@ interface DiscoveryRow {
   profileFitScore: number;
   shortExplanation: string;
   isFallback: boolean;
+  hasCriticalDataGap: boolean;
 }
 
 interface CompareCardData {
@@ -101,9 +102,12 @@ interface CompareCardData {
   return: number;
   liquidity: number;
   diversification: number;
-  totalScore: number;
+  totalScore: number | null;
   balanceScore: number;
   isFallback: boolean;
+  riskUnavailable: boolean;
+  returnUnavailable: boolean;
+  hasCriticalDataGap: boolean;
 }
 
 type TimeHorizon = AnalyzeRequest["timeHorizon"];
@@ -221,6 +225,19 @@ function clampScore(value: number): number {
 
 function clampProfileFitScore(value: number): number {
   return Math.max(0, Math.min(100, Number(value.toFixed(1))));
+}
+
+function hasFallbackReason(asset: NormalizedAsset | undefined, reason: string): boolean {
+  return Boolean(asset?.computation?.fallbackReasons.includes(reason));
+}
+
+function hasCriticalMetricGap(asset: NormalizedAsset | undefined): boolean {
+  return (
+    hasFallbackReason(asset, "risk_data_unavailable") ||
+    hasFallbackReason(asset, "return_data_unavailable") ||
+    hasFallbackReason(asset, "risk_target_insufficient_history") ||
+    hasFallbackReason(asset, "return_target_insufficient_history")
+  );
 }
 
 function formatLiveDataTimestamp(iso: string): string {
@@ -611,11 +628,22 @@ export default function UniversalAssetComparisonPanel() {
   const compareCards = useMemo<CompareCardData[]>(
     () =>
       matrix.assets.map((assetSymbol) => {
+        const sourceAsset = assets.find((asset) => asset.symbol === assetSymbol);
         const risk = matrix.metrics.find((metric) => metric.label === "Risk")?.values[assetSymbol] ?? 0;
         const returnScore = matrix.metrics.find((metric) => metric.label === "Getiri")?.values[assetSymbol] ?? 0;
         const liquidity = matrix.metrics.find((metric) => metric.label === "Likidite")?.values[assetSymbol] ?? 0;
         const diversification = matrix.metrics.find((metric) => metric.label === "Çeşitlendirme")?.values[assetSymbol] ?? 0;
-        const balanceScore = (riskQuality(risk) + returnScore + liquidity + diversification) / 4;
+        const riskUnavailable = hasFallbackReason(sourceAsset, "risk_data_unavailable");
+        const returnUnavailable = hasFallbackReason(sourceAsset, "return_data_unavailable");
+        const hasCriticalDataGap = hasCriticalMetricGap(sourceAsset);
+        const comparableMetrics: number[] = [liquidity, diversification];
+        if (!riskUnavailable) comparableMetrics.push(riskQuality(risk));
+        if (!returnUnavailable) comparableMetrics.push(returnScore);
+        const balanceScore =
+          hasCriticalDataGap || comparableMetrics.length === 0
+            ? Number.NEGATIVE_INFINITY
+            : comparableMetrics.reduce((sum, item) => sum + item, 0) / comparableMetrics.length;
+        const totalScore = hasCriticalDataGap ? null : totalByAsset[assetSymbol] ?? 0;
 
         return {
           symbol: assetSymbol,
@@ -623,16 +651,20 @@ export default function UniversalAssetComparisonPanel() {
           return: returnScore,
           liquidity,
           diversification,
-          totalScore: totalByAsset[assetSymbol] ?? 0,
+          totalScore,
           balanceScore,
-          isFallback: Boolean(assets.find((asset) => asset.symbol === assetSymbol)?.computation?.isFallback),
+          isFallback: Boolean(sourceAsset?.computation?.isFallback),
+          riskUnavailable,
+          returnUnavailable,
+          hasCriticalDataGap,
         };
       }),
     [assets, matrix.assets, matrix.metrics, totalByAsset]
   );
   const bestBalancedAsset = useMemo(() => {
-    if (compareCards.length === 0) return null;
-    const sorted = [...compareCards].sort((left, right) => right.balanceScore - left.balanceScore);
+    const eligible = compareCards.filter((card) => Number.isFinite(card.balanceScore));
+    if (eligible.length === 0) return null;
+    const sorted = [...eligible].sort((left, right) => right.balanceScore - left.balanceScore);
     return sorted[0] ?? null;
   }, [compareCards]);
   const bestBalancedReason = useMemo(() => {
@@ -672,13 +704,14 @@ export default function UniversalAssetComparisonPanel() {
         const liquidityFit = qualityScoreByTarget(liquidity, liquidityTarget);
         const diversificationFit = qualityScoreByTarget(diversification, diversificationTarget);
 
+        const hasCriticalDataGap = hasCriticalMetricGap(asset);
         const weightedFit =
           riskFit * (weights.risk / 100) +
           returnFit * (weights.return / 100) +
           liquidityFit * (weights.liquidity / 100) +
           diversificationFit * (weights.diversification / 100);
 
-        const profileFitScore = clampProfileFitScore(weightedFit * 10);
+        const profileFitScore = hasCriticalDataGap ? 0 : clampProfileFitScore(weightedFit * 10);
 
         const baseRow: Omit<DiscoveryRow, "shortExplanation"> = {
           symbol: asset.symbol,
@@ -689,11 +722,14 @@ export default function UniversalAssetComparisonPanel() {
           diversification,
           profileFitScore,
           isFallback: Boolean(asset.computation?.isFallback),
+          hasCriticalDataGap,
         };
 
         return {
           ...baseRow,
-          shortExplanation: profileDescription(baseRow),
+          shortExplanation: hasCriticalDataGap
+            ? "Bu varlık için veri yetersiz olduğu için profil uyumu puanı üretilmemiştir."
+            : profileDescription(baseRow),
         };
       })
       .sort((left, right) => right.profileFitScore - left.profileFitScore);
@@ -973,7 +1009,7 @@ export default function UniversalAssetComparisonPanel() {
                     <p className="mt-2 text-sm text-slate-300">Sebep: {bestBalancedReason}.</p>
                   </>
                 ) : (
-                  <p className="mt-1 text-sm text-slate-300">Karşılaştırma için en az bir varlık girin.</p>
+                  <p className="mt-1 text-sm text-slate-300">Karşılaştırma için yeterli veri bulunamadı.</p>
                 )}
               </div>
 
@@ -987,7 +1023,11 @@ export default function UniversalAssetComparisonPanel() {
                         {card.isFallback ? (
                           <span
                             className="rounded-full border border-white/20 bg-slate-900/70 px-2 py-0.5 text-xs text-slate-200"
-                            title="Bu veri sınıf ortalamasından üretilmiştir."
+                            title={
+                              card.hasCriticalDataGap
+                                ? "Bu varlıkta veri yetersiz. Puanlar karşılaştırma yerine nötr gösterimde tutulur."
+                                : "Bu veri sınıf ortalamasından üretilmiştir."
+                            }
                           >
                             ℹ️
                           </span>
@@ -996,11 +1036,23 @@ export default function UniversalAssetComparisonPanel() {
                       <div className="mt-3 space-y-2 text-sm">
                         <div className="flex items-center justify-between text-slate-200">
                           <span>Risk Düzeyi</span>
-                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Risk", card.risk)}`}>{card.risk.toFixed(1)}</span>
+                          {card.riskUnavailable ? (
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                          ) : (
+                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Risk", card.risk)}`}>
+                              {card.risk.toFixed(1)}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
                           <span>Geçmiş Getiri Gücü</span>
-                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Getiri", card.return)}`}>{card.return.toFixed(1)}</span>
+                          {card.returnUnavailable ? (
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                          ) : (
+                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Getiri", card.return)}`}>
+                              {card.return.toFixed(1)}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
                           <span>Nakde Çevirme Kolaylığı</span>
@@ -1015,7 +1067,9 @@ export default function UniversalAssetComparisonPanel() {
                         <div className="mt-3 border-t border-white/10 pt-2">
                           <div className="flex items-center justify-between text-slate-100">
                             <span className="font-display text-xs">Skor</span>
-                            <span className="font-data text-base font-semibold">{card.totalScore.toFixed(1)}</span>
+                            <span className="font-data text-base font-semibold">
+                              {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1062,7 +1116,7 @@ export default function UniversalAssetComparisonPanel() {
                             </span>
                           ) : null}
                           <span className="rounded-md border border-[#22b7ff]/35 bg-[#22b7ff]/14 px-2 py-1 font-data text-xs text-[#8ddfff]">
-                            Uyum {row.profileFitScore.toFixed(1)}
+                            {row.hasCriticalDataGap ? "Uyum: Veri yetersiz" : `Uyum ${row.profileFitScore.toFixed(1)}`}
                           </span>
                         </div>
                       </div>

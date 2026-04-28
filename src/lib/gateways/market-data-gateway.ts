@@ -112,6 +112,29 @@ function resolveProviderSymbol(symbol: string): string {
   return PROVIDER_SYMBOL_OVERRIDES[symbol] ?? symbol;
 }
 
+function buildProviderSymbolCandidates(symbol: string): string[] {
+  const normalized = normalizeSymbol(symbol);
+  if (!normalized) return [];
+
+  const candidates = new Set<string>();
+  const preferred = resolveProviderSymbol(normalized);
+  if (preferred) candidates.add(preferred);
+  candidates.add(normalized);
+
+  const hasCompositeSyntax = /[.=^-]/.test(normalized);
+  if (!hasCompositeSyntax && /^[A-Z]{4,5}$/.test(normalized)) {
+    candidates.add(`${normalized}.IS`);
+  }
+  if (!hasCompositeSyntax && /^[A-Z]{6}$/.test(normalized)) {
+    candidates.add(`${normalized}=X`);
+  }
+  if (!hasCompositeSyntax && /^[A-Z0-9]{2,10}$/.test(normalized)) {
+    candidates.add(`${normalized}-USD`);
+  }
+
+  return Array.from(candidates);
+}
+
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -281,10 +304,16 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     const cached = this.getCached(this.quoteCache, symbol);
     if (cached !== undefined) return cached;
 
-    const providerSymbol = resolveProviderSymbol(symbol);
-    const queryPath = `/v7/finance/quote?symbols=${encodeURIComponent(providerSymbol)}`;
-    const payload = await this.fetchWithProviderFallback(queryPath);
-    const quote = parseQuotePayload(payload, symbol, providerSymbol);
+    let quote: MarketQuote | null = null;
+    for (const providerSymbol of buildProviderSymbolCandidates(symbol)) {
+      const queryPath = `/v7/finance/quote?symbols=${encodeURIComponent(providerSymbol)}`;
+      const payload = await this.fetchWithProviderFallback(queryPath);
+      const parsed = parseQuotePayload(payload, symbol, providerSymbol);
+      if (parsed !== null) {
+        quote = parsed;
+        break;
+      }
+    }
     this.setCached(this.quoteCache, symbol, quote, QUOTE_TTL_MS);
     return quote;
   }
@@ -302,14 +331,33 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     const cached = this.getCached(this.historyCache, cacheKey);
     if (cached !== undefined) return cached;
 
-    const providerSymbol = resolveProviderSymbol(symbol);
-    const queryPath =
-      `/v8/finance/chart/${encodeURIComponent(providerSymbol)}` +
-      `?interval=${encodeURIComponent(interval)}&range=${encodeURIComponent(range)}`;
-    const payload = await this.fetchWithProviderFallback(queryPath);
-    const history = parseHistoryPayload(payload, symbol, providerSymbol);
-    this.setCached(this.historyCache, cacheKey, history, HISTORY_TTL_MS);
-    return history;
+    let history: MarketHistory | null = null;
+    let fallbackProviderSymbol = resolveProviderSymbol(symbol);
+    for (const providerSymbol of buildProviderSymbolCandidates(symbol)) {
+      fallbackProviderSymbol = providerSymbol;
+      const queryPath =
+        `/v8/finance/chart/${encodeURIComponent(providerSymbol)}` +
+        `?interval=${encodeURIComponent(interval)}&range=${encodeURIComponent(range)}`;
+      const payload = await this.fetchWithProviderFallback(queryPath);
+      const parsed = parseHistoryPayload(payload, symbol, providerSymbol);
+      if (parsed.points.length > 0 && parsed.returns.length > 0) {
+        history = parsed;
+        break;
+      }
+      if (history === null && parsed.points.length > 0) {
+        history = parsed;
+      }
+    }
+    const resolvedHistory =
+      history ??
+      ({
+        symbol,
+        providerSymbol: fallbackProviderSymbol,
+        points: [],
+        returns: [],
+      } as MarketHistory);
+    this.setCached(this.historyCache, cacheKey, resolvedHistory, HISTORY_TTL_MS);
+    return resolvedHistory;
   }
 
   async getLiquidity(
