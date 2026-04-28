@@ -1,7 +1,7 @@
 ﻿"use client";
 
 interface MetricExplanationItem {
-  title: "Risk Düzeyi" | "Kazanç Potansiyeli" | "Nakde Çevirme Kolaylığı" | "Portföy Dengeleme Gücü";
+  title: "Risk Düzeyi" | "Geçmiş Getiri Gücü" | "Nakde Çevirme Kolaylığı" | "Portföy Dengeleme Gücü";
   description: string;
 }
 
@@ -12,9 +12,9 @@ const METRIC_EXPLANATIONS: MetricExplanationItem[] = [
       "Varlığın fiyatındaki dalgalanma (volatilite) ve ani kayıp ihtimalidir. Tarihsel fiyat hareketlerinin standart sapması ile hesaplanır.",
   },
   {
-    title: "Kazanç Potansiyeli",
+    title: "Geçmiş Getiri Gücü",
     description:
-      "Varlığın geçmiş verilere göre kazandırma potansiyelidir. Belirli periyotlardaki büyüme oranlarının ortalaması alınarak ölçülür.",
+      "Varlığın geçmiş performansının risk ayarlı gücüdür. Ortalama getiri, risksiz getiri ve oynaklık birlikte değerlendirilerek hesaplanır.",
   },
   {
     title: "Nakde Çevirme Kolaylığı",

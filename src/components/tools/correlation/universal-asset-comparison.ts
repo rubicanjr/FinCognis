@@ -19,11 +19,21 @@ export interface UniversalMetrics {
   diversification: number;
 }
 
+export type AnalyzeTimeHorizon = "1mo" | "1y" | "5y";
+
+export interface AssetComputationMeta {
+  isFallback: boolean;
+  fallbackReasons: string[];
+  modelVersion: string;
+  timeHorizon: AnalyzeTimeHorizon;
+}
+
 export interface NormalizedAsset {
   symbol: string;
   originalInput: string;
   class: AssetClass;
   metrics: UniversalMetrics;
+  computation?: AssetComputationMeta;
 }
 
 export type AliasDictionary = Record<string, string>;
@@ -354,6 +364,12 @@ export class AssetParserService {
       originalInput: token.trim(),
       class: assetClass,
       metrics: fallbackMetrics(symbol, assetClass),
+      computation: {
+        isFallback: true,
+        fallbackReasons: ["parser_seed_metrics"],
+        modelVersion: "analysis_engine_v2",
+        timeHorizon: "1y",
+      },
     };
   }
 }

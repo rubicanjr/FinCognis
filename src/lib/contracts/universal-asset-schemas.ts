@@ -2,6 +2,7 @@ import { z } from "zod";
 import { AssetClass } from "@/components/tools/correlation/universal-asset-comparison";
 
 export const AssetClassSchema = z.nativeEnum(AssetClass);
+export const AnalyzeTimeHorizonSchema = z.enum(["1mo", "1y", "5y"]);
 
 export const UniversalMetricsSchema = z.object({
   risk: z.number().min(1).max(10),
@@ -10,11 +11,19 @@ export const UniversalMetricsSchema = z.object({
   diversification: z.number().min(1).max(10),
 });
 
+export const AssetComputationMetaSchema = z.object({
+  isFallback: z.boolean(),
+  fallbackReasons: z.array(z.string().min(1)),
+  modelVersion: z.string().min(1),
+  timeHorizon: AnalyzeTimeHorizonSchema,
+});
+
 export const NormalizedAssetSchema = z.object({
   symbol: z.string().min(1),
   originalInput: z.string().min(1),
   class: AssetClassSchema,
   metrics: UniversalMetricsSchema,
+  computation: AssetComputationMetaSchema.optional(),
 });
 
 export const AssetParserWarningSchema = z.object({
@@ -50,6 +59,7 @@ export const AnalyzeRequestSchema = z.object({
       class: AssetClassSchema,
     })
   ).max(40),
+  timeHorizon: AnalyzeTimeHorizonSchema.default("1y"),
 });
 
 export const AnalyzeResponseSchema = z.object({

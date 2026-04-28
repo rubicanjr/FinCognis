@@ -19,7 +19,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const analyzed = await analyzeUniversalAssets(parsed.data.assets, marketDataGateway);
+  const analyzed = await analyzeUniversalAssets(parsed.data.assets, marketDataGateway, {
+    timeHorizon: parsed.data.timeHorizon,
+  });
   const unknownList = analyzed
     .filter((asset) => asset.class === AssetClass.Unknown)
     .map((asset) => asset.originalInput);
@@ -41,7 +43,7 @@ export async function POST(request: Request) {
       provider: "Yahoo Finance MarketDataGateway",
       fetchedAtIso: new Date().toISOString(),
       note:
-        "Skorlar canlı piyasa akışından üretilir. Veri kapsamı olmayan sembollerde sınıf-bazlı varsayımlar kullanılabilir.",
+        `Skorlar canlı piyasa akışından üretilir. Model: analysis_engine_v2_quant. Zaman ufku: ${parsed.data.timeHorizon}. Veri yetersizliğinde fallback metadata alanını kontrol edin.`,
     },
   });
 

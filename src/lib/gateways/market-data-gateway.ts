@@ -43,10 +43,15 @@ export interface MarketLiquidity {
   volumeBand: "very_high" | "high" | "medium" | "low" | "unknown";
 }
 
+export interface MarketLiquidityOptions {
+  range?: MarketHistoryRange;
+  interval?: "1d";
+}
+
 export interface MarketDataGatewayPort {
   getQuote(symbol: string): Promise<MarketQuote | null>;
   getHistory(symbol: string, options?: MarketHistoryOptions): Promise<MarketHistory>;
-  getLiquidity(symbol: string): Promise<MarketLiquidity>;
+  getLiquidity(symbol: string, options?: MarketLiquidityOptions): Promise<MarketLiquidity>;
   getSupportedAssets(): AssetCatalogItem[];
 }
 
@@ -298,7 +303,10 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     return history;
   }
 
-  async getLiquidity(symbolInput: string): Promise<MarketLiquidity> {
+  async getLiquidity(
+    symbolInput: string,
+    options: MarketLiquidityOptions = {}
+  ): Promise<MarketLiquidity> {
     const symbol = normalizeSymbol(symbolInput);
     const cacheKey = symbol;
     const cached = this.getCached(this.liquidityCache, cacheKey);
@@ -306,8 +314,10 @@ export class MarketDataGateway implements MarketDataGatewayPort {
 
     const providerSymbol = resolveProviderSymbol(symbol);
     const baseProfile = BASE_LIQUIDITY_BY_SYMBOL[symbol] ?? LIQUIDITY_TABLE.high;
+    const liquidityRange = options.range ?? "3mo";
+    const liquidityInterval = options.interval ?? "1d";
     const [history, quote] = await Promise.all([
-      this.getHistory(symbol, { range: "3mo", interval: "1d" }),
+      this.getHistory(symbol, { range: liquidityRange, interval: liquidityInterval }),
       this.getQuote(symbol),
     ]);
 

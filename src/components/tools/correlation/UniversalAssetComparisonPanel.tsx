@@ -92,6 +92,7 @@ interface DiscoveryRow {
   diversification: number;
   profileFitScore: number;
   shortExplanation: string;
+  isFallback: boolean;
 }
 
 interface CompareCardData {
@@ -102,7 +103,10 @@ interface CompareCardData {
   diversification: number;
   totalScore: number;
   balanceScore: number;
+  isFallback: boolean;
 }
+
+type TimeHorizon = AnalyzeRequest["timeHorizon"];
 
 const METRIC_CONFIG: MetricConfig[] = [
   { key: "risk", matrixLabel: "Risk" },
@@ -123,6 +127,12 @@ const PREFERENCE_LEVEL_OPTIONS: Array<{ value: PreferenceLevel; label: string }>
   { value: "low", label: "Düşük" },
   { value: "medium", label: "Orta" },
   { value: "high", label: "Yüksek" },
+];
+
+const TIME_HORIZON_OPTIONS: Array<{ value: TimeHorizon; label: string }> = [
+  { value: "1mo", label: "1 Ay" },
+  { value: "1y", label: "1 Yıl" },
+  { value: "5y", label: "5 Yıl" },
 ];
 
 const PREFERENCE_TARGET_SCORE: Record<PreferenceLevel, number> = {
@@ -404,7 +414,7 @@ function profileDescription(row: Omit<DiscoveryRow, "shortExplanation">): string
     notes.push("Portföy dengeleme gücü görece yüksektir.");
   }
   if (row.return >= 7) {
-    notes.push("Kazanç potansiyeli görece yüksektir.");
+    notes.push("Geçmiş getiri gücü görece yüksektir.");
   }
 
   if (row.profileFitScore >= 75) {
@@ -421,6 +431,7 @@ function profileDescription(row: Omit<DiscoveryRow, "shortExplanation">): string
 
 export default function UniversalAssetComparisonPanel() {
   const [mode, setMode] = useState<PanelMode>("compare");
+  const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("1y");
 
   const [rawInput, setRawInput] = useState("TUPRS ve BTC karşılaştır");
   const [debouncedInput, setDebouncedInput] = useState(rawInput);
@@ -436,6 +447,7 @@ export default function UniversalAssetComparisonPanel() {
   const [discoveryError, setDiscoveryError] = useState<string | null>(null);
   const [discoveryData, setDiscoveryData] = useState<AnalyzeResponse | null>(null);
   const [discoveryCatalogSignature, setDiscoveryCatalogSignature] = useState("");
+  const [discoveryHorizon, setDiscoveryHorizon] = useState<TimeHorizon | null>(null);
 
   const [selectedPresetKey, setSelectedPresetKey] = useState<ProfilePresetKey>(DEFAULT_PROFILE_PRESET_KEY);
   const [criteria, setCriteria] = useState<DiscoveryCriteria>(defaultCriteriaByPreset(DEFAULT_PROFILE_PRESET_KEY));
@@ -506,7 +518,7 @@ export default function UniversalAssetComparisonPanel() {
     fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assets: parsedAssets }),
+      body: JSON.stringify({ assets: parsedAssets, timeHorizon }),
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {
@@ -528,7 +540,7 @@ export default function UniversalAssetComparisonPanel() {
       });
 
     return () => controller?.abort();
-  }, [catalogData, debouncedInput, mode]);
+  }, [catalogData, debouncedInput, mode, timeHorizon]);
 
   const catalogSignature = useMemo(() => {
     if (!catalogData) return "";
@@ -542,7 +554,7 @@ export default function UniversalAssetComparisonPanel() {
     if (mode !== "discover") return;
     if (!catalogData) return;
 
-    if (discoveryData && discoveryCatalogSignature === catalogSignature) return;
+    if (discoveryData && discoveryCatalogSignature === catalogSignature && discoveryHorizon === timeHorizon) return;
 
     const discoveryAssets = toCatalogAnalyzeAssets(catalogData);
     if (discoveryAssets.length === 0) {
@@ -559,7 +571,7 @@ export default function UniversalAssetComparisonPanel() {
     fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assets: discoveryAssets }),
+      body: JSON.stringify({ assets: discoveryAssets, timeHorizon }),
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {
@@ -572,6 +584,7 @@ export default function UniversalAssetComparisonPanel() {
       .then((data) => {
         setDiscoveryData(data);
         setDiscoveryCatalogSignature(catalogSignature);
+        setDiscoveryHorizon(timeHorizon);
         setDiscoveryLoading(false);
       })
       .catch((error: unknown) => {
@@ -582,7 +595,7 @@ export default function UniversalAssetComparisonPanel() {
       });
 
     return () => controller?.abort();
-  }, [catalogData, catalogSignature, discoveryCatalogSignature, discoveryData, mode]);
+  }, [catalogData, catalogSignature, discoveryCatalogSignature, discoveryData, discoveryHorizon, mode, timeHorizon]);
 
   const assets = useMemo(() => analysisData?.assets ?? [], [analysisData?.assets]);
   const matrix = useMemo(() => createComparisonMatrix(assets), [assets]);
@@ -612,9 +625,10 @@ export default function UniversalAssetComparisonPanel() {
           diversification,
           totalScore: totalByAsset[assetSymbol] ?? 0,
           balanceScore,
+          isFallback: Boolean(assets.find((asset) => asset.symbol === assetSymbol)?.computation?.isFallback),
         };
       }),
-    [matrix.assets, matrix.metrics, totalByAsset]
+    [assets, matrix.assets, matrix.metrics, totalByAsset]
   );
   const bestBalancedAsset = useMemo(() => {
     if (compareCards.length === 0) return null;
@@ -625,7 +639,7 @@ export default function UniversalAssetComparisonPanel() {
     if (!bestBalancedAsset) return "";
     const factors = [
       { label: "düşük risk düzeyi", score: riskQuality(bestBalancedAsset.risk) },
-      { label: "yüksek kazanç potansiyeli", score: bestBalancedAsset.return },
+      { label: "yüksek geçmiş getiri gücü", score: bestBalancedAsset.return },
       { label: "güçlü nakde çevirme kolaylığı", score: bestBalancedAsset.liquidity },
       { label: "yüksek portföy dengeleme gücü", score: bestBalancedAsset.diversification },
     ]
@@ -674,6 +688,7 @@ export default function UniversalAssetComparisonPanel() {
           liquidity,
           diversification,
           profileFitScore,
+          isFallback: Boolean(asset.computation?.isFallback),
         };
 
         return {
@@ -702,7 +717,7 @@ export default function UniversalAssetComparisonPanel() {
 
   const title = mode === "compare" ? "Varlıkları Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Varlıkları Keşfedin";
   const subtitle =
-    "Yatırım tavsiyesi değil; Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü metriklerine göre genel profil eşleştirmesi.";
+    "Yatırım tavsiyesi değil; Risk Düzeyi, Geçmiş Getiri Gücü, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü metriklerine göre genel profil eşleştirmesi.";
 
   const dataError = catalogError ?? (mode === "compare" ? analysisError : discoveryError);
   const liveMeta = (mode === "compare" ? analysisData?.meta : discoveryData?.meta) ?? catalogData?.meta ?? null;
@@ -772,6 +787,23 @@ export default function UniversalAssetComparisonPanel() {
         </div>
 
         <div className="mx-auto mt-7 max-w-3xl">
+          <div className="mb-3 rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
+            <label className="block space-y-1">
+              <span className="font-display text-[11px] text-slate-300">Yatırım ufku</span>
+              <select
+                value={timeHorizon}
+                onChange={(event) => setTimeHorizon(event.target.value as TimeHorizon)}
+                className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+              >
+                {TIME_HORIZON_OPTIONS.map((option) => (
+                  <option key={`horizon:${option.value}`} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
           {mode === "compare" ? (
             <div className="rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-2 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]">
               <label htmlFor="asset-query" className="mb-2 block px-2 font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300">
@@ -829,7 +861,7 @@ export default function UniversalAssetComparisonPanel() {
                   <p className="font-display text-[11px] text-slate-300">Ağırlık dağılımı</p>
                   <p className="mt-1 font-data text-xs text-[#8ddfff]">
                     Risk Düzeyi %{selectedPreset.weights.risk} | Nakde Çevirme Kolaylığı %
-                    {selectedPreset.weights.liquidity} | Kazanç Potansiyeli %{selectedPreset.weights.return} | Portföy
+                    {selectedPreset.weights.liquidity} | Geçmiş Getiri Gücü %{selectedPreset.weights.return} | Portföy
                     Dengeleme Gücü %{selectedPreset.weights.diversification}
                   </p>
                 </div>
@@ -848,7 +880,7 @@ export default function UniversalAssetComparisonPanel() {
                   </select>
                 </label>
                 <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Kazanç potansiyeli beklentisi</span>
+                  <span className="font-display text-[11px] text-slate-300">Geçmiş getiri gücü beklentisi</span>
                   <select
                     value={criteria.returnExpectation}
                     onChange={(event) => handleCriteriaChange("returnExpectation", event.target.value)}
@@ -936,14 +968,24 @@ export default function UniversalAssetComparisonPanel() {
                 <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                   {compareCards.map((card, index) => (
                     <article key={`compare-card:${card.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
-                      <h4 className="font-display text-lg font-semibold text-slate-100">{card.symbol}</h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-display text-lg font-semibold text-slate-100">{card.symbol}</h4>
+                        {card.isFallback ? (
+                          <span
+                            className="rounded-full border border-white/20 bg-slate-900/70 px-2 py-0.5 text-xs text-slate-200"
+                            title="Bu veri sınıf ortalamasından üretilmiştir."
+                          >
+                            ℹ️
+                          </span>
+                        ) : null}
+                      </div>
                       <div className="mt-3 space-y-2 text-sm">
                         <div className="flex items-center justify-between text-slate-200">
                           <span>Risk Düzeyi</span>
                           <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Risk", card.risk)}`}>{card.risk.toFixed(1)}</span>
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Kazanç Potansiyeli</span>
+                          <span>Geçmiş Getiri Gücü</span>
                           <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Getiri", card.return)}`}>{card.return.toFixed(1)}</span>
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
@@ -996,9 +1038,19 @@ export default function UniversalAssetComparisonPanel() {
                     <article key={`suitable:${row.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
                       <div className="flex items-center justify-between">
                         <h4 className="font-display text-lg font-semibold text-slate-100">{row.symbol}</h4>
-                        <span className="rounded-md border border-[#22b7ff]/35 bg-[#22b7ff]/14 px-2 py-1 font-data text-xs text-[#8ddfff]">
-                          Uyum {row.profileFitScore.toFixed(1)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {row.isFallback ? (
+                            <span
+                              className="rounded-full border border-white/20 bg-slate-900/70 px-2 py-0.5 text-xs text-slate-200"
+                              title="Bu veri sınıf ortalamasından üretilmiştir."
+                            >
+                              ℹ️
+                            </span>
+                          ) : null}
+                          <span className="rounded-md border border-[#22b7ff]/35 bg-[#22b7ff]/14 px-2 py-1 font-data text-xs text-[#8ddfff]">
+                            Uyum {row.profileFitScore.toFixed(1)}
+                          </span>
+                        </div>
                       </div>
                       <p className="mt-1 text-xs text-slate-300">{row.assetClassLabel}</p>
                       <p className="mt-2 text-sm text-slate-200">{row.shortExplanation}</p>
@@ -1013,7 +1065,13 @@ export default function UniversalAssetComparisonPanel() {
                   <ul className="mt-3 space-y-2">
                     {higherRiskRows.map((row) => (
                       <li key={`riskier:${row.symbol}`} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-sm text-slate-100`}>
-                        <span className="font-display font-semibold">{row.symbol}</span> · Risk Düzeyi {row.risk.toFixed(1)} ·{" "}
+                        <span className="font-display font-semibold">{row.symbol}</span>
+                        {row.isFallback ? (
+                          <span className="ml-2 text-xs text-slate-300" title="Bu veri sınıf ortalamasından üretilmiştir.">
+                            ℹ️
+                          </span>
+                        ) : null}{" "}
+                        · Risk Düzeyi {row.risk.toFixed(1)} ·{" "}
                         {row.shortExplanation}
                       </li>
                     ))}
