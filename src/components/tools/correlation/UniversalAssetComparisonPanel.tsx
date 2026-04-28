@@ -720,6 +720,7 @@ export default function UniversalAssetComparisonPanel() {
     "Yatırım tavsiyesi değil; Risk Düzeyi, Geçmiş Getiri Gücü, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü metriklerine göre genel profil eşleştirmesi.";
 
   const dataError = catalogError ?? (mode === "compare" ? analysisError : discoveryError);
+  const activeWarnings = mode === "compare" ? analysisData?.warnings ?? [] : discoveryData?.warnings ?? [];
   const liveMeta = (mode === "compare" ? analysisData?.meta : discoveryData?.meta) ?? catalogData?.meta ?? null;
   const liveDataNote = liveMeta
     ? `Canlı ve dinamik piyasa verisi kullanılıyor (${liveMeta.provider}). Son doğrulama: ${formatLiveDataTimestamp(
@@ -943,6 +944,19 @@ export default function UniversalAssetComparisonPanel() {
         {dataError ? (
           <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-warning/40 bg-warning-container/25 px-3 py-2 text-xs text-warning">
             {dataError}
+          </div>
+        ) : null}
+
+        {activeWarnings.length > 0 ? (
+          <div className="mx-auto mt-4 flex max-w-3xl flex-col gap-2">
+            {activeWarnings.map((warning, index) => (
+              <div
+                key={`analysis-warning:${index}`}
+                className="rounded-xl border border-white/15 bg-slate-900/65 px-3 py-2 text-xs text-slate-200"
+              >
+                {warning.message}
+              </div>
+            ))}
           </div>
         ) : null}
 

@@ -28,6 +28,7 @@ interface AnalyzeUniversalAssetsOptions {
 interface HorizonSpec {
   range: MarketHistoryRange;
   lookbackDays: number;
+  cryptoCalendarLookbackDays: number;
   minHistoryPoints: number;
 }
 
@@ -38,13 +39,6 @@ interface ClassLiquidityThresholds {
   low: number;
 }
 
-interface ClassStatBaseline {
-  volatilityMean: number;
-  volatilityStd: number;
-  sharpeLogMean: number;
-  sharpeLogStd: number;
-}
-
 interface RawAssetSeries {
   symbol: string;
   originalInput: string;
@@ -52,18 +46,98 @@ interface RawAssetSeries {
   providerSymbol: string;
   historyPoints: number;
   returns: number[];
+  riskReturns: number[];
+  riskExpectedPoints: number;
+  riskQualityRatio: number;
   liquidity: MarketLiquidity;
+}
+
+interface PreparedRiskReturns {
+  values: number[];
+  qualityRatio: number;
+}
+
+interface UniverseVolatilitySnapshot {
+  volatilities: number[];
+  computedAtIso: string;
+}
+
+interface CacheEntry<TValue> {
+  expiresAt: number;
+  value: TValue;
+}
+
+interface UniverseDistributionResult {
+  source: "fresh_cache" | "recomputed" | "stale_cache" | "unavailable";
+  volatilities: number[];
+}
+
+interface UniverseSharpeDistributionResult {
+  source: "fresh_cache" | "recomputed" | "stale_cache" | "unavailable";
+  sharpes: number[];
 }
 
 const classBySymbol = buildDefaultClassDictionary();
 const MODEL_VERSION = "analysis_engine_v2_quant";
 const DEFAULT_RISK_FREE_RATE_ANNUAL = 0.12;
+const RISK_UNIVERSE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENABLE_ANALYSIS_DIAGNOSTICS = process.env.FINCOGNIS_ANALYSIS_DEBUG === "true";
+const riskUniverseCache = new Map<string, CacheEntry<UniverseVolatilitySnapshot>>();
+const sharpeUniverseCache = new Map<string, CacheEntry<UniverseVolatilitySnapshot>>();
 
 const HORIZON_CONFIG: Record<AnalyzeTimeHorizon, HorizonSpec> = {
-  "1mo": { range: "1mo", lookbackDays: 21, minHistoryPoints: 12 },
-  "1y": { range: "1y", lookbackDays: 252, minHistoryPoints: 60 },
-  "5y": { range: "5y", lookbackDays: 1260, minHistoryPoints: 180 },
+  "1mo": { range: "1mo", lookbackDays: 21, cryptoCalendarLookbackDays: 30, minHistoryPoints: 12 },
+  "1y": { range: "1y", lookbackDays: 252, cryptoCalendarLookbackDays: 365, minHistoryPoints: 60 },
+  "5y": { range: "5y", lookbackDays: 1260, cryptoCalendarLookbackDays: 1825, minHistoryPoints: 180 },
+};
+
+const CLASS_BENCHMARK_UNIVERSE: Record<AssetClass, string[]> = {
+  [AssetClass.Equity]: [
+    "TUPRS",
+    "THYAO",
+    "GARAN",
+    "KCHOL",
+    "ASELS",
+    "AKBNK.IS",
+    "BIMAS.IS",
+    "EREGL.IS",
+    "ISCTR.IS",
+    "SAHOL.IS",
+    "SISE.IS",
+    "YKBNK.IS",
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+  ],
+  [AssetClass.Crypto]: [
+    "BTC",
+    "ETH",
+    "BNB",
+    "SOL",
+    "XRP-USD",
+    "ADA-USD",
+    "DOGE-USD",
+    "TRX-USD",
+    "AVAX-USD",
+    "DOT-USD",
+    "LINK-USD",
+    "TON-USD",
+    "SHIB-USD",
+    "LTC-USD",
+    "BCH-USD",
+    "XLM-USD",
+    "UNI-USD",
+    "SUI-USD",
+    "APT-USD",
+    "NEAR-USD",
+  ],
+  [AssetClass.Commodity]: ["XAU", "XAG", "WTI", "BRENT", "HG=F", "XPTUSD=X"],
+  [AssetClass.Index]: ["SPX", "NDX", "BIST30", "SPY", "QQQ", "VTI"],
+  [AssetClass.FX]: ["USDTRY", "EURUSD", "GBPUSD=X", "JPYUSD=X", "USDCAD=X", "AUDUSD=X"],
+  [AssetClass.Bond]: ["EUROBOND", "^TNX", "^TYX", "IEF", "TLT", "BND"],
+  [AssetClass.Fund]: ["SPY", "QQQ", "VTI", "BND", "EEM", "IWM"],
+  [AssetClass.Unknown]: [],
 };
 
 const CLASS_LIQUIDITY_THRESHOLDS: Record<AssetClass, ClassLiquidityThresholds> = {
@@ -77,25 +151,25 @@ const CLASS_LIQUIDITY_THRESHOLDS: Record<AssetClass, ClassLiquidityThresholds> =
   [AssetClass.Unknown]: { veryHigh: 80_000_000, high: 20_000_000, medium: 2_000_000, low: 500_000 },
 };
 
-const CLASS_STAT_BASELINES: Record<AssetClass, ClassStatBaseline> = {
-  [AssetClass.Equity]: { volatilityMean: 0.018, volatilityStd: 0.008, sharpeLogMean: 0.1, sharpeLogStd: 0.55 },
-  [AssetClass.Crypto]: { volatilityMean: 0.045, volatilityStd: 0.02, sharpeLogMean: 0.05, sharpeLogStd: 0.75 },
-  [AssetClass.Commodity]: { volatilityMean: 0.015, volatilityStd: 0.007, sharpeLogMean: 0.08, sharpeLogStd: 0.5 },
-  [AssetClass.Index]: { volatilityMean: 0.012, volatilityStd: 0.006, sharpeLogMean: 0.1, sharpeLogStd: 0.45 },
-  [AssetClass.FX]: { volatilityMean: 0.009, volatilityStd: 0.004, sharpeLogMean: 0.06, sharpeLogStd: 0.4 },
-  [AssetClass.Bond]: { volatilityMean: 0.007, volatilityStd: 0.003, sharpeLogMean: 0.04, sharpeLogStd: 0.35 },
-  [AssetClass.Fund]: { volatilityMean: 0.011, volatilityStd: 0.005, sharpeLogMean: 0.08, sharpeLogStd: 0.45 },
-  [AssetClass.Unknown]: { volatilityMean: 0.015, volatilityStd: 0.007, sharpeLogMean: 0.07, sharpeLogStd: 0.5 },
+const CLASS_RISK_FREE_RATE_ANNUAL: Record<AssetClass, number> = {
+  [AssetClass.Equity]: 0.37,
+  [AssetClass.Crypto]: 0.0,
+  [AssetClass.Commodity]: 0.0364,
+  [AssetClass.Index]: 0.0364,
+  [AssetClass.FX]: 0.0364,
+  [AssetClass.Bond]: 0.37,
+  [AssetClass.Fund]: 0.0364,
+  [AssetClass.Unknown]: DEFAULT_RISK_FREE_RATE_ANNUAL,
 };
 
 const CLASS_FALLBACK_METRICS: Record<AssetClass, UniversalMetrics> = {
-  [AssetClass.Equity]: { risk: 6.1, return: 6.9, liquidity: 7.1, diversification: 5.9 },
-  [AssetClass.Crypto]: { risk: 3.8, return: 7.7, liquidity: 6.4, diversification: 5.0 },
-  [AssetClass.Commodity]: { risk: 5.9, return: 6.1, liquidity: 6.8, diversification: 7.7 },
-  [AssetClass.Index]: { risk: 7.4, return: 6.3, liquidity: 8.6, diversification: 7.9 },
-  [AssetClass.FX]: { risk: 7.2, return: 5.0, liquidity: 8.8, diversification: 7.0 },
-  [AssetClass.Bond]: { risk: 8.0, return: 4.6, liquidity: 6.0, diversification: 8.1 },
-  [AssetClass.Fund]: { risk: 6.9, return: 6.0, liquidity: 7.9, diversification: 7.8 },
+  [AssetClass.Equity]: { risk: 5.0, return: 6.9, liquidity: 7.1, diversification: 5.9 },
+  [AssetClass.Crypto]: { risk: 5.0, return: 7.7, liquidity: 6.4, diversification: 5.0 },
+  [AssetClass.Commodity]: { risk: 5.0, return: 6.1, liquidity: 6.8, diversification: 7.7 },
+  [AssetClass.Index]: { risk: 5.0, return: 6.3, liquidity: 8.6, diversification: 7.9 },
+  [AssetClass.FX]: { risk: 5.0, return: 5.0, liquidity: 8.8, diversification: 7.0 },
+  [AssetClass.Bond]: { risk: 5.0, return: 4.6, liquidity: 6.0, diversification: 8.1 },
+  [AssetClass.Fund]: { risk: 5.0, return: 6.0, liquidity: 7.9, diversification: 7.8 },
   [AssetClass.Unknown]: { risk: 5.0, return: 5.0, liquidity: 5.0, diversification: 5.0 },
 };
 
@@ -219,12 +293,6 @@ function toSharpeLog(returns: number[], riskFreeRateDaily: number): number | nul
   return Math.sign(sharpeLike) * Math.log1p(Math.abs(sharpeLike));
 }
 
-function computeZScore(value: number, values: number[], baselineMean: number, baselineStd: number): number {
-  const localMean = values.length >= 2 ? mean(values) : baselineMean;
-  const localStd = values.length >= 2 ? Math.max(stdDev(values), 1e-6) : Math.max(baselineStd, 1e-6);
-  return (value - localMean) / localStd;
-}
-
 function scoreFromVolumeThreshold(volume: number | null, assetClass: AssetClass): number {
   if (volume === null || volume <= 0) return 5;
   const thresholds = CLASS_LIQUIDITY_THRESHOLDS[assetClass] ?? CLASS_LIQUIDITY_THRESHOLDS[AssetClass.Unknown];
@@ -268,17 +336,286 @@ function toDailyRiskFreeRate(annualRate: number): number {
   return (1 + annualRate) ** (1 / 252) - 1;
 }
 
+function getRiskLookbackDays(assetClass: AssetClass, horizon: HorizonSpec): number {
+  return assetClass === AssetClass.Crypto ? horizon.cryptoCalendarLookbackDays : horizon.lookbackDays;
+}
+
+function getExpectedRiskPoints(assetClass: AssetClass, horizon: HorizonSpec): number {
+  const lookback = getRiskLookbackDays(assetClass, horizon);
+  const minimum = assetClass === AssetClass.Crypto ? 20 : 12;
+  const ratio = assetClass === AssetClass.Crypto ? 0.75 : 0.55;
+  return Math.max(minimum, Math.floor(lookback * ratio));
+}
+
+function getExpectedReturnPoints(assetClass: AssetClass, horizon: HorizonSpec): number {
+  return getExpectedRiskPoints(assetClass, horizon);
+}
+
+function buildUniverseCacheKey(assetClass: AssetClass, horizon: HorizonSpec): string {
+  return `universe_volatility:${assetClass}:${horizon.range}:1d`;
+}
+
+function buildSharpeUniverseCacheKey(assetClass: AssetClass, horizon: HorizonSpec): string {
+  return `universe_sharpe:${assetClass}:${horizon.range}:1d`;
+}
+
+function percentileRank(universe: number[], value: number): number {
+  if (universe.length === 0) return 0.5;
+  const below = universe.filter((candidate) => candidate < value).length;
+  return below / universe.length;
+}
+
+function prepareRiskReturns(
+  rawReturns: number[],
+  assetClass: AssetClass,
+  providerSymbol: string,
+  lookbackDays: number,
+  expectedPoints: number
+): PreparedRiskReturns {
+  const sliced = rawReturns.slice(-lookbackDays).filter((value) => Number.isFinite(value));
+  const bounded = sliced.filter((value) => value > -0.95 && value < 0.95);
+
+  let filtered = bounded;
+  if (assetClass === AssetClass.Equity) {
+    filtered = filtered.filter((value) => Math.abs(value) > 1e-8);
+  }
+
+  if (assetClass === AssetClass.Commodity && providerSymbol.endsWith("=F")) {
+    filtered = filtered.filter((value) => Math.abs(value) <= 0.2);
+  }
+
+  const qualityRatio = expectedPoints > 0 ? filtered.length / expectedPoints : 0;
+  return { values: filtered, qualityRatio };
+}
+
+function prepareReturnSeries(
+  rawReturns: number[],
+  assetClass: AssetClass,
+  providerSymbol: string,
+  lookbackDays: number,
+  expectedPoints: number
+): PreparedRiskReturns {
+  return prepareRiskReturns(rawReturns, assetClass, providerSymbol, lookbackDays, expectedPoints);
+}
+
+function winsorizeSharpe(value: number, assetClass: AssetClass): number {
+  if (assetClass !== AssetClass.Crypto) return value;
+  return Math.max(-3, Math.min(3, value));
+}
+
+async function mapWithConcurrency<TItem, TResult>(
+  items: readonly TItem[],
+  concurrency: number,
+  worker: (item: TItem) => Promise<TResult>
+): Promise<TResult[]> {
+  const safeConcurrency = Math.max(1, Math.min(concurrency, items.length));
+  if (items.length === 0) return [];
+
+  const results: TResult[] = new Array(items.length);
+  let cursor = 0;
+
+  async function runWorker(): Promise<void> {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      results[index] = await worker(items[index]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: safeConcurrency }, () => runWorker()));
+  return results;
+}
+
+function getCachedUniverseVolatilities(key: string, allowStale: boolean): UniverseDistributionResult | null {
+  const existing = riskUniverseCache.get(key);
+  if (!existing) return null;
+  const isFresh = existing.expiresAt > Date.now();
+  if (isFresh) {
+    return { source: "fresh_cache", volatilities: existing.value.volatilities };
+  }
+  if (allowStale) {
+    return { source: "stale_cache", volatilities: existing.value.volatilities };
+  }
+  return null;
+}
+
+function setUniverseVolatilityCache(key: string, snapshot: UniverseVolatilitySnapshot): void {
+  riskUniverseCache.set(key, {
+    expiresAt: Date.now() + RISK_UNIVERSE_CACHE_TTL_MS,
+    value: snapshot,
+  });
+}
+
+async function recomputeUniverseVolatilities(
+  assetClass: AssetClass,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort
+): Promise<UniverseVolatilitySnapshot | null> {
+  const symbols = Array.from(new Set(CLASS_BENCHMARK_UNIVERSE[assetClass] ?? []));
+  if (symbols.length === 0) return null;
+
+  const expectedPoints = getExpectedRiskPoints(assetClass, horizon);
+  const lookbackDays = getRiskLookbackDays(assetClass, horizon);
+  const computed = await mapWithConcurrency(symbols, 5, async (symbol) => {
+    const history = await gateway.getHistory(symbol, { range: horizon.range, interval: "1d" });
+    const prepared = prepareRiskReturns(
+      history.returns,
+      assetClass,
+      history.providerSymbol,
+      lookbackDays,
+      expectedPoints
+    );
+    if (prepared.values.length < expectedPoints) return null;
+    const volatility = stdDev(prepared.values);
+    return Number.isFinite(volatility) && volatility > 0 ? volatility : null;
+  });
+  const volatilities = computed.filter((value): value is number => value !== null);
+
+  if (volatilities.length === 0) return null;
+  return {
+    volatilities,
+    computedAtIso: new Date().toISOString(),
+  };
+}
+
+async function getUniverseDistribution(
+  assetClass: AssetClass,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort
+): Promise<UniverseDistributionResult> {
+  const key = buildUniverseCacheKey(assetClass, horizon);
+  const fresh = getCachedUniverseVolatilities(key, false);
+  if (fresh) return fresh;
+
+  try {
+    const rebuilt = await recomputeUniverseVolatilities(assetClass, horizon, gateway);
+    if (rebuilt && rebuilt.volatilities.length >= 5) {
+      setUniverseVolatilityCache(key, rebuilt);
+      return { source: "recomputed", volatilities: rebuilt.volatilities };
+    }
+  } catch {
+    // Intentional no-op: fallback below covers degraded data mode.
+  }
+
+  const stale = getCachedUniverseVolatilities(key, true);
+  if (stale) return stale;
+
+  return { source: "unavailable", volatilities: [] };
+}
+
+async function recomputeUniverseSharpes(
+  assetClass: AssetClass,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort,
+  riskFreeRateDaily: number
+): Promise<UniverseVolatilitySnapshot | null> {
+  const symbols = Array.from(new Set(CLASS_BENCHMARK_UNIVERSE[assetClass] ?? []));
+  if (symbols.length === 0) return null;
+
+  const expectedPoints = getExpectedReturnPoints(assetClass, horizon);
+  const lookbackDays = getRiskLookbackDays(assetClass, horizon);
+
+  const computed = await mapWithConcurrency(symbols, 5, async (symbol) => {
+    const history = await gateway.getHistory(symbol, { range: horizon.range, interval: "1d" });
+    const prepared = prepareReturnSeries(
+      history.returns,
+      assetClass,
+      history.providerSymbol,
+      lookbackDays,
+      expectedPoints
+    );
+    if (prepared.values.length < expectedPoints) return null;
+    const sharpeLog = toSharpeLog(prepared.values, riskFreeRateDaily);
+    if (sharpeLog === null || !Number.isFinite(sharpeLog)) return null;
+    return winsorizeSharpe(sharpeLog, assetClass);
+  });
+
+  const sharpes = computed.filter((value): value is number => value !== null);
+  if (sharpes.length === 0) return null;
+  return {
+    volatilities: sharpes,
+    computedAtIso: new Date().toISOString(),
+  };
+}
+
+async function getUniverseSharpeDistribution(
+  assetClass: AssetClass,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort,
+  riskFreeRateDaily: number
+): Promise<UniverseSharpeDistributionResult> {
+  const key = buildSharpeUniverseCacheKey(assetClass, horizon);
+  const fresh = getCachedUniverseVolatilitiesFrom(sharpeUniverseCache, key, false);
+  if (fresh) return { source: fresh.source, sharpes: fresh.values };
+
+  try {
+    const rebuilt = await recomputeUniverseSharpes(assetClass, horizon, gateway, riskFreeRateDaily);
+    if (rebuilt && rebuilt.volatilities.length >= 5) {
+      setUniverseVolatilityCacheTo(sharpeUniverseCache, key, rebuilt);
+      return { source: "recomputed", sharpes: rebuilt.volatilities };
+    }
+  } catch {
+    // no-op
+  }
+
+  const stale = getCachedUniverseVolatilitiesFrom(sharpeUniverseCache, key, true);
+  if (stale) return { source: stale.source, sharpes: stale.values };
+
+  return { source: "unavailable", sharpes: [] };
+}
+
 function logAnalysisDiagnostics(params: {
   symbol: string;
   providerSymbol: string;
   lookbackDays: number;
   historyPoints: number;
   returnsLength: number;
+  riskReturnsLength: number;
+  riskExpectedPoints: number;
+  riskUniverseSize: number;
+  riskUniverseSource: UniverseDistributionResult["source"];
+  returnUniverseSize: number;
+  returnUniverseSource: UniverseSharpeDistributionResult["source"];
   usingFallback: boolean;
   fallbackReasons: string[];
 }): void {
   if (!ENABLE_ANALYSIS_DIAGNOSTICS) return;
   console.info("[analysis_engine_v2_quant]", params);
+}
+
+function getCachedUniverseVolatilitiesFrom(
+  cache: Map<string, CacheEntry<UniverseVolatilitySnapshot>>,
+  key: string,
+  allowStale: boolean
+): { source: "fresh_cache" | "stale_cache"; values: number[] } | null {
+  const existing = cache.get(key);
+  if (!existing) return null;
+  const isFresh = existing.expiresAt > Date.now();
+  if (isFresh) {
+    return { source: "fresh_cache", values: existing.value.volatilities };
+  }
+  if (allowStale) {
+    return { source: "stale_cache", values: existing.value.volatilities };
+  }
+  return null;
+}
+
+function setUniverseVolatilityCacheTo(
+  cache: Map<string, CacheEntry<UniverseVolatilitySnapshot>>,
+  key: string,
+  snapshot: UniverseVolatilitySnapshot
+): void {
+  cache.set(key, {
+    expiresAt: Date.now() + RISK_UNIVERSE_CACHE_TTL_MS,
+    value: snapshot,
+  });
+}
+
+function getClassAnnualRiskFreeRate(assetClass: AssetClass, overrideAnnualRiskFree?: number): number {
+  if (typeof overrideAnnualRiskFree === "number" && Number.isFinite(overrideAnnualRiskFree)) {
+    return overrideAnnualRiskFree;
+  }
+  return CLASS_RISK_FREE_RATE_ANNUAL[assetClass] ?? DEFAULT_RISK_FREE_RATE_ANNUAL;
 }
 
 export function getUniversalAssetCatalog(
@@ -301,7 +638,32 @@ export async function analyzeUniversalAssets(
 
   const horizonKey = options.timeHorizon ?? "1y";
   const horizon = getHorizonSpec(horizonKey);
-  const riskFreeRateDaily = toDailyRiskFreeRate(options.riskFreeRateAnnual ?? DEFAULT_RISK_FREE_RATE_ANNUAL);
+
+  const classes = Array.from(new Set(resolvedAssets.map((asset) => asset.resolvedClass)));
+  const universeDistributionByClass = new Map<AssetClass, UniverseDistributionResult>();
+  const sharpeDistributionByClass = new Map<AssetClass, UniverseSharpeDistributionResult>();
+  const universeDistributionList = await Promise.all(
+    classes.map(async (assetClass) => ({
+      assetClass,
+      distribution: await getUniverseDistribution(assetClass, horizon, gateway),
+    }))
+  );
+  universeDistributionList.forEach((item) => {
+    universeDistributionByClass.set(item.assetClass, item.distribution);
+  });
+  const sharpeDistributionList = await Promise.all(
+    classes.map(async (assetClass) => {
+      const annualRate = getClassAnnualRiskFreeRate(assetClass, options.riskFreeRateAnnual);
+      const dailyRate = toDailyRiskFreeRate(annualRate);
+      return {
+        assetClass,
+        distribution: await getUniverseSharpeDistribution(assetClass, horizon, gateway, dailyRate),
+      };
+    })
+  );
+  sharpeDistributionList.forEach((item) => {
+    sharpeDistributionByClass.set(item.assetClass, item.distribution);
+  });
 
   const series = await Promise.all(
     resolvedAssets.map(async (asset): Promise<RawAssetSeries> => {
@@ -311,6 +673,16 @@ export async function analyzeUniversalAssets(
       ]);
 
       const returns = history.returns.slice(-horizon.lookbackDays);
+      const riskLookbackDays = getRiskLookbackDays(asset.resolvedClass, horizon);
+      const riskExpectedPoints = getExpectedRiskPoints(asset.resolvedClass, horizon);
+      const preparedRiskReturns = prepareRiskReturns(
+        history.returns,
+        asset.resolvedClass,
+        history.providerSymbol,
+        riskLookbackDays,
+        riskExpectedPoints
+      );
+
       return {
         symbol: asset.symbol,
         originalInput: asset.originalInput,
@@ -318,63 +690,95 @@ export async function analyzeUniversalAssets(
         providerSymbol: history.providerSymbol,
         historyPoints: history.points.length,
         returns,
+        riskReturns: preparedRiskReturns.values,
+        riskExpectedPoints,
+        riskQualityRatio: preparedRiskReturns.qualityRatio,
         liquidity,
       };
     })
   );
 
-  const volatilityByClass = new Map<AssetClass, number[]>();
-  const sharpeLogByClass = new Map<AssetClass, number[]>();
   const volumeByClass = new Map<AssetClass, number[]>();
 
   series.forEach((row) => {
-    const classVols = volatilityByClass.get(row.resolvedClass) ?? [];
-    const classSharpe = sharpeLogByClass.get(row.resolvedClass) ?? [];
     const classVolumes = volumeByClass.get(row.resolvedClass) ?? [];
-
-    if (row.returns.length >= horizon.minHistoryPoints) {
-      classVols.push(stdDev(row.returns));
-      const sharpeLog = toSharpeLog(row.returns, riskFreeRateDaily);
-      if (sharpeLog !== null) classSharpe.push(sharpeLog);
-    }
 
     if (typeof row.liquidity.avgDailyVolume === "number" && row.liquidity.avgDailyVolume > 0) {
       classVolumes.push(row.liquidity.avgDailyVolume);
     }
 
-    volatilityByClass.set(row.resolvedClass, classVols);
-    sharpeLogByClass.set(row.resolvedClass, classSharpe);
     volumeByClass.set(row.resolvedClass, classVolumes);
   });
 
   return series.map((row, rowIndex) => {
     const fallbackMetrics = classFallbackMetrics(row.resolvedClass);
     const fallbackReasons: string[] = [];
-    const classBaseline = CLASS_STAT_BASELINES[row.resolvedClass] ?? CLASS_STAT_BASELINES[AssetClass.Unknown];
+    const riskUniverse = universeDistributionByClass.get(row.resolvedClass) ?? {
+      source: "unavailable",
+      volatilities: [],
+    };
+    const returnUniverse = sharpeDistributionByClass.get(row.resolvedClass) ?? {
+      source: "unavailable",
+      sharpes: [],
+    };
+    const classRiskFreeRateDaily = toDailyRiskFreeRate(
+      getClassAnnualRiskFreeRate(row.resolvedClass, options.riskFreeRateAnnual)
+    );
 
     let riskScore = fallbackMetrics.risk;
     let returnScore = fallbackMetrics.return;
     let liquidityScore = fallbackMetrics.liquidity;
     let diversificationScore = fallbackMetrics.diversification;
 
-    if (row.returns.length >= horizon.minHistoryPoints) {
-      const volatility = stdDev(row.returns);
-      const classVols = volatilityByClass.get(row.resolvedClass) ?? [];
-      const volZ = computeZScore(volatility, classVols, classBaseline.volatilityMean, classBaseline.volatilityStd);
-      const mdd = maxDrawdown(row.returns);
-      const mddPenalty = mdd > 0.2 ? Math.min(4, (mdd - 0.2) * 15) : 0;
-      riskScore = clampMetric(10 - volZ * 1.8 - mddPenalty);
+    const hasTargetRiskSeries = row.riskReturns.length >= row.riskExpectedPoints;
+    const hasUniverseRiskSeries = riskUniverse.volatilities.length >= 5;
 
-      const sharpeLog = toSharpeLog(row.returns, riskFreeRateDaily);
-      if (sharpeLog === null) {
-        fallbackReasons.push("return_strength_insufficient_volatility");
-      } else {
-        const classSharpe = sharpeLogByClass.get(row.resolvedClass) ?? [];
-        const sharpeZ = computeZScore(sharpeLog, classSharpe, classBaseline.sharpeLogMean, classBaseline.sharpeLogStd);
-        returnScore = clampMetric(5 + sharpeZ * 1.9);
+    if (hasTargetRiskSeries && hasUniverseRiskSeries) {
+      const targetVolatility = stdDev(row.riskReturns);
+      const percentile = percentileRank(riskUniverse.volatilities, targetVolatility);
+      const percentileScore = 10 - percentile * 9;
+      const mdd = maxDrawdown(row.riskReturns);
+      const mddPenalty = mdd > 0.2 ? Math.min(4, (mdd - 0.2) * 15) : 0;
+      riskScore = clampMetric(percentileScore - mddPenalty);
+      if (riskUniverse.source === "stale_cache") {
+        fallbackReasons.push("risk_universe_stale_cache");
+      }
+    } else if (hasUniverseRiskSeries) {
+      riskScore = 5.0;
+      fallbackReasons.push("risk_target_insufficient_history");
+      if (row.riskQualityRatio < 0.6) fallbackReasons.push("risk_low_data_quality");
+      if (riskUniverse.source === "stale_cache") {
+        fallbackReasons.push("risk_universe_stale_cache");
       }
     } else {
-      fallbackReasons.push("risk_return_insufficient_history");
+      riskScore = 5.0;
+      fallbackReasons.push("risk_data_unavailable");
+    }
+
+    const hasTargetReturnSeries = row.riskReturns.length >= row.riskExpectedPoints;
+    const hasUniverseReturnSeries = returnUniverse.sharpes.length >= 5;
+    if (hasTargetReturnSeries && hasUniverseReturnSeries) {
+      const targetSharpe = toSharpeLog(row.riskReturns, classRiskFreeRateDaily);
+      if (targetSharpe === null) {
+        fallbackReasons.push("return_strength_insufficient_volatility");
+      } else {
+        const boundedSharpe = winsorizeSharpe(targetSharpe, row.resolvedClass);
+        const percentile = percentileRank(returnUniverse.sharpes, boundedSharpe);
+        returnScore = clampMetric(1 + percentile * 9);
+        if (returnUniverse.source === "stale_cache") {
+          fallbackReasons.push("return_universe_stale_cache");
+        }
+      }
+    } else if (hasUniverseReturnSeries) {
+      returnScore = 5.0;
+      fallbackReasons.push("return_target_insufficient_history");
+      if (row.riskQualityRatio < 0.8) fallbackReasons.push("return_low_data_quality");
+      if (returnUniverse.source === "stale_cache") {
+        fallbackReasons.push("return_universe_stale_cache");
+      }
+    } else {
+      returnScore = 5.0;
+      fallbackReasons.push("return_data_unavailable");
     }
 
     const classVolumes = volumeByClass.get(row.resolvedClass) ?? [];
@@ -414,9 +818,15 @@ export async function analyzeUniversalAssets(
     logAnalysisDiagnostics({
       symbol: row.symbol,
       providerSymbol: row.providerSymbol,
-      lookbackDays: horizon.lookbackDays,
+      lookbackDays: getRiskLookbackDays(row.resolvedClass, horizon),
       historyPoints: row.historyPoints,
       returnsLength: row.returns.length,
+      riskReturnsLength: row.riskReturns.length,
+      riskExpectedPoints: row.riskExpectedPoints,
+      riskUniverseSize: riskUniverse.volatilities.length,
+      riskUniverseSource: riskUniverse.source,
+      returnUniverseSize: returnUniverse.sharpes.length,
+      returnUniverseSource: returnUniverse.source,
       usingFallback: fallbackReasons.length > 0,
       fallbackReasons,
     });

@@ -11,16 +11,12 @@ import type {
 } from "@/lib/gateways/market-data-gateway";
 import { analyzeUniversalAssets } from "@/lib/services/universal-asset-analysis-service";
 
-function buildReturns(totalDays: number): number[] {
-  const values: number[] = [];
-  for (let index = 0; index < totalDays; index += 1) {
-    if (index < totalDays - 21) {
-      values.push(index % 2 === 0 ? 0.045 : -0.04);
-    } else {
-      values.push(index % 2 === 0 ? 0.018 : -0.001);
-    }
-  }
-  return values;
+function stableHash(value: string): number {
+  return value.split("").reduce((acc, char, index) => acc + char.charCodeAt(0) * (index + 17), 0);
+}
+
+function buildReturns(totalDays: number, amplitude: number): number[] {
+  return Array.from({ length: totalDays }, (_, index) => (index % 2 === 0 ? amplitude : -amplitude * 0.82));
 }
 
 function buildHistoryFromReturns(symbol: string, providerSymbol: string, returns: number[]): MarketHistory {
@@ -46,8 +42,6 @@ function buildHistoryFromReturns(symbol: string, providerSymbol: string, returns
 class MockGateway implements MarketDataGatewayPort {
   public readonly historyCalls: Array<{ symbol: string; options: MarketHistoryOptions | undefined }> = [];
 
-  private readonly dataset = buildHistoryFromReturns("TUPRS", "TUPRS.IS", buildReturns(260));
-
   getSupportedAssets(): AssetCatalogItem[] {
     return [];
   }
@@ -66,7 +60,12 @@ class MockGateway implements MarketDataGatewayPort {
 
   async getHistory(symbol: string, options?: MarketHistoryOptions): Promise<MarketHistory> {
     this.historyCalls.push({ symbol, options });
-    return this.dataset;
+    const range = options?.range ?? "1y";
+    const totalDays = range === "1mo" ? 30 : range === "5y" ? 1825 : 365;
+    const symbolSeed = (stableHash(symbol) % 7) + 1;
+    const baseAmplitude = symbol === "TUPRS" ? (range === "1mo" ? 0.009 : 0.033) : symbolSeed * 0.0045;
+    const returns = buildReturns(totalDays, baseAmplitude);
+    return buildHistoryFromReturns(symbol, "TUPRS.IS", returns);
   }
 
   async getLiquidity(symbol: string, _options?: MarketLiquidityOptions): Promise<MarketLiquidity> {
