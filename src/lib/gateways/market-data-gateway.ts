@@ -61,10 +61,13 @@ interface CacheEntry<TValue> {
 }
 
 const DEFAULT_BASE_URL = "https://query1.finance.yahoo.com";
+const SECONDARY_BASE_URL = "https://query2.finance.yahoo.com";
 const QUOTE_TTL_MS = 15_000;
 const HISTORY_TTL_MS = 5 * 60_000;
 const LIQUIDITY_TTL_MS = 5 * 60_000;
 const REQUEST_TIMEOUT_MS = 6_000;
+const REQUEST_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 const PROVIDER_SYMBOL_OVERRIDES: Record<string, string> = {
   AAPL: "AAPL",
@@ -160,7 +163,11 @@ async function fetchJson(url: string): Promise<unknown> {
   try {
     const response = await fetch(url, {
       cache: "no-store",
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "en-US,en;q=0.9,tr-TR;q=0.8,tr;q=0.7",
+        "User-Agent": REQUEST_USER_AGENT,
+      },
       signal: controller.signal,
     });
     if (!response.ok) return null;
@@ -253,12 +260,14 @@ export class MarketDataGateway implements MarketDataGatewayPort {
 
   private readonly liquidityCache = new Map<string, CacheEntry<MarketLiquidity>>();
 
-  private readonly baseUrl: string;
+  private readonly baseUrls: string[];
 
   private readonly supportedAssets: AssetCatalogItem[];
 
   constructor(baseUrl = process.env.YAHOO_FINANCE_BASE_URL ?? DEFAULT_BASE_URL) {
-    this.baseUrl = baseUrl;
+    this.baseUrls = Array.from(
+      new Set([baseUrl.trim(), DEFAULT_BASE_URL, SECONDARY_BASE_URL].filter((candidate) => candidate.length > 0))
+    );
     this.supportedAssets = buildAssetCatalog();
   }
 
@@ -273,8 +282,8 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     if (cached !== undefined) return cached;
 
     const providerSymbol = resolveProviderSymbol(symbol);
-    const url = `${this.baseUrl}/v7/finance/quote?symbols=${encodeURIComponent(providerSymbol)}`;
-    const payload = await fetchJson(url);
+    const queryPath = `/v7/finance/quote?symbols=${encodeURIComponent(providerSymbol)}`;
+    const payload = await this.fetchWithProviderFallback(queryPath);
     const quote = parseQuotePayload(payload, symbol, providerSymbol);
     this.setCached(this.quoteCache, symbol, quote, QUOTE_TTL_MS);
     return quote;
@@ -294,10 +303,10 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     if (cached !== undefined) return cached;
 
     const providerSymbol = resolveProviderSymbol(symbol);
-    const url =
-      `${this.baseUrl}/v8/finance/chart/${encodeURIComponent(providerSymbol)}` +
+    const queryPath =
+      `/v8/finance/chart/${encodeURIComponent(providerSymbol)}` +
       `?interval=${encodeURIComponent(interval)}&range=${encodeURIComponent(range)}`;
-    const payload = await fetchJson(url);
+    const payload = await this.fetchWithProviderFallback(queryPath);
     const history = parseHistoryPayload(payload, symbol, providerSymbol);
     this.setCached(this.historyCache, cacheKey, history, HISTORY_TTL_MS);
     return history;
@@ -308,14 +317,14 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     options: MarketLiquidityOptions = {}
   ): Promise<MarketLiquidity> {
     const symbol = normalizeSymbol(symbolInput);
-    const cacheKey = symbol;
+    const liquidityRange = options.range ?? "3mo";
+    const liquidityInterval = options.interval ?? "1d";
+    const cacheKey = `${symbol}:${liquidityRange}:${liquidityInterval}`;
     const cached = this.getCached(this.liquidityCache, cacheKey);
     if (cached !== undefined) return cached;
 
     const providerSymbol = resolveProviderSymbol(symbol);
     const baseProfile = BASE_LIQUIDITY_BY_SYMBOL[symbol] ?? LIQUIDITY_TABLE.high;
-    const liquidityRange = options.range ?? "3mo";
-    const liquidityInterval = options.interval ?? "1d";
     const [history, quote] = await Promise.all([
       this.getHistory(symbol, { range: liquidityRange, interval: liquidityInterval }),
       this.getQuote(symbol),
@@ -340,6 +349,14 @@ export class MarketDataGateway implements MarketDataGatewayPort {
 
     this.setCached(this.liquidityCache, cacheKey, liquidity, LIQUIDITY_TTL_MS);
     return liquidity;
+  }
+
+  private async fetchWithProviderFallback(path: string): Promise<unknown> {
+    for (const baseUrl of this.baseUrls) {
+      const payload = await fetchJson(`${baseUrl}${path}`);
+      if (payload !== null) return payload;
+    }
+    return null;
   }
 
   private getCached<TValue>(

@@ -49,6 +49,8 @@ interface RawAssetSeries {
   symbol: string;
   originalInput: string;
   resolvedClass: AssetClass;
+  providerSymbol: string;
+  historyPoints: number;
   returns: number[];
   liquidity: MarketLiquidity;
 }
@@ -56,6 +58,7 @@ interface RawAssetSeries {
 const classBySymbol = buildDefaultClassDictionary();
 const MODEL_VERSION = "analysis_engine_v2_quant";
 const DEFAULT_RISK_FREE_RATE_ANNUAL = 0.12;
+const ENABLE_ANALYSIS_DIAGNOSTICS = process.env.FINCOGNIS_ANALYSIS_DEBUG === "true";
 
 const HORIZON_CONFIG: Record<AnalyzeTimeHorizon, HorizonSpec> = {
   "1mo": { range: "1mo", lookbackDays: 21, minHistoryPoints: 12 },
@@ -265,6 +268,19 @@ function toDailyRiskFreeRate(annualRate: number): number {
   return (1 + annualRate) ** (1 / 252) - 1;
 }
 
+function logAnalysisDiagnostics(params: {
+  symbol: string;
+  providerSymbol: string;
+  lookbackDays: number;
+  historyPoints: number;
+  returnsLength: number;
+  usingFallback: boolean;
+  fallbackReasons: string[];
+}): void {
+  if (!ENABLE_ANALYSIS_DIAGNOSTICS) return;
+  console.info("[analysis_engine_v2_quant]", params);
+}
+
 export function getUniversalAssetCatalog(
   gateway: MarketDataGatewayPort = marketDataGateway
 ): AssetCatalogItem[] {
@@ -299,6 +315,8 @@ export async function analyzeUniversalAssets(
         symbol: asset.symbol,
         originalInput: asset.originalInput,
         resolvedClass: asset.resolvedClass,
+        providerSymbol: history.providerSymbol,
+        historyPoints: history.points.length,
         returns,
         liquidity,
       };
@@ -392,6 +410,16 @@ export async function analyzeUniversalAssets(
         series.map((item) => item.resolvedClass)
       );
     }
+
+    logAnalysisDiagnostics({
+      symbol: row.symbol,
+      providerSymbol: row.providerSymbol,
+      lookbackDays: horizon.lookbackDays,
+      historyPoints: row.historyPoints,
+      returnsLength: row.returns.length,
+      usingFallback: fallbackReasons.length > 0,
+      fallbackReasons,
+    });
 
     return {
       symbol: row.symbol,
