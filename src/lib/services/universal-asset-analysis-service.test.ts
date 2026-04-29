@@ -21,13 +21,15 @@ function buildReturns(totalDays: number, amplitude: number): number[] {
 
 function buildHistoryFromReturns(symbol: string, providerSymbol: string, returns: number[]): MarketHistory {
   let price = 100;
-  const points = [{ date: "2020-01-01", close: price, volume: 1_000_000 }];
+  const points = [{ date: "2020-01-01", close: price, volume: 1_000_000, high: price * 1.01, low: price * 0.99 }];
   returns.forEach((item, index) => {
     price *= 1 + item;
     points.push({
       date: `2020-01-${String(index + 2).padStart(2, "0")}`,
       close: Number(price.toFixed(6)),
       volume: 1_000_000,
+      high: Number((price * 1.01).toFixed(6)),
+      low: Number((price * 0.99).toFixed(6)),
     });
   });
 

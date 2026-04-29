@@ -16,6 +16,11 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
       message:
         "Geçmiş Getiri Gücü, seçilen zaman dilimindeki risk ayarlı performansı yansıtır. Geçmiş performans gelecek performansı garanti etmez.",
     },
+    {
+      level: "info",
+      message:
+        "Likidite skoru normal piyasa koşullarında geçerlidir. Kriz dönemlerinde tüm varlık sınıflarında likidite belirgin biçimde düşebilir.",
+    },
   ];
 
   if (classes.has(AssetClass.Equity)) {
@@ -33,17 +38,37 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
       level: "info",
       message: "Kripto varlıklarda yüksek oynaklık nedeniyle kısa vadeli Sharpe skoru hızlı değişebilir.",
     });
+    warnings.push({
+      level: "info",
+      message: "Kripto likiditesi spot borsa verileriyle ölçülür; büyük tutarlı işlemlerde OTC fiyatlaması farklılaşabilir.",
+    });
   }
   if (classes.has(AssetClass.FX)) {
     warnings.push({
       level: "info",
       message: "Döviz varlıklarında metrik yalnızca kur hareketini ölçer; faiz (carry) etkisi dahil değildir.",
     });
+    warnings.push({
+      level: "info",
+      message: "TRY bazlı döviz işlemlerinde düzenleyici limitler dönemsel likidite kısıtı oluşturabilir.",
+    });
   }
   if (classes.has(AssetClass.Commodity)) {
     warnings.push({
       level: "info",
       message: "Emtia varlıklarında mümkün olduğunda spot fiyat serileri kullanılır; vadeli kontratlarda dönemsel geçiş etkisi olabilir.",
+    });
+  }
+  if (classes.has(AssetClass.Equity)) {
+    warnings.push({
+      level: "info",
+      message: "BIST varlıklarında seans dışı ve hafta sonu nakde çevrim mümkün değildir.",
+    });
+  }
+  if (classes.has(AssetClass.Fund)) {
+    warnings.push({
+      level: "info",
+      message: "Fon ürünlerinde valör (T+2/T+3) nedeniyle nakde çevrim anlık gerçekleşmeyebilir.",
     });
   }
 

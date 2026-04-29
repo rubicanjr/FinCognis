@@ -15,7 +15,7 @@ export enum AssetClass {
 export interface UniversalMetrics {
   risk: number;
   return: number;
-  liquidity: number;
+  liquidity: number | null;
   diversification: number;
 }
 
@@ -257,7 +257,7 @@ function fallbackMetrics(symbol: string, assetClass: AssetClass): UniversalMetri
   return {
     risk: clampMetric(base.risk + offset(0)),
     return: clampMetric(base.return + offset(1)),
-    liquidity: clampMetric(base.liquidity + offset(2)),
+    liquidity: base.liquidity === null ? null : clampMetric(base.liquidity + offset(2)),
     diversification: clampMetric(base.diversification + offset(3)),
   };
 }

@@ -26,6 +26,8 @@ export interface MarketHistoryPoint {
   date: string;
   close: number;
   volume: number | null;
+  high: number | null;
+  low: number | null;
 }
 
 export interface MarketHistory {
@@ -250,6 +252,8 @@ function parseHistoryPayload(
   const quoteEntries = readArray(indicators, "quote");
   const quoteEntry = quoteEntries.length > 0 ? quoteEntries[0] : null;
   const closes = readOptionalNumberArray(quoteEntry, "close");
+  const highs = readOptionalNumberArray(quoteEntry, "high");
+  const lows = readOptionalNumberArray(quoteEntry, "low");
   const volumes = readOptionalNumberArray(quoteEntry, "volume");
   const length = Math.min(timestamps.length, closes.length);
 
@@ -261,6 +265,8 @@ function parseHistoryPayload(
       date: toIsoDay(timestamps[index]),
       close,
       volume: volumes[index] ?? null,
+      high: highs[index] ?? null,
+      low: lows[index] ?? null,
     });
   }
 

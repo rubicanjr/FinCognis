@@ -67,7 +67,7 @@ interface ComparisonMatrix {
   assets: string[];
   metrics: {
     label: MatrixMetricLabel;
-    values: Record<string, number>;
+    values: Record<string, number | null>;
   }[];
 }
 
@@ -88,7 +88,7 @@ interface DiscoveryRow {
   assetClassLabel: string;
   risk: number;
   return: number;
-  liquidity: number;
+  liquidity: number | null;
   diversification: number;
   profileFitScore: number;
   shortExplanation: string;
@@ -100,13 +100,14 @@ interface CompareCardData {
   symbol: string;
   risk: number;
   return: number;
-  liquidity: number;
+  liquidity: number | null;
   diversification: number;
   totalScore: number | null;
   balanceScore: number;
   isFallback: boolean;
   riskUnavailable: boolean;
   returnUnavailable: boolean;
+  liquidityUnavailable: boolean;
   hasCriticalDataGap: boolean;
 }
 
@@ -223,6 +224,11 @@ function clampScore(value: number): number {
   return Math.max(1, Math.min(10, value));
 }
 
+function clampNullableScore(value: number | null): number | null {
+  if (value === null) return null;
+  return clampScore(value);
+}
+
 function clampProfileFitScore(value: number): number {
   return Math.max(0, Math.min(100, Number(value.toFixed(1))));
 }
@@ -235,6 +241,7 @@ function hasCriticalMetricGap(asset: NormalizedAsset | undefined): boolean {
   return (
     hasFallbackReason(asset, "risk_data_unavailable") ||
     hasFallbackReason(asset, "return_data_unavailable") ||
+    hasFallbackReason(asset, "liquidity_data_unavailable") ||
     hasFallbackReason(asset, "risk_target_insufficient_history") ||
     hasFallbackReason(asset, "return_target_insufficient_history")
   );
@@ -337,8 +344,9 @@ function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {
   const symbols = assets.map((asset) => asset.symbol);
 
   const metrics = METRIC_CONFIG.map((config) => {
-    const values = assets.reduce<Record<string, number>>((acc, asset) => {
-      acc[asset.symbol] = clampScore(asset.metrics[config.key]);
+    const values = assets.reduce<Record<string, number | null>>((acc, asset) => {
+      const metricValue = asset.metrics[config.key];
+      acc[asset.symbol] = typeof metricValue === "number" ? clampScore(metricValue) : null;
       return acc;
     }, {});
 
@@ -424,7 +432,7 @@ function profileDescription(row: Omit<DiscoveryRow, "shortExplanation">): string
   if (riskQuality(row.risk) >= 7.5) {
     notes.push("Bu varlık düşük oynaklık profiline daha yakındır.");
   }
-  if (row.liquidity >= 7) {
+  if (typeof row.liquidity === "number" && row.liquidity >= 7) {
     notes.push("Nakde çevirme kolaylığı açısından güçlü görünmektedir.");
   }
   if (row.diversification >= 7) {
@@ -618,8 +626,13 @@ export default function UniversalAssetComparisonPanel() {
   const matrix = useMemo(() => createComparisonMatrix(assets), [assets]);
   const totalByAsset = useMemo(
     () =>
-      matrix.assets.reduce<Record<string, number>>((acc, assetSymbol) => {
-        acc[assetSymbol] = matrix.metrics.reduce((sum, metric) => sum + (metric.values[assetSymbol] ?? 0), 0);
+      matrix.assets.reduce<Record<string, number | null>>((acc, assetSymbol) => {
+        const metricValues = matrix.metrics.map((metric) => metric.values[assetSymbol]);
+        if (!metricValues.every((value): value is number => typeof value === "number")) {
+          acc[assetSymbol] = null;
+          return acc;
+        }
+        acc[assetSymbol] = metricValues.reduce((sum, value) => sum + value, 0);
         return acc;
       }, {}),
     [matrix]
@@ -629,14 +642,22 @@ export default function UniversalAssetComparisonPanel() {
     () =>
       matrix.assets.map((assetSymbol) => {
         const sourceAsset = assets.find((asset) => asset.symbol === assetSymbol);
-        const risk = matrix.metrics.find((metric) => metric.label === "Risk")?.values[assetSymbol] ?? 0;
-        const returnScore = matrix.metrics.find((metric) => metric.label === "Getiri")?.values[assetSymbol] ?? 0;
-        const liquidity = matrix.metrics.find((metric) => metric.label === "Likidite")?.values[assetSymbol] ?? 0;
-        const diversification = matrix.metrics.find((metric) => metric.label === "Çeşitlendirme")?.values[assetSymbol] ?? 0;
+        const risk = clampScore(matrix.metrics.find((metric) => metric.label === "Risk")?.values[assetSymbol] ?? 0);
+        const returnScore = clampScore(
+          matrix.metrics.find((metric) => metric.label === "Getiri")?.values[assetSymbol] ?? 0
+        );
+        const liquidity = clampNullableScore(
+          matrix.metrics.find((metric) => metric.label === "Likidite")?.values[assetSymbol] ?? null
+        );
+        const diversification = clampScore(
+          matrix.metrics.find((metric) => metric.label === "Çeşitlendirme")?.values[assetSymbol] ?? 0
+        );
         const riskUnavailable = hasFallbackReason(sourceAsset, "risk_data_unavailable");
         const returnUnavailable = hasFallbackReason(sourceAsset, "return_data_unavailable");
+        const liquidityUnavailable = hasFallbackReason(sourceAsset, "liquidity_data_unavailable");
         const hasCriticalDataGap = hasCriticalMetricGap(sourceAsset);
-        const comparableMetrics: number[] = [liquidity, diversification];
+        const comparableMetrics: number[] = [diversification];
+        if (liquidity !== null) comparableMetrics.push(liquidity);
         if (!riskUnavailable) comparableMetrics.push(riskQuality(risk));
         if (!returnUnavailable) comparableMetrics.push(returnScore);
         const balanceScore =
@@ -656,6 +677,7 @@ export default function UniversalAssetComparisonPanel() {
           isFallback: Boolean(sourceAsset?.computation?.isFallback),
           riskUnavailable,
           returnUnavailable,
+          liquidityUnavailable,
           hasCriticalDataGap,
         };
       }),
@@ -674,7 +696,7 @@ export default function UniversalAssetComparisonPanel() {
       { label: "yüksek geçmiş getiri gücü", score: bestBalancedAsset.return },
       { label: "güçlü nakde çevirme kolaylığı", score: bestBalancedAsset.liquidity },
       { label: "yüksek portföy dengeleme gücü", score: bestBalancedAsset.diversification },
-    ]
+    ].filter((item): item is { label: string; score: number } => typeof item.score === "number")
       .sort((left, right) => right.score - left.score)
       .slice(0, 2)
       .map((item) => item.label);
@@ -696,12 +718,12 @@ export default function UniversalAssetComparisonPanel() {
       .map((asset) => {
         const risk = clampScore(asset.metrics.risk);
         const returnScore = clampScore(asset.metrics.return);
-        const liquidity = clampScore(asset.metrics.liquidity);
+        const liquidity = clampNullableScore(asset.metrics.liquidity);
         const diversification = clampScore(asset.metrics.diversification);
 
         const riskFit = qualityScoreByTarget(riskQuality(risk), riskTarget);
         const returnFit = qualityScoreByTarget(returnScore, returnTarget);
-        const liquidityFit = qualityScoreByTarget(liquidity, liquidityTarget);
+        const liquidityFit = qualityScoreByTarget(liquidity ?? 0, liquidityTarget);
         const diversificationFit = qualityScoreByTarget(diversification, diversificationTarget);
 
         const hasCriticalDataGap = hasCriticalMetricGap(asset);
@@ -711,7 +733,8 @@ export default function UniversalAssetComparisonPanel() {
           liquidityFit * (weights.liquidity / 100) +
           diversificationFit * (weights.diversification / 100);
 
-        const profileFitScore = hasCriticalDataGap ? 0 : clampProfileFitScore(weightedFit * 10);
+        const profileFitScore =
+          hasCriticalDataGap || liquidity === null ? 0 : clampProfileFitScore(weightedFit * 10);
 
         const baseRow: Omit<DiscoveryRow, "shortExplanation"> = {
           symbol: asset.symbol,
@@ -1056,7 +1079,13 @@ export default function UniversalAssetComparisonPanel() {
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
                           <span>Nakde Çevirme Kolaylığı</span>
-                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Likidite", card.liquidity)}`}>{card.liquidity.toFixed(1)}</span>
+                          {card.liquidityUnavailable || card.liquidity === null ? (
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                          ) : (
+                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Likidite", card.liquidity)}`}>
+                              {card.liquidity.toFixed(1)}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
                           <span>Portföy Dengeleme Gücü</span>

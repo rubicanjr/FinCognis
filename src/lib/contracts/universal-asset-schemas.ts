@@ -7,7 +7,7 @@ export const AnalyzeTimeHorizonSchema = z.enum(["1mo", "1y", "5y"]);
 export const UniversalMetricsSchema = z.object({
   risk: z.number().min(1).max(10),
   return: z.number().min(1).max(10),
-  liquidity: z.number().min(1).max(10),
+  liquidity: z.number().min(1).max(10).nullable(),
   diversification: z.number().min(1).max(10),
 });
 

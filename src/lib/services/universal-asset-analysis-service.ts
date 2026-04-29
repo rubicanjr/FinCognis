@@ -10,6 +10,7 @@ import {
 import {
   marketDataGateway,
   type MarketDataGatewayPort,
+  type MarketHistory,
   type MarketHistoryRange,
   type MarketLiquidity,
 } from "@/lib/gateways/market-data-gateway";
@@ -49,6 +50,7 @@ interface RawAssetSeries {
   riskReturns: number[];
   riskExpectedPoints: number;
   riskQualityRatio: number;
+  history: MarketHistory;
   liquidity: MarketLiquidity;
 }
 
@@ -77,6 +79,27 @@ interface UniverseSharpeDistributionResult {
   sharpes: number[];
 }
 
+interface LiquidityComponents {
+  avgDailyVolume: number | null;
+  spreadProxy: number | null;
+  amihud: number | null;
+  qualityRatio: number;
+}
+
+interface UniverseLiquiditySnapshot {
+  volumes: number[];
+  spreads: number[];
+  amihuds: number[];
+  computedAtIso: string;
+}
+
+interface UniverseLiquidityDistributionResult {
+  source: "fresh_cache" | "recomputed" | "stale_cache" | "unavailable";
+  volumes: number[];
+  spreads: number[];
+  amihuds: number[];
+}
+
 const classBySymbol = buildDefaultClassDictionary();
 const MODEL_VERSION = "analysis_engine_v2_quant";
 const DEFAULT_RISK_FREE_RATE_ANNUAL = 0.12;
@@ -84,6 +107,7 @@ const RISK_UNIVERSE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ENABLE_ANALYSIS_DIAGNOSTICS = process.env.FINCOGNIS_ANALYSIS_DEBUG === "true";
 const riskUniverseCache = new Map<string, CacheEntry<UniverseVolatilitySnapshot>>();
 const sharpeUniverseCache = new Map<string, CacheEntry<UniverseVolatilitySnapshot>>();
+const liquidityUniverseCache = new Map<string, CacheEntry<UniverseLiquiditySnapshot>>();
 
 const HORIZON_CONFIG: Record<AnalyzeTimeHorizon, HorizonSpec> = {
   "1mo": { range: "1mo", lookbackDays: 21, cryptoCalendarLookbackDays: 30, minHistoryPoints: 12 },
@@ -151,6 +175,20 @@ const CLASS_LIQUIDITY_THRESHOLDS: Record<AssetClass, ClassLiquidityThresholds> =
   [AssetClass.Unknown]: { veryHigh: 80_000_000, high: 20_000_000, medium: 2_000_000, low: 500_000 },
 };
 
+const CLASS_LIQUIDITY_COMPONENT_WEIGHTS: Record<
+  AssetClass,
+  { volume: number; spread: number; amihud: number }
+> = {
+  [AssetClass.Equity]: { volume: 0.4, spread: 0.35, amihud: 0.25 },
+  [AssetClass.Crypto]: { volume: 0.4, spread: 0.35, amihud: 0.25 },
+  [AssetClass.Commodity]: { volume: 0.3, spread: 0.4, amihud: 0.3 },
+  [AssetClass.Index]: { volume: 0.4, spread: 0.35, amihud: 0.25 },
+  [AssetClass.FX]: { volume: 0.35, spread: 0.4, amihud: 0.25 },
+  [AssetClass.Bond]: { volume: 0.45, spread: 0.3, amihud: 0.25 },
+  [AssetClass.Fund]: { volume: 0.45, spread: 0.3, amihud: 0.25 },
+  [AssetClass.Unknown]: { volume: 0.4, spread: 0.35, amihud: 0.25 },
+};
+
 const CLASS_RISK_FREE_RATE_ANNUAL: Record<AssetClass, number> = {
   [AssetClass.Equity]: 0.37,
   [AssetClass.Crypto]: 0.0,
@@ -163,14 +201,14 @@ const CLASS_RISK_FREE_RATE_ANNUAL: Record<AssetClass, number> = {
 };
 
 const CLASS_FALLBACK_METRICS: Record<AssetClass, UniversalMetrics> = {
-  [AssetClass.Equity]: { risk: 5.0, return: 6.9, liquidity: 7.1, diversification: 5.9 },
-  [AssetClass.Crypto]: { risk: 5.0, return: 7.7, liquidity: 6.4, diversification: 5.0 },
-  [AssetClass.Commodity]: { risk: 5.0, return: 6.1, liquidity: 6.8, diversification: 7.7 },
-  [AssetClass.Index]: { risk: 5.0, return: 6.3, liquidity: 8.6, diversification: 7.9 },
-  [AssetClass.FX]: { risk: 5.0, return: 5.0, liquidity: 8.8, diversification: 7.0 },
-  [AssetClass.Bond]: { risk: 5.0, return: 4.6, liquidity: 6.0, diversification: 8.1 },
-  [AssetClass.Fund]: { risk: 5.0, return: 6.0, liquidity: 7.9, diversification: 7.8 },
-  [AssetClass.Unknown]: { risk: 5.0, return: 5.0, liquidity: 5.0, diversification: 5.0 },
+  [AssetClass.Equity]: { risk: 5.0, return: 6.9, liquidity: null, diversification: 5.9 },
+  [AssetClass.Crypto]: { risk: 5.0, return: 7.7, liquidity: null, diversification: 5.0 },
+  [AssetClass.Commodity]: { risk: 5.0, return: 6.1, liquidity: null, diversification: 7.7 },
+  [AssetClass.Index]: { risk: 5.0, return: 6.3, liquidity: null, diversification: 7.9 },
+  [AssetClass.FX]: { risk: 5.0, return: 5.0, liquidity: null, diversification: 7.0 },
+  [AssetClass.Bond]: { risk: 5.0, return: 4.6, liquidity: null, diversification: 8.1 },
+  [AssetClass.Fund]: { risk: 5.0, return: 6.0, liquidity: null, diversification: 7.8 },
+  [AssetClass.Unknown]: { risk: 5.0, return: 5.0, liquidity: null, diversification: 5.0 },
 };
 
 const CLASS_DISTANCE_MATRIX: Record<AssetClass, Record<AssetClass, number>> = {
@@ -303,17 +341,6 @@ function scoreFromVolumeThreshold(volume: number | null, assetClass: AssetClass)
   return 4.0;
 }
 
-function volumeRankScore(volume: number | null, classVolumes: number[]): number {
-  if (volume === null || volume <= 0) return 5;
-  const filtered = classVolumes.filter((value) => value > 0);
-  if (filtered.length < 2) return 5;
-  const sorted = [...filtered].sort((left, right) => left - right);
-  const index = sorted.findIndex((value) => value >= volume);
-  const boundedIndex = index === -1 ? sorted.length - 1 : index;
-  const percentile = boundedIndex / (sorted.length - 1);
-  return 1 + percentile * 9;
-}
-
 function diversificationFallbackByClassDistance(assetClass: AssetClass, allClasses: AssetClass[]): number {
   const peers = allClasses.filter((peer) => peer !== assetClass);
   if (peers.length === 0) return CLASS_FALLBACK_METRICS[assetClass].diversification;
@@ -351,12 +378,24 @@ function getExpectedReturnPoints(assetClass: AssetClass, horizon: HorizonSpec): 
   return getExpectedRiskPoints(assetClass, horizon);
 }
 
+function getLiquidityLookbackDays(assetClass: AssetClass, horizon: HorizonSpec): number {
+  return getRiskLookbackDays(assetClass, horizon);
+}
+
+function getExpectedLiquidityPoints(assetClass: AssetClass, horizon: HorizonSpec): number {
+  return getExpectedRiskPoints(assetClass, horizon);
+}
+
 function buildUniverseCacheKey(assetClass: AssetClass, horizon: HorizonSpec): string {
   return `universe_volatility:${assetClass}:${horizon.range}:1d`;
 }
 
 function buildSharpeUniverseCacheKey(assetClass: AssetClass, horizon: HorizonSpec): string {
   return `universe_sharpe:${assetClass}:${horizon.range}:1d`;
+}
+
+function buildLiquidityUniverseCacheKey(assetClass: AssetClass, horizon: HorizonSpec): string {
+  return `universe_liquidity:${assetClass}:${horizon.range}:1d`;
 }
 
 function percentileRank(universe: number[], value: number): number {
@@ -396,6 +435,65 @@ function prepareReturnSeries(
   expectedPoints: number
 ): PreparedRiskReturns {
   return prepareRiskReturns(rawReturns, assetClass, providerSymbol, lookbackDays, expectedPoints);
+}
+
+function prepareLiquidityComponents(
+  history: MarketHistory,
+  assetClass: AssetClass,
+  horizon: HorizonSpec
+): LiquidityComponents {
+  const lookbackDays = getLiquidityLookbackDays(assetClass, horizon);
+  const expectedPoints = getExpectedLiquidityPoints(assetClass, horizon);
+  const returns = history.returns.slice(-lookbackDays);
+  const points = history.points.slice(-(returns.length + 1));
+
+  const volumes: number[] = [];
+  const spreads: number[] = [];
+  const amihuds: number[] = [];
+
+  const isCommodityFuture = assetClass === AssetClass.Commodity && history.providerSymbol.endsWith("=F");
+
+  for (let index = 1; index < points.length; index += 1) {
+    const point = points[index];
+    const rawReturn = returns[index - 1];
+    if (!Number.isFinite(rawReturn)) continue;
+
+    if (assetClass === AssetClass.Equity && Math.abs(rawReturn) >= 0.095) continue;
+    if (isCommodityFuture && Math.abs(rawReturn) >= 0.2) continue;
+
+    const boundedReturn =
+      assetClass === AssetClass.Crypto
+        ? Math.max(-0.15, Math.min(0.15, rawReturn))
+        : rawReturn;
+
+    const close = point.close;
+    const volume = point.volume;
+    if (typeof volume === "number" && volume > 0) {
+      volumes.push(volume);
+      const tradedValue = volume * close;
+      if (Number.isFinite(tradedValue) && tradedValue > 0) {
+        amihuds.push(Math.abs(boundedReturn) / tradedValue);
+      }
+    }
+
+    if (
+      typeof point.high === "number" &&
+      typeof point.low === "number" &&
+      Number.isFinite(point.high) &&
+      Number.isFinite(point.low) &&
+      close > 0 &&
+      point.high >= point.low
+    ) {
+      spreads.push((point.high - point.low) / close);
+    }
+  }
+
+  const avgDailyVolume = volumes.length > 0 ? mean(volumes) : null;
+  const spreadProxy = spreads.length > 0 ? mean(spreads) : null;
+  const amihud = amihuds.length > 0 ? mean(amihuds) : null;
+  const qualityRatio = expectedPoints > 0 ? returns.length / expectedPoints : 0;
+
+  return { avgDailyVolume, spreadProxy, amihud, qualityRatio };
 }
 
 function winsorizeSharpe(value: number, assetClass: AssetClass): number {
@@ -564,6 +662,102 @@ async function getUniverseSharpeDistribution(
   return { source: "unavailable", sharpes: [] };
 }
 
+function getCachedLiquidityDistribution(
+  key: string,
+  allowStale: boolean
+): UniverseLiquidityDistributionResult | null {
+  const existing = liquidityUniverseCache.get(key);
+  if (!existing) return null;
+  const isFresh = existing.expiresAt > Date.now();
+  if (isFresh) {
+    return {
+      source: "fresh_cache",
+      volumes: existing.value.volumes,
+      spreads: existing.value.spreads,
+      amihuds: existing.value.amihuds,
+    };
+  }
+  if (allowStale) {
+    return {
+      source: "stale_cache",
+      volumes: existing.value.volumes,
+      spreads: existing.value.spreads,
+      amihuds: existing.value.amihuds,
+    };
+  }
+  return null;
+}
+
+function setLiquidityDistributionCache(key: string, snapshot: UniverseLiquiditySnapshot): void {
+  liquidityUniverseCache.set(key, {
+    expiresAt: Date.now() + RISK_UNIVERSE_CACHE_TTL_MS,
+    value: snapshot,
+  });
+}
+
+async function recomputeUniverseLiquidity(
+  assetClass: AssetClass,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort
+): Promise<UniverseLiquiditySnapshot | null> {
+  const symbols = Array.from(new Set(CLASS_BENCHMARK_UNIVERSE[assetClass] ?? []));
+  if (symbols.length === 0) return null;
+
+  const computed = await mapWithConcurrency(symbols, 5, async (symbol) => {
+    const history = await gateway.getHistory(symbol, { range: horizon.range, interval: "1d" });
+    const components = prepareLiquidityComponents(history, assetClass, horizon);
+    return components;
+  });
+
+  const volumes = computed
+    .map((entry) => entry.avgDailyVolume)
+    .filter((value): value is number => typeof value === "number" && value > 0);
+  const spreads = computed
+    .map((entry) => entry.spreadProxy)
+    .filter((value): value is number => typeof value === "number" && value > 0);
+  const amihuds = computed
+    .map((entry) => entry.amihud)
+    .filter((value): value is number => typeof value === "number" && value > 0);
+
+  if (volumes.length < 5) return null;
+  return {
+    volumes,
+    spreads,
+    amihuds,
+    computedAtIso: new Date().toISOString(),
+  };
+}
+
+async function getUniverseLiquidityDistribution(
+  assetClass: AssetClass,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort
+): Promise<UniverseLiquidityDistributionResult> {
+  const key = buildLiquidityUniverseCacheKey(assetClass, horizon);
+  const fresh = getCachedLiquidityDistribution(key, false);
+  if (fresh) return fresh;
+
+  try {
+    const rebuilt = await recomputeUniverseLiquidity(assetClass, horizon, gateway);
+    if (rebuilt) {
+      setLiquidityDistributionCache(key, rebuilt);
+      return {
+        source: "recomputed",
+        volumes: rebuilt.volumes,
+        spreads: rebuilt.spreads,
+        amihuds: rebuilt.amihuds,
+      };
+    }
+  } catch {
+    // no-op
+  }
+
+  const stale = getCachedLiquidityDistribution(key, true);
+  if (stale) return stale;
+
+  return { source: "unavailable", volumes: [], spreads: [], amihuds: [] };
+}
+
 function logAnalysisDiagnostics(params: {
   symbol: string;
   providerSymbol: string;
@@ -576,6 +770,11 @@ function logAnalysisDiagnostics(params: {
   riskUniverseSource: UniverseDistributionResult["source"];
   returnUniverseSize: number;
   returnUniverseSource: UniverseSharpeDistributionResult["source"];
+  liquidityUniverseVolumeSize: number;
+  liquidityUniverseSpreadSize: number;
+  liquidityUniverseAmihudSize: number;
+  liquidityUniverseSource: UniverseLiquidityDistributionResult["source"];
+  liquidityHasPartialData: boolean;
   usingFallback: boolean;
   fallbackReasons: string[];
 }): void {
@@ -642,6 +841,7 @@ export async function analyzeUniversalAssets(
   const classes = Array.from(new Set(resolvedAssets.map((asset) => asset.resolvedClass)));
   const universeDistributionByClass = new Map<AssetClass, UniverseDistributionResult>();
   const sharpeDistributionByClass = new Map<AssetClass, UniverseSharpeDistributionResult>();
+  const liquidityDistributionByClass = new Map<AssetClass, UniverseLiquidityDistributionResult>();
   const universeDistributionList = await Promise.all(
     classes.map(async (assetClass) => ({
       assetClass,
@@ -663,6 +863,15 @@ export async function analyzeUniversalAssets(
   );
   sharpeDistributionList.forEach((item) => {
     sharpeDistributionByClass.set(item.assetClass, item.distribution);
+  });
+  const liquidityDistributionList = await Promise.all(
+    classes.map(async (assetClass) => ({
+      assetClass,
+      distribution: await getUniverseLiquidityDistribution(assetClass, horizon, gateway),
+    }))
+  );
+  liquidityDistributionList.forEach((item) => {
+    liquidityDistributionByClass.set(item.assetClass, item.distribution);
   });
 
   const series = await Promise.all(
@@ -693,22 +902,11 @@ export async function analyzeUniversalAssets(
         riskReturns: preparedRiskReturns.values,
         riskExpectedPoints,
         riskQualityRatio: preparedRiskReturns.qualityRatio,
+        history,
         liquidity,
       };
     })
   );
-
-  const volumeByClass = new Map<AssetClass, number[]>();
-
-  series.forEach((row) => {
-    const classVolumes = volumeByClass.get(row.resolvedClass) ?? [];
-
-    if (typeof row.liquidity.avgDailyVolume === "number" && row.liquidity.avgDailyVolume > 0) {
-      classVolumes.push(row.liquidity.avgDailyVolume);
-    }
-
-    volumeByClass.set(row.resolvedClass, classVolumes);
-  });
 
   return series.map((row, rowIndex) => {
     const fallbackMetrics = classFallbackMetrics(row.resolvedClass);
@@ -721,13 +919,19 @@ export async function analyzeUniversalAssets(
       source: "unavailable",
       sharpes: [],
     };
+    const liquidityUniverse = liquidityDistributionByClass.get(row.resolvedClass) ?? {
+      source: "unavailable",
+      volumes: [],
+      spreads: [],
+      amihuds: [],
+    };
     const classRiskFreeRateDaily = toDailyRiskFreeRate(
       getClassAnnualRiskFreeRate(row.resolvedClass, options.riskFreeRateAnnual)
     );
 
     let riskScore = fallbackMetrics.risk;
     let returnScore = fallbackMetrics.return;
-    let liquidityScore = fallbackMetrics.liquidity;
+    let liquidityScore: number | null = fallbackMetrics.liquidity;
     let diversificationScore = fallbackMetrics.diversification;
 
     const hasTargetRiskSeries = row.riskReturns.length >= row.riskExpectedPoints;
@@ -781,14 +985,51 @@ export async function analyzeUniversalAssets(
       fallbackReasons.push("return_data_unavailable");
     }
 
-    const classVolumes = volumeByClass.get(row.resolvedClass) ?? [];
-    const thresholdScore = scoreFromVolumeThreshold(row.liquidity.avgDailyVolume, row.resolvedClass);
-    const rankScore = volumeRankScore(row.liquidity.avgDailyVolume, classVolumes);
-    const profilePenalty = row.liquidity.profile.liquidationDays * 0.22 + row.liquidity.profile.marginAddOn * 12;
-    liquidityScore = clampMetric(thresholdScore * 0.55 + rankScore * 0.45 - profilePenalty);
-    if ((row.liquidity.avgDailyVolume ?? 0) <= 0) {
-      fallbackReasons.push("liquidity_missing_volume");
-      liquidityScore = clampMetric((liquidityScore + fallbackMetrics.liquidity) / 2);
+    const liquidityComponents = prepareLiquidityComponents(row.history, row.resolvedClass, horizon);
+    const volumeReady =
+      typeof liquidityComponents.avgDailyVolume === "number" &&
+      liquidityComponents.avgDailyVolume > 0 &&
+      liquidityUniverse.volumes.length >= 5;
+    const spreadReady =
+      typeof liquidityComponents.spreadProxy === "number" &&
+      liquidityComponents.spreadProxy > 0 &&
+      liquidityUniverse.spreads.length >= 5;
+    const amihudReady =
+      typeof liquidityComponents.amihud === "number" &&
+      liquidityComponents.amihud > 0 &&
+      liquidityUniverse.amihuds.length >= 5;
+    const allLiquidityComponentsReady = volumeReady && spreadReady && amihudReady;
+    const hasPartialLiquidity = volumeReady && !allLiquidityComponentsReady;
+
+    if (allLiquidityComponentsReady) {
+      const weights =
+        CLASS_LIQUIDITY_COMPONENT_WEIGHTS[row.resolvedClass] ??
+        CLASS_LIQUIDITY_COMPONENT_WEIGHTS[AssetClass.Unknown];
+      const volumePct = percentileRank(liquidityUniverse.volumes, liquidityComponents.avgDailyVolume as number);
+      const spreadPct = 1 - percentileRank(liquidityUniverse.spreads, liquidityComponents.spreadProxy as number);
+      const amihudPct = 1 - percentileRank(liquidityUniverse.amihuds, liquidityComponents.amihud as number);
+      const weighted =
+        volumePct * weights.volume + spreadPct * weights.spread + amihudPct * weights.amihud;
+      const thresholdScore = scoreFromVolumeThreshold(liquidityComponents.avgDailyVolume, row.resolvedClass);
+      const profilePenalty = row.liquidity.profile.liquidationDays * 0.18 + row.liquidity.profile.marginAddOn * 8;
+      liquidityScore = clampMetric(weighted * 9 + 1);
+      liquidityScore = clampMetric((liquidityScore * 0.85 + thresholdScore * 0.15) - profilePenalty);
+      if (liquidityUniverse.source === "stale_cache") {
+        fallbackReasons.push("liquidity_universe_stale_cache");
+      }
+    } else if (hasPartialLiquidity) {
+      const volumePct = percentileRank(liquidityUniverse.volumes, liquidityComponents.avgDailyVolume as number);
+      liquidityScore = clampMetric(1 + volumePct * 9);
+      fallbackReasons.push("liquidity_partial_components_missing");
+      if (liquidityUniverse.source === "stale_cache") {
+        fallbackReasons.push("liquidity_universe_stale_cache");
+      }
+    } else {
+      liquidityScore = null;
+      fallbackReasons.push("liquidity_data_unavailable");
+      if (liquidityComponents.qualityRatio < 0.6) {
+        fallbackReasons.push("liquidity_low_data_quality");
+      }
     }
 
     const peerCorrelations: number[] = [];
@@ -827,6 +1068,11 @@ export async function analyzeUniversalAssets(
       riskUniverseSource: riskUniverse.source,
       returnUniverseSize: returnUniverse.sharpes.length,
       returnUniverseSource: returnUniverse.source,
+      liquidityUniverseVolumeSize: liquidityUniverse.volumes.length,
+      liquidityUniverseSpreadSize: liquidityUniverse.spreads.length,
+      liquidityUniverseAmihudSize: liquidityUniverse.amihuds.length,
+      liquidityUniverseSource: liquidityUniverse.source,
+      liquidityHasPartialData: hasPartialLiquidity,
       usingFallback: fallbackReasons.length > 0,
       fallbackReasons,
     });
