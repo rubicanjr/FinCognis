@@ -543,7 +543,7 @@ export default function UniversalAssetComparisonPanel() {
     fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assets: parsedAssets, timeHorizon }),
+      body: JSON.stringify({ assets: parsedAssets, timeHorizon, analysisMode: "compare" }),
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {
@@ -596,7 +596,7 @@ export default function UniversalAssetComparisonPanel() {
     fetch("/api/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assets: discoveryAssets, timeHorizon }),
+      body: JSON.stringify({ assets: discoveryAssets, timeHorizon, analysisMode: "discover" }),
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {

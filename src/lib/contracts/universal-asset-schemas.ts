@@ -3,6 +3,7 @@ import { AssetClass } from "@/components/tools/correlation/universal-asset-compa
 
 export const AssetClassSchema = z.nativeEnum(AssetClass);
 export const AnalyzeTimeHorizonSchema = z.enum(["1mo", "1y", "5y"]);
+export const AnalyzeModeSchema = z.enum(["compare", "discover"]);
 
 export const UniversalMetricsSchema = z.object({
   risk: z.number().min(1).max(10),
@@ -60,6 +61,7 @@ export const AnalyzeRequestSchema = z.object({
     })
   ).max(40),
   timeHorizon: AnalyzeTimeHorizonSchema.default("1y"),
+  analysisMode: AnalyzeModeSchema.default("compare"),
 });
 
 export const AnalyzeResponseSchema = z.object({

@@ -21,6 +21,11 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
       message:
         "Likidite skoru normal piyasa koşullarında geçerlidir. Kriz dönemlerinde tüm varlık sınıflarında likidite belirgin biçimde düşebilir.",
     },
+    {
+      level: "info",
+      message:
+        "Portföy Dengeleme Gücü, seçilen zaman dilimindeki tarihsel korelasyonlara dayanır. Kriz dönemlerinde korelasyonlar yükselebilir ve dengeleme etkisi zayıflayabilir.",
+    },
   ];
 
   if (classes.has(AssetClass.Equity)) {
@@ -42,6 +47,10 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
       level: "info",
       message: "Kripto likiditesi spot borsa verileriyle ölçülür; büyük tutarlı işlemlerde OTC fiyatlaması farklılaşabilir.",
     });
+    warnings.push({
+      level: "info",
+      message: "Kripto varlıklarda hisse senedi piyasalarıyla korelasyon rejimi zaman içinde değişebilir.",
+    });
   }
   if (classes.has(AssetClass.FX)) {
     warnings.push({
@@ -52,17 +61,29 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
       level: "info",
       message: "TRY bazlı döviz işlemlerinde düzenleyici limitler dönemsel likidite kısıtı oluşturabilir.",
     });
+    warnings.push({
+      level: "info",
+      message: "Döviz varlıklarında merkez bankası müdahaleleri dönemsel korelasyon rejimini etkileyebilir.",
+    });
   }
   if (classes.has(AssetClass.Commodity)) {
     warnings.push({
       level: "info",
       message: "Emtia varlıklarında mümkün olduğunda spot fiyat serileri kullanılır; vadeli kontratlarda dönemsel geçiş etkisi olabilir.",
     });
+    warnings.push({
+      level: "info",
+      message: "Altın gibi emtialarda likidite krizlerinde kısa vadeli korelasyon artabilir; dengeleme skoru rejime göre değişebilir.",
+    });
   }
   if (classes.has(AssetClass.Equity)) {
     warnings.push({
       level: "info",
       message: "BIST varlıklarında seans dışı ve hafta sonu nakde çevrim mümkün değildir.",
+    });
+    warnings.push({
+      level: "info",
+      message: "BIST içi korelasyonlar stres dönemlerinde yükselme eğilimindedir; dengeleme skoru dönemsel olarak düşebilir.",
     });
   }
   if (classes.has(AssetClass.Fund)) {
@@ -87,6 +108,7 @@ export async function POST(request: Request) {
 
   const analyzed = await analyzeUniversalAssets(parsed.data.assets, marketDataGateway, {
     timeHorizon: parsed.data.timeHorizon,
+    analysisMode: parsed.data.analysisMode,
   });
   const unknownList = analyzed
     .filter((asset) => asset.class === AssetClass.Unknown)
@@ -112,7 +134,7 @@ export async function POST(request: Request) {
       provider: "Yahoo Finance MarketDataGateway",
       fetchedAtIso: new Date().toISOString(),
       note:
-        `Skorlar canlı piyasa akışından üretilir. Model: analysis_engine_v2_quant. Zaman ufku: ${parsed.data.timeHorizon}. Veri yetersizliğinde fallback metadata alanını kontrol edin.`,
+        `Skorlar canlı piyasa akışından üretilir. Model: analysis_engine_v2_quant. Mod: ${parsed.data.analysisMode}. Zaman ufku: ${parsed.data.timeHorizon}. Veri yetersizliğinde fallback metadata alanını kontrol edin.`,
     },
   });
 

@@ -1,4 +1,4 @@
-import { correlation, mean, stdDev } from "@/components/tools/correlation/math";
+import { correlation, covariance, mean, stdDev, variance } from "@/components/tools/correlation/math";
 import {
   AssetClass,
   buildDefaultClassDictionary,
@@ -24,6 +24,7 @@ interface AnalyzeInputAsset {
 interface AnalyzeUniversalAssetsOptions {
   timeHorizon?: AnalyzeTimeHorizon;
   riskFreeRateAnnual?: number;
+  analysisMode?: "compare" | "discover";
 }
 
 interface HorizonSpec {
@@ -52,6 +53,7 @@ interface RawAssetSeries {
   riskQualityRatio: number;
   history: MarketHistory;
   liquidity: MarketLiquidity;
+  returnsByDate: Record<string, number>;
 }
 
 interface PreparedRiskReturns {
@@ -100,6 +102,19 @@ interface UniverseLiquidityDistributionResult {
   amihuds: number[];
 }
 
+type DiversificationMode = "contextual" | "absolute";
+type MarketRegime = "normal" | "transition" | "crisis";
+
+interface UniverseDiversificationSnapshot {
+  scores: number[];
+  computedAtIso: string;
+}
+
+interface UniverseDiversificationDistributionResult {
+  source: "fresh_cache" | "recomputed" | "stale_cache" | "unavailable";
+  scores: number[];
+}
+
 const classBySymbol = buildDefaultClassDictionary();
 const MODEL_VERSION = "analysis_engine_v2_quant";
 const DEFAULT_RISK_FREE_RATE_ANNUAL = 0.12;
@@ -108,6 +123,7 @@ const ENABLE_ANALYSIS_DIAGNOSTICS = process.env.FINCOGNIS_ANALYSIS_DEBUG === "tr
 const riskUniverseCache = new Map<string, CacheEntry<UniverseVolatilitySnapshot>>();
 const sharpeUniverseCache = new Map<string, CacheEntry<UniverseVolatilitySnapshot>>();
 const liquidityUniverseCache = new Map<string, CacheEntry<UniverseLiquiditySnapshot>>();
+const diversificationUniverseCache = new Map<string, CacheEntry<UniverseDiversificationSnapshot>>();
 
 const HORIZON_CONFIG: Record<AnalyzeTimeHorizon, HorizonSpec> = {
   "1mo": { range: "1mo", lookbackDays: 21, cryptoCalendarLookbackDays: 30, minHistoryPoints: 12 },
@@ -162,6 +178,23 @@ const CLASS_BENCHMARK_UNIVERSE: Record<AssetClass, string[]> = {
   [AssetClass.Bond]: ["EUROBOND", "^TNX", "^TYX", "IEF", "TLT", "BND"],
   [AssetClass.Fund]: ["SPY", "QQQ", "VTI", "BND", "EEM", "IWM"],
   [AssetClass.Unknown]: [],
+};
+
+const CLASS_MEDIAN_CORRELATION: Record<AssetClass, number> = {
+  [AssetClass.Equity]: 0.75,
+  [AssetClass.Crypto]: 0.65,
+  [AssetClass.Commodity]: 0.1,
+  [AssetClass.Index]: 0.8,
+  [AssetClass.FX]: -0.2,
+  [AssetClass.Bond]: 0.35,
+  [AssetClass.Fund]: 0.8,
+  [AssetClass.Unknown]: 0.5,
+};
+
+const REGIME_MULTIPLIERS: Record<MarketRegime, number> = {
+  normal: 1.0,
+  transition: 0.85,
+  crisis: 0.7,
 };
 
 const CLASS_LIQUIDITY_THRESHOLDS: Record<AssetClass, ClassLiquidityThresholds> = {
@@ -396,6 +429,109 @@ function buildSharpeUniverseCacheKey(assetClass: AssetClass, horizon: HorizonSpe
 
 function buildLiquidityUniverseCacheKey(assetClass: AssetClass, horizon: HorizonSpec): string {
   return `universe_liquidity:${assetClass}:${horizon.range}:1d`;
+}
+
+function buildDiversificationUniverseCacheKey(
+  assetClass: AssetClass,
+  benchmarkSymbol: string,
+  horizon: HorizonSpec,
+  regime: MarketRegime
+): string {
+  return `universe_diversification:${assetClass}:${benchmarkSymbol}:${horizon.range}:${regime}`;
+}
+
+function toReturnsByDate(history: MarketHistory): Record<string, number> {
+  const returnsByDate: Record<string, number> = {};
+  for (let index = 1; index < history.points.length; index += 1) {
+    const point = history.points[index];
+    const value = history.returns[index - 1];
+    if (!Number.isFinite(value)) continue;
+    returnsByDate[point.date] = value;
+  }
+  return returnsByDate;
+}
+
+function alignReturnPairs(
+  leftByDate: Record<string, number>,
+  rightByDate: Record<string, number>,
+  lookbackDays: number
+): { left: number[]; right: number[] } {
+  const commonDates = Object.keys(leftByDate).filter((date) => date in rightByDate).sort();
+  const recentDates = commonDates.slice(-lookbackDays);
+  const left: number[] = [];
+  const right: number[] = [];
+  recentDates.forEach((date) => {
+    const l = leftByDate[date];
+    const r = rightByDate[date];
+    if (!Number.isFinite(l) || !Number.isFinite(r)) return;
+    left.push(l);
+    right.push(r);
+  });
+  return { left, right };
+}
+
+function weightedRollingCorrelation(left: number[], right: number[]): number | null {
+  const size = Math.min(left.length, right.length);
+  if (size < 12) return null;
+  const l = left.slice(-size);
+  const r = right.slice(-size);
+
+  const longCorr = correlation(l, r);
+  if (!Number.isFinite(longCorr)) return null;
+
+  if (size < 21) return longCorr;
+  const shortCorr = correlation(l.slice(-21), r.slice(-21));
+  if (!Number.isFinite(shortCorr)) return longCorr;
+  return shortCorr * 0.4 + longCorr * 0.6;
+}
+
+function calculateBeta(left: number[], right: number[]): number | null {
+  const size = Math.min(left.length, right.length);
+  if (size < 12) return null;
+  const l = left.slice(-size);
+  const r = right.slice(-size);
+  const benchmarkVariance = variance(r);
+  if (!Number.isFinite(benchmarkVariance) || benchmarkVariance <= 1e-12) return null;
+  const cov = covariance(l, r);
+  if (!Number.isFinite(cov)) return null;
+  return cov / benchmarkVariance;
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function resolveDiversificationBenchmark(
+  assetClass: AssetClass,
+  symbol: string,
+  providerSymbol: string
+): string | null {
+  if (assetClass === AssetClass.Equity) {
+    return providerSymbol.endsWith(".IS") ? "XU100.IS" : "SPY";
+  }
+  if (assetClass === AssetClass.Crypto) {
+    return symbol === "BTC" ? "SPY" : "BTC";
+  }
+  if (assetClass === AssetClass.Commodity) return "GSG";
+  if (assetClass === AssetClass.FX) return "UUP";
+  if (assetClass === AssetClass.Index) return "SPY";
+  if (assetClass === AssetClass.Bond) return "TLT";
+  if (assetClass === AssetClass.Fund) return "SPY";
+  return null;
+}
+
+function detectMarketRegime(vixPrice: number | null): MarketRegime {
+  if (typeof vixPrice !== "number" || !Number.isFinite(vixPrice)) return "normal";
+  if (vixPrice > 30) return "crisis";
+  if (vixPrice > 20) return "transition";
+  return "normal";
+}
+
+function rawAbsoluteDiversificationScore(correlationValue: number, betaValue: number): number {
+  return (
+    (1 - Math.abs(correlationValue)) * 0.6 +
+    (1 - clamp01(Math.abs(betaValue))) * 0.4
+  );
 }
 
 function percentileRank(universe: number[], value: number): number {
@@ -758,6 +894,92 @@ async function getUniverseLiquidityDistribution(
   return { source: "unavailable", volumes: [], spreads: [], amihuds: [] };
 }
 
+function getCachedUniverseDiversification(
+  key: string,
+  allowStale: boolean
+): UniverseDiversificationDistributionResult | null {
+  const existing = diversificationUniverseCache.get(key);
+  if (!existing) return null;
+  const isFresh = existing.expiresAt > Date.now();
+  if (isFresh) {
+    return { source: "fresh_cache", scores: existing.value.scores };
+  }
+  if (allowStale) {
+    return { source: "stale_cache", scores: existing.value.scores };
+  }
+  return null;
+}
+
+function setDiversificationCache(key: string, snapshot: UniverseDiversificationSnapshot): void {
+  diversificationUniverseCache.set(key, {
+    expiresAt: Date.now() + RISK_UNIVERSE_CACHE_TTL_MS,
+    value: snapshot,
+  });
+}
+
+async function recomputeUniverseDiversification(
+  assetClass: AssetClass,
+  benchmarkSymbol: string,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort,
+  regime: MarketRegime
+): Promise<UniverseDiversificationSnapshot | null> {
+  const symbols = Array.from(new Set(CLASS_BENCHMARK_UNIVERSE[assetClass] ?? []));
+  if (symbols.length === 0) return null;
+
+  const benchmarkHistory = await gateway.getHistory(benchmarkSymbol, { range: horizon.range, interval: "1d" });
+  const benchmarkByDate = toReturnsByDate(benchmarkHistory);
+  const lookbackDays = getRiskLookbackDays(assetClass, horizon);
+  const regimeMultiplier = REGIME_MULTIPLIERS[regime];
+
+  const rawScores = await mapWithConcurrency(symbols, 5, async (symbol) => {
+    const history = await gateway.getHistory(symbol, { range: horizon.range, interval: "1d" });
+    const returnsByDate = toReturnsByDate(history);
+    const paired = alignReturnPairs(returnsByDate, benchmarkByDate, lookbackDays);
+    if (paired.left.length < 12) return null;
+    const corr = weightedRollingCorrelation(paired.left, paired.right);
+    const beta = calculateBeta(paired.left, paired.right);
+    if (corr === null || beta === null) return null;
+    const raw = rawAbsoluteDiversificationScore(corr, beta);
+    return clamp01(raw * regimeMultiplier);
+  });
+
+  const scores = rawScores.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  if (scores.length < 5) return null;
+
+  return {
+    scores,
+    computedAtIso: new Date().toISOString(),
+  };
+}
+
+async function getUniverseDiversificationDistribution(
+  assetClass: AssetClass,
+  benchmarkSymbol: string,
+  horizon: HorizonSpec,
+  gateway: MarketDataGatewayPort,
+  regime: MarketRegime
+): Promise<UniverseDiversificationDistributionResult> {
+  const key = buildDiversificationUniverseCacheKey(assetClass, benchmarkSymbol, horizon, regime);
+  const fresh = getCachedUniverseDiversification(key, false);
+  if (fresh) return fresh;
+
+  try {
+    const rebuilt = await recomputeUniverseDiversification(assetClass, benchmarkSymbol, horizon, gateway, regime);
+    if (rebuilt) {
+      setDiversificationCache(key, rebuilt);
+      return { source: "recomputed", scores: rebuilt.scores };
+    }
+  } catch {
+    // no-op
+  }
+
+  const stale = getCachedUniverseDiversification(key, true);
+  if (stale) return stale;
+
+  return { source: "unavailable", scores: [] };
+}
+
 function logAnalysisDiagnostics(params: {
   symbol: string;
   providerSymbol: string;
@@ -775,6 +997,8 @@ function logAnalysisDiagnostics(params: {
   liquidityUniverseAmihudSize: number;
   liquidityUniverseSource: UniverseLiquidityDistributionResult["source"];
   liquidityHasPartialData: boolean;
+  diversificationMode: DiversificationMode;
+  marketRegime: MarketRegime;
   usingFallback: boolean;
   fallbackReasons: string[];
 }): void {
@@ -837,6 +1061,9 @@ export async function analyzeUniversalAssets(
 
   const horizonKey = options.timeHorizon ?? "1y";
   const horizon = getHorizonSpec(horizonKey);
+  const diversificationMode: DiversificationMode = options.analysisMode === "discover" ? "absolute" : "contextual";
+  const vixQuote = await gateway.getQuote("^VIX");
+  const marketRegime = detectMarketRegime(vixQuote?.price ?? null);
 
   const classes = Array.from(new Set(resolvedAssets.map((asset) => asset.resolvedClass)));
   const universeDistributionByClass = new Map<AssetClass, UniverseDistributionResult>();
@@ -904,9 +1131,52 @@ export async function analyzeUniversalAssets(
         riskQualityRatio: preparedRiskReturns.qualityRatio,
         history,
         liquidity,
+        returnsByDate: toReturnsByDate(history),
       };
     })
   );
+
+  const benchmarkByAsset = new Map<string, string>();
+  const benchmarkReturnsByContext = new Map<string, Record<string, number>>();
+  const diversificationUniverseByContext = new Map<string, UniverseDiversificationDistributionResult>();
+
+  if (diversificationMode === "absolute") {
+    const contextMap = new Map<string, { assetClass: AssetClass; benchmarkSymbol: string }>();
+    series.forEach((row) => {
+      const benchmarkSymbol = resolveDiversificationBenchmark(row.resolvedClass, row.symbol, row.providerSymbol);
+      if (!benchmarkSymbol) return;
+      benchmarkByAsset.set(row.symbol, benchmarkSymbol);
+      const contextKey = `${row.resolvedClass}:${benchmarkSymbol}`;
+      if (!contextMap.has(contextKey)) {
+        contextMap.set(contextKey, { assetClass: row.resolvedClass, benchmarkSymbol });
+      }
+    });
+
+    const contextResults = await Promise.all(
+      Array.from(contextMap.entries()).map(async ([contextKey, context]) => {
+        const [benchmarkHistory, universe] = await Promise.all([
+          gateway.getHistory(context.benchmarkSymbol, { range: horizon.range, interval: "1d" }),
+          getUniverseDiversificationDistribution(
+            context.assetClass,
+            context.benchmarkSymbol,
+            horizon,
+            gateway,
+            marketRegime
+          ),
+        ]);
+        return {
+          contextKey,
+          benchmarkReturnsByDate: toReturnsByDate(benchmarkHistory),
+          universe,
+        };
+      })
+    );
+
+    contextResults.forEach((result) => {
+      benchmarkReturnsByContext.set(result.contextKey, result.benchmarkReturnsByDate);
+      diversificationUniverseByContext.set(result.contextKey, result.universe);
+    });
+  }
 
   return series.map((row, rowIndex) => {
     const fallbackMetrics = classFallbackMetrics(row.resolvedClass);
@@ -1032,28 +1302,66 @@ export async function analyzeUniversalAssets(
       }
     }
 
-    const peerCorrelations: number[] = [];
-    for (let peerIndex = 0; peerIndex < series.length; peerIndex += 1) {
-      if (peerIndex === rowIndex) continue;
-      const peer = series[peerIndex];
-      const commonSize = Math.min(row.returns.length, peer.returns.length, horizon.lookbackDays);
-      if (commonSize < horizon.minHistoryPoints) continue;
+    if (diversificationMode === "contextual") {
+      const peerCorrelations: number[] = [];
+      for (let peerIndex = 0; peerIndex < series.length; peerIndex += 1) {
+        if (peerIndex === rowIndex) continue;
+        const peer = series[peerIndex];
+        const paired = alignReturnPairs(row.returnsByDate, peer.returnsByDate, horizon.lookbackDays);
+        if (paired.left.length < horizon.minHistoryPoints) continue;
 
-      const left = row.returns.slice(-commonSize);
-      const right = peer.returns.slice(-commonSize);
-      const corr = correlation(left, right);
-      if (Number.isFinite(corr)) peerCorrelations.push(corr);
-    }
+        const corr = weightedRollingCorrelation(paired.left, paired.right);
+        if (corr !== null && Number.isFinite(corr)) {
+          peerCorrelations.push(corr);
+        }
+      }
 
-    if (peerCorrelations.length > 0) {
-      const avgCorrelation = mean(peerCorrelations);
-      diversificationScore = clampMetric(10 - avgCorrelation * 10);
+      if (peerCorrelations.length > 0) {
+        const avgCorrelation = mean(peerCorrelations);
+        const contextualRaw = clamp01(1 - avgCorrelation);
+        const adjusted = clamp01(contextualRaw * REGIME_MULTIPLIERS[marketRegime]);
+        diversificationScore = clampMetric(adjusted * 9 + 1);
+      } else {
+        fallbackReasons.push("diversification_context_insufficient_history");
+        const medianCorrelation = CLASS_MEDIAN_CORRELATION[row.resolvedClass] ?? CLASS_MEDIAN_CORRELATION[AssetClass.Unknown];
+        diversificationScore = clampMetric(clamp01(1 - Math.abs(medianCorrelation)) * 9 + 1);
+      }
     } else {
-      fallbackReasons.push("diversification_insufficient_history");
-      diversificationScore = diversificationFallbackByClassDistance(
-        row.resolvedClass,
-        series.map((item) => item.resolvedClass)
-      );
+      const benchmarkSymbol = benchmarkByAsset.get(row.symbol);
+      const contextKey = benchmarkSymbol ? `${row.resolvedClass}:${benchmarkSymbol}` : null;
+      const benchmarkReturnsByDate = contextKey ? benchmarkReturnsByContext.get(contextKey) : undefined;
+      const diversificationUniverse = contextKey
+        ? diversificationUniverseByContext.get(contextKey) ?? { source: "unavailable", scores: [] }
+        : { source: "unavailable" as const, scores: [] as number[] };
+
+      if (benchmarkSymbol && benchmarkReturnsByDate && diversificationUniverse.scores.length >= 5) {
+        const paired = alignReturnPairs(row.returnsByDate, benchmarkReturnsByDate, horizon.lookbackDays);
+        const corr = weightedRollingCorrelation(paired.left, paired.right);
+        const beta = calculateBeta(paired.left, paired.right);
+
+        if (corr !== null && beta !== null && Number.isFinite(corr) && Number.isFinite(beta)) {
+          const raw = rawAbsoluteDiversificationScore(corr, beta);
+          const adjusted = clamp01(raw * REGIME_MULTIPLIERS[marketRegime]);
+          const percentile = percentileRank(diversificationUniverse.scores, adjusted);
+          diversificationScore = clampMetric(1 + percentile * 9);
+          if (diversificationUniverse.source === "stale_cache") {
+            fallbackReasons.push("diversification_universe_stale_cache");
+          }
+        } else {
+          fallbackReasons.push("diversification_target_insufficient_history");
+          const medianCorrelation =
+            CLASS_MEDIAN_CORRELATION[row.resolvedClass] ?? CLASS_MEDIAN_CORRELATION[AssetClass.Unknown];
+          diversificationScore = clampMetric(clamp01(1 - Math.abs(medianCorrelation)) * 9 + 1);
+        }
+      } else if (row.resolvedClass !== AssetClass.Unknown) {
+        fallbackReasons.push("diversification_class_median_fallback");
+        const medianCorrelation =
+          CLASS_MEDIAN_CORRELATION[row.resolvedClass] ?? CLASS_MEDIAN_CORRELATION[AssetClass.Unknown];
+        diversificationScore = clampMetric(clamp01(1 - Math.abs(medianCorrelation)) * 9 + 1);
+      } else {
+        fallbackReasons.push("diversification_data_unavailable");
+        diversificationScore = classFallbackMetrics(AssetClass.Unknown).diversification;
+      }
     }
 
     logAnalysisDiagnostics({
@@ -1073,6 +1381,8 @@ export async function analyzeUniversalAssets(
       liquidityUniverseAmihudSize: liquidityUniverse.amihuds.length,
       liquidityUniverseSource: liquidityUniverse.source,
       liquidityHasPartialData: hasPartialLiquidity,
+      diversificationMode,
+      marketRegime,
       usingFallback: fallbackReasons.length > 0,
       fallbackReasons,
     });
