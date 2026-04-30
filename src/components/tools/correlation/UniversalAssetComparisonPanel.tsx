@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { LoaderCircle, Search, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
@@ -61,7 +61,12 @@ const NEUTRAL_FALLBACK_TEXT =
   "Bu içerik yatırım tavsiyesi içermez; yalnızca genel karşılaştırmalı profil bilgisidir.";
 
 type PanelMode = "compare" | "discover";
-type MatrixMetricLabel = "Risk" | "Getiri" | "Likidite" | "Çeşitlendirme";
+type MatrixMetricLabel =
+  | "En Kötü Düşüş"
+  | "Riske Göre Kazanç"
+  | "Enflasyon Sonrası Gerçek Kazanç"
+  | "Piyasayı Geçme Gücü"
+  | "Piyasa Sakinlik Durumu";
 
 interface ComparisonMatrix {
   assets: string[];
@@ -102,24 +107,30 @@ interface CompareCardData {
   return: number;
   liquidity: number | null;
   diversification: number;
+  calmness: number | null;
   totalScore: number | null;
   balanceScore: number;
   isFallback: boolean;
   riskUnavailable: boolean;
   returnUnavailable: boolean;
   liquidityUnavailable: boolean;
+  calmnessUnavailable: boolean;
   hasCriticalDataGap: boolean;
 }
 
 type TimeHorizon = AnalyzeRequest["timeHorizon"];
 
 const METRIC_CONFIG: MetricConfig[] = [
-  { key: "risk", matrixLabel: "Risk" },
-  { key: "return", matrixLabel: "Getiri" },
-  { key: "liquidity", matrixLabel: "Likidite" },
+  { key: "risk", matrixLabel: "En Kötü Düşüş" },
+  { key: "return", matrixLabel: "Riske Göre Kazanç" },
+  { key: "liquidity", matrixLabel: "Enflasyon Sonrası Gerçek Kazanç" },
   {
     key: "diversification",
-    matrixLabel: "Çeşitlendirme",
+    matrixLabel: "Piyasayı Geçme Gücü",
+  },
+  {
+    key: "calmness",
+    matrixLabel: "Piyasa Sakinlik Durumu",
   },
 ];
 
@@ -242,6 +253,8 @@ function hasCriticalMetricGap(asset: NormalizedAsset | undefined): boolean {
     hasFallbackReason(asset, "risk_data_unavailable") ||
     hasFallbackReason(asset, "return_data_unavailable") ||
     hasFallbackReason(asset, "liquidity_data_unavailable") ||
+    hasFallbackReason(asset, "real_return_data_unavailable") ||
+    hasFallbackReason(asset, "calmness_data_unavailable") ||
     hasFallbackReason(asset, "risk_target_insufficient_history") ||
     hasFallbackReason(asset, "return_target_insufficient_history")
   );
@@ -360,7 +373,7 @@ function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {
 }
 
 function heatCellTone(metricLabel: MatrixMetricLabel, score: number): string {
-  const decisionScore = metricLabel === "Risk" ? 11 - score : score;
+  const decisionScore = metricLabel === "En Kötü Düşüş" ? 11 - score : score;
   const toneIndex = decisionScore >= 8 ? 0 : decisionScore >= 5 ? 1 : 2;
   return HEATMAP_TONES[toneIndex];
 }
@@ -374,8 +387,8 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
     return ["Karşılaştırma içgörüsü için en az iki varlık girin."];
   }
 
-  const riskMetric = matrix.metrics.find((metric) => metric.label === "Risk");
-  const returnMetric = matrix.metrics.find((metric) => metric.label === "Getiri");
+  const riskMetric = matrix.metrics.find((metric) => metric.label === "En Kötü Düşüş");
+  const returnMetric = matrix.metrics.find((metric) => metric.label === "Riske Göre Kazanç");
 
   if (!riskMetric || !returnMetric) {
     return ["Karşılaştırma içgörüsü için metrik verisi eksik."];
@@ -642,22 +655,32 @@ export default function UniversalAssetComparisonPanel() {
     () =>
       matrix.assets.map((assetSymbol) => {
         const sourceAsset = assets.find((asset) => asset.symbol === assetSymbol);
-        const risk = clampScore(matrix.metrics.find((metric) => metric.label === "Risk")?.values[assetSymbol] ?? 0);
+        const risk = clampScore(
+          matrix.metrics.find((metric) => metric.label === "En Kötü Düşüş")?.values[assetSymbol] ?? 0
+        );
         const returnScore = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Getiri")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Riske Göre Kazanç")?.values[assetSymbol] ?? 0
         );
         const liquidity = clampNullableScore(
-          matrix.metrics.find((metric) => metric.label === "Likidite")?.values[assetSymbol] ?? null
+          matrix.metrics.find((metric) => metric.label === "Enflasyon Sonrası Gerçek Kazanç")?.values[assetSymbol] ??
+            null
         );
         const diversification = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Çeşitlendirme")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Piyasayı Geçme Gücü")?.values[assetSymbol] ?? 0
+        );
+        const calmness = clampNullableScore(
+          matrix.metrics.find((metric) => metric.label === "Piyasa Sakinlik Durumu")?.values[assetSymbol] ?? null
         );
         const riskUnavailable = hasFallbackReason(sourceAsset, "risk_data_unavailable");
         const returnUnavailable = hasFallbackReason(sourceAsset, "return_data_unavailable");
-        const liquidityUnavailable = hasFallbackReason(sourceAsset, "liquidity_data_unavailable");
+        const liquidityUnavailable =
+          hasFallbackReason(sourceAsset, "liquidity_data_unavailable") ||
+          hasFallbackReason(sourceAsset, "real_return_data_unavailable");
+        const calmnessUnavailable = hasFallbackReason(sourceAsset, "calmness_data_unavailable");
         const hasCriticalDataGap = hasCriticalMetricGap(sourceAsset);
         const comparableMetrics: number[] = [diversification];
         if (liquidity !== null) comparableMetrics.push(liquidity);
+        if (calmness !== null) comparableMetrics.push(calmness);
         if (!riskUnavailable) comparableMetrics.push(riskQuality(risk));
         if (!returnUnavailable) comparableMetrics.push(returnScore);
         const balanceScore =
@@ -672,12 +695,14 @@ export default function UniversalAssetComparisonPanel() {
           return: returnScore,
           liquidity,
           diversification,
+          calmness,
           totalScore,
           balanceScore,
           isFallback: Boolean(sourceAsset?.computation?.isFallback),
           riskUnavailable,
           returnUnavailable,
           liquidityUnavailable,
+          calmnessUnavailable,
           hasCriticalDataGap,
         };
       }),
@@ -692,10 +717,11 @@ export default function UniversalAssetComparisonPanel() {
   const bestBalancedReason = useMemo(() => {
     if (!bestBalancedAsset) return "";
     const factors = [
-      { label: "düşük risk düzeyi", score: riskQuality(bestBalancedAsset.risk) },
-      { label: "yüksek geçmiş getiri gücü", score: bestBalancedAsset.return },
-      { label: "güçlü nakde çevirme kolaylığı", score: bestBalancedAsset.liquidity },
-      { label: "yüksek portföy dengeleme gücü", score: bestBalancedAsset.diversification },
+      { label: "düşük en kötü düşüş", score: riskQuality(bestBalancedAsset.risk) },
+      { label: "yüksek riske göre kazanç", score: bestBalancedAsset.return },
+      { label: "yüksek enflasyon sonrası gerçek kazanç", score: bestBalancedAsset.liquidity },
+      { label: "yüksek piyasayı geçme gücü", score: bestBalancedAsset.diversification },
+      { label: "sakin piyasa rejimine yakınlık", score: bestBalancedAsset.calmness },
     ].filter((item): item is { label: string; score: number } => typeof item.score === "number")
       .sort((left, right) => right.score - left.score)
       .slice(0, 2)
@@ -776,7 +802,7 @@ export default function UniversalAssetComparisonPanel() {
 
   const title = mode === "compare" ? "Varlıkları Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Varlıkları Keşfedin";
   const subtitle =
-    "Yatırım tavsiyesi değil; Risk Düzeyi, Geçmiş Getiri Gücü, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü metriklerine göre genel profil eşleştirmesi.";
+    "Yatırım tavsiyesi değil; En Kötü Düşüş, Riske Göre Kazanç, Enflasyon Sonrası Gerçek Kazanç, Piyasayı Geçme Gücü ve Piyasa Sakinlik Durumu metriklerine göre genel profil eşleştirmesi.";
 
   const dataError = catalogError ?? (mode === "compare" ? analysisError : discoveryError);
   const activeWarnings = mode === "compare" ? analysisData?.warnings ?? [] : discoveryData?.warnings ?? [];
@@ -920,9 +946,9 @@ export default function UniversalAssetComparisonPanel() {
                 <div className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2">
                   <p className="font-display text-[11px] text-slate-300">Ağırlık dağılımı</p>
                   <p className="mt-1 font-data text-xs text-[#8ddfff]">
-                    Risk Düzeyi %{selectedPreset.weights.risk} | Nakde Çevirme Kolaylığı %
-                    {selectedPreset.weights.liquidity} | Geçmiş Getiri Gücü %{selectedPreset.weights.return} | Portföy
-                    Dengeleme Gücü %{selectedPreset.weights.diversification}
+                    En Kötü Düşüş %{selectedPreset.weights.risk} | Enflasyon Sonrası Gerçek Kazanç %
+                    {selectedPreset.weights.liquidity} | Riske Göre Kazanç %{selectedPreset.weights.return} | Piyasayı
+                    Geçme Gücü %{selectedPreset.weights.diversification}
                   </p>
                 </div>
                 <label className="space-y-1">
@@ -1058,40 +1084,50 @@ export default function UniversalAssetComparisonPanel() {
                       </div>
                       <div className="mt-3 space-y-2 text-sm">
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Risk Düzeyi</span>
+                          <span>En Kötü Düşüş</span>
                           {card.riskUnavailable ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Risk", card.risk)}`}>
+                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("En Kötü Düşüş", card.risk)}`}>
                               {card.risk.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Geçmiş Getiri Gücü</span>
+                          <span>Riske Göre Kazanç</span>
                           {card.returnUnavailable ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Getiri", card.return)}`}>
+                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Riske Göre Kazanç", card.return)}`}>
                               {card.return.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Nakde Çevirme Kolaylığı</span>
+                          <span>Enflasyon Sonrası Gerçek Kazanç</span>
                           {card.liquidityUnavailable || card.liquidity === null ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Likidite", card.liquidity)}`}>
+                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Enflasyon Sonrası Gerçek Kazanç", card.liquidity)}`}>
                               {card.liquidity.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Portföy Dengeleme Gücü</span>
-                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Çeşitlendirme", card.diversification)}`}>
+                          <span>Piyasayı Geçme Gücü</span>
+                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Piyasayı Geçme Gücü", card.diversification)}`}>
                             {card.diversification.toFixed(1)}
                           </span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-200">
+                          <span>Piyasa Sakinlik Durumu</span>
+                          {card.calmnessUnavailable || card.calmness === null ? (
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                          ) : (
+                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Piyasa Sakinlik Durumu", card.calmness)}`}>
+                              {card.calmness.toFixed(1)}
+                            </span>
+                          )}
                         </div>
                         <div className="mt-3 border-t border-white/10 pt-2">
                           <div className="flex items-center justify-between text-slate-100">
@@ -1168,7 +1204,7 @@ export default function UniversalAssetComparisonPanel() {
                             ℹ️
                           </span>
                         ) : null}{" "}
-                        · Risk Düzeyi {row.risk.toFixed(1)} ·{" "}
+                        · En Kötü Düşüş {row.risk.toFixed(1)} ·{" "}
                         {row.shortExplanation}
                       </li>
                     ))}

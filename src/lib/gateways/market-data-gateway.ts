@@ -25,6 +25,7 @@ export interface MarketQuote {
 export interface MarketHistoryPoint {
   date: string;
   close: number;
+  adjustedClose: number | null;
   volume: number | null;
   high: number | null;
   low: number | null;
@@ -251,7 +252,10 @@ function parseHistoryPayload(
   const indicators = readRecord(firstResult, "indicators");
   const quoteEntries = readArray(indicators, "quote");
   const quoteEntry = quoteEntries.length > 0 ? quoteEntries[0] : null;
+  const adjustedCloseEntries = readArray(indicators, "adjclose");
+  const adjustedCloseEntry = adjustedCloseEntries.length > 0 ? adjustedCloseEntries[0] : null;
   const closes = readOptionalNumberArray(quoteEntry, "close");
+  const adjustedCloses = readOptionalNumberArray(adjustedCloseEntry, "adjclose");
   const highs = readOptionalNumberArray(quoteEntry, "high");
   const lows = readOptionalNumberArray(quoteEntry, "low");
   const volumes = readOptionalNumberArray(quoteEntry, "volume");
@@ -261,9 +265,14 @@ function parseHistoryPayload(
   for (let index = 0; index < length; index += 1) {
     const close = closes[index];
     if (close === null || close <= 0) continue;
+    const adjustedClose = adjustedCloses[index];
     points.push({
       date: toIsoDay(timestamps[index]),
       close,
+      adjustedClose:
+        typeof adjustedClose === "number" && Number.isFinite(adjustedClose) && adjustedClose > 0
+          ? adjustedClose
+          : null,
       volume: volumes[index] ?? null,
       high: highs[index] ?? null,
       low: lows[index] ?? null,
@@ -272,8 +281,8 @@ function parseHistoryPayload(
 
   const returns: number[] = [];
   for (let index = 1; index < points.length; index += 1) {
-    const previous = points[index - 1].close;
-    const current = points[index].close;
+    const previous = points[index - 1].adjustedClose ?? points[index - 1].close;
+    const current = points[index].adjustedClose ?? points[index].close;
     if (previous > 0 && Number.isFinite(previous) && Number.isFinite(current)) {
       returns.push(current / previous - 1);
     }

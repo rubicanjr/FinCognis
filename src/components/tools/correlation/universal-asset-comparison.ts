@@ -17,6 +17,7 @@ export interface UniversalMetrics {
   return: number;
   liquidity: number | null;
   diversification: number;
+  calmness: number | null;
 }
 
 export type AnalyzeTimeHorizon = "1mo" | "1y" | "5y";
@@ -138,14 +139,14 @@ const BASE_CLASS_SEEDS: Record<string, AssetClass> = {
 };
 
 const CLASS_BASE_METRICS: Record<AssetClass, UniversalMetrics> = {
-  [AssetClass.Equity]: { risk: 6.3, return: 7.1, liquidity: 7.2, diversification: 6.1 },
-  [AssetClass.Crypto]: { risk: 3.9, return: 8.2, liquidity: 8.1, diversification: 5.2 },
-  [AssetClass.Commodity]: { risk: 5.8, return: 6.4, liquidity: 7.3, diversification: 8.0 },
-  [AssetClass.Index]: { risk: 7.2, return: 6.8, liquidity: 9.0, diversification: 8.3 },
-  [AssetClass.FX]: { risk: 7.0, return: 5.2, liquidity: 9.2, diversification: 7.3 },
-  [AssetClass.Bond]: { risk: 8.1, return: 4.9, liquidity: 6.5, diversification: 8.2 },
-  [AssetClass.Fund]: { risk: 7.0, return: 6.3, liquidity: 8.3, diversification: 8.1 },
-  [AssetClass.Unknown]: { risk: 5.0, return: 5.0, liquidity: 5.0, diversification: 5.0 },
+  [AssetClass.Equity]: { risk: 6.3, return: 7.1, liquidity: 7.2, diversification: 6.1, calmness: 6.0 },
+  [AssetClass.Crypto]: { risk: 3.9, return: 8.2, liquidity: 8.1, diversification: 5.2, calmness: 4.2 },
+  [AssetClass.Commodity]: { risk: 5.8, return: 6.4, liquidity: 7.3, diversification: 8.0, calmness: 5.8 },
+  [AssetClass.Index]: { risk: 7.2, return: 6.8, liquidity: 9.0, diversification: 8.3, calmness: 6.6 },
+  [AssetClass.FX]: { risk: 7.0, return: 5.2, liquidity: 9.2, diversification: 7.3, calmness: 6.1 },
+  [AssetClass.Bond]: { risk: 8.1, return: 4.9, liquidity: 6.5, diversification: 8.2, calmness: 7.2 },
+  [AssetClass.Fund]: { risk: 7.0, return: 6.3, liquidity: 8.3, diversification: 8.1, calmness: 6.5 },
+  [AssetClass.Unknown]: { risk: 5.0, return: 5.0, liquidity: 5.0, diversification: 5.0, calmness: 5.0 },
 };
 
 function normalizeAliasKey(value: string): string {
@@ -259,6 +260,7 @@ function fallbackMetrics(symbol: string, assetClass: AssetClass): UniversalMetri
     return: clampMetric(base.return + offset(1)),
     liquidity: base.liquidity === null ? null : clampMetric(base.liquidity + offset(2)),
     diversification: clampMetric(base.diversification + offset(3)),
+    calmness: base.calmness === null ? null : clampMetric(base.calmness + offset(4)),
   };
 }
 

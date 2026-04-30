@@ -19,19 +19,29 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
     {
       level: "info",
       message:
-        "Likidite skoru normal piyasa koşullarında geçerlidir. Kriz dönemlerinde tüm varlık sınıflarında likidite belirgin biçimde düşebilir.",
+        "Enflasyon Sonrası Gerçek Kazanç, nominal getiri ile enflasyon etkisinin Fisher denklemiyle ayrıştırılmasıyla hesaplanır.",
     },
     {
       level: "info",
       message:
         "Portföy Dengeleme Gücü, seçilen zaman dilimindeki tarihsel korelasyonlara dayanır. Kriz dönemlerinde korelasyonlar yükselebilir ve dengeleme etkisi zayıflayabilir.",
     },
+    {
+      level: "info",
+      message:
+        "Piyasayı Geçme Gücü, Jensen's Alpha (CAPM) yaklaşımıyla hesaplanır; alfa istatistiksel olarak anlamlı değilse skor nötr/fallback görünür.",
+    },
+    {
+      level: "info",
+      message:
+        "Piyasa Sakinlik Durumu, çoklu pencere volatilite (5/21/63/252), EWMA ve sınıf-içi yüzdeklik rejim sınırlarıyla hesaplanır.",
+    },
   ];
 
   if (classes.has(AssetClass.Equity)) {
     warnings.push({
       level: "info",
-      message: "BIST hisseleri için getiri TL bazlı nominaldir; enflasyon ve kur etkisi ayrıca değerlendirilmelidir.",
+      message: "BIST hisselerinde reel getiri hesaplamasında resmi TÜFE serisi kullanılır; yayımlanmayan son aylar için tahmini değer devreye girebilir.",
     });
     warnings.push({
       level: "info",
@@ -45,7 +55,7 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
     });
     warnings.push({
       level: "info",
-      message: "Kripto likiditesi spot borsa verileriyle ölçülür; büyük tutarlı işlemlerde OTC fiyatlaması farklılaşabilir.",
+      message: "Kripto varlıklarda reel kazanç hesabı USD fiyat getirisi + USDTRY kur etkisi üzerinden TL bazına çevrilerek yapılır.",
     });
     warnings.push({
       level: "info",
@@ -55,7 +65,7 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
   if (classes.has(AssetClass.FX)) {
     warnings.push({
       level: "info",
-      message: "Döviz varlıklarında metrik yalnızca kur hareketini ölçer; faiz (carry) etkisi dahil değildir.",
+      message: "Döviz varlıklarında Enflasyon Sonrası Gerçek Kazanç, kur hareketinin TÜFE ile düzeltilmiş etkisini gösterir.",
     });
     warnings.push({
       level: "info",
@@ -90,6 +100,10 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
     warnings.push({
       level: "info",
       message: "Fon ürünlerinde valör (T+2/T+3) nedeniyle nakde çevrim anlık gerçekleşmeyebilir.",
+    });
+    warnings.push({
+      level: "info",
+      message: "Yurt dışı varlıklarda vergi beyan yükümlülükleri değişebilir; reel kazanç yorumu kişisel vergi durumundan bağımsızdır.",
     });
   }
 

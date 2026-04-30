@@ -1,30 +1,40 @@
 ﻿"use client";
 
 interface MetricExplanationItem {
-  title: "Risk Düzeyi" | "Geçmiş Getiri Gücü" | "Nakde Çevirme Kolaylığı" | "Portföy Dengeleme Gücü";
+  title:
+    | "En Kötü Düşüş"
+    | "Riske Göre Kazanç"
+    | "Enflasyon Sonrası Gerçek Kazanç"
+    | "Piyasayı Geçme Gücü"
+    | "Piyasa Sakinlik Durumu";
   description: string;
 }
 
 const METRIC_EXPLANATIONS: MetricExplanationItem[] = [
   {
-    title: "Risk Düzeyi",
+    title: "En Kötü Düşüş",
     description:
-      "Varlığın fiyatındaki dalgalanma (volatilite) ve ani kayıp ihtimalidir. Tarihsel fiyat hareketlerinin standart sapması ile hesaplanır.",
+      "Seçilen dönemde varlığın zirveden en dip noktaya kadar yaşadığı en büyük yüzdesel geri çekilmedir. Düşük değer, daha sınırlı kayıp profiline işaret eder.",
   },
   {
-    title: "Geçmiş Getiri Gücü",
+    title: "Riske Göre Kazanç",
     description:
       "Varlığın geçmiş performansının risk ayarlı gücüdür. Ortalama getiri, risksiz getiri ve oynaklık birlikte değerlendirilerek hesaplanır.",
   },
   {
-    title: "Nakde Çevirme Kolaylığı",
+    title: "Enflasyon Sonrası Gerçek Kazanç",
     description:
-      "Varlığın değer kaybetmeden ne kadar hızlı nakde çevrilebileceğidir. İşlem hacmi ve piyasa derinliği ile hesaplanır.",
+      "Varlığın nominal getirisinden enflasyon etkisi ayrıştırıldığında kalan reel performansı ifade eder. Farklı dönemlerde satın alma gücü etkisini görünür kılar.",
   },
   {
-    title: "Portföy Dengeleme Gücü",
+    title: "Piyasayı Geçme Gücü",
     description:
-      "Bu varlığın portföyünüzdeki diğer varlıklarla ne kadar \"zıt\" hareket ettiğidir. Korelasyon katsayıları kullanılarak ölçülür; zıt hareket edenler riski dengelediği için yüksek puan alır.",
+      "Varlığın referans piyasa endeksine göre göreli performansını özetler. Pozitif farklar, seçilen dönemde piyasa ortalamasının üzerinde seyre işaret eder.",
+  },
+  {
+    title: "Piyasa Sakinlik Durumu",
+    description:
+      "Volatilitenin tarihsel rejim içindeki konumunu gösterir. EWMA ve çoklu pencere volatilite birlikte değerlendirilir; yüksek puan daha sakin ve stabil rejime yakınlığı ifade eder.",
   },
 ];
 

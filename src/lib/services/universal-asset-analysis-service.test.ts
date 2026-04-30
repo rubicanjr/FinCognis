@@ -21,12 +21,22 @@ function buildReturns(totalDays: number, amplitude: number): number[] {
 
 function buildHistoryFromReturns(symbol: string, providerSymbol: string, returns: number[]): MarketHistory {
   let price = 100;
-  const points = [{ date: "2020-01-01", close: price, volume: 1_000_000, high: price * 1.01, low: price * 0.99 }];
+  const points = [
+    {
+      date: "2020-01-01",
+      close: price,
+      adjustedClose: price,
+      volume: 1_000_000,
+      high: price * 1.01,
+      low: price * 0.99,
+    },
+  ];
   returns.forEach((item, index) => {
     price *= 1 + item;
     points.push({
       date: `2020-01-${String(index + 2).padStart(2, "0")}`,
       close: Number(price.toFixed(6)),
+      adjustedClose: Number(price.toFixed(6)),
       volume: 1_000_000,
       high: Number((price * 1.01).toFixed(6)),
       low: Number((price * 0.99).toFixed(6)),
@@ -107,5 +117,16 @@ describe("analyzeUniversalAssets", () => {
 
     expect(oneMonth[0].metrics.risk).not.toBe(oneYear[0].metrics.risk);
     expect(oneMonth[0].metrics.return).not.toBe(oneYear[0].metrics.return);
+    expect(oneMonth[0].metrics.calmness).not.toBeNull();
+    expect(oneYear[0].metrics.calmness).not.toBeNull();
+    expect(oneMonth[0].metrics.calmness).not.toBe(oneYear[0].metrics.calmness);
+  });
+
+  it("marks alpha as statistically insignificant when asset equals benchmark", async () => {
+    const gateway = new MockGateway();
+    const input = [{ symbol: "SPY", originalInput: "SPY", class: AssetClass.Fund }];
+
+    const analyzed = await analyzeUniversalAssets(input, gateway, { timeHorizon: "1y" });
+    expect(analyzed[0].computation?.fallbackReasons).toContain("alpha_not_statistically_significant");
   });
 });

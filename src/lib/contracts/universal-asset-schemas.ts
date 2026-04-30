@@ -10,6 +10,7 @@ export const UniversalMetricsSchema = z.object({
   return: z.number().min(1).max(10),
   liquidity: z.number().min(1).max(10).nullable(),
   diversification: z.number().min(1).max(10),
+  calmness: z.number().min(1).max(10).nullable(),
 });
 
 export const AssetComputationMetaSchema = z.object({
