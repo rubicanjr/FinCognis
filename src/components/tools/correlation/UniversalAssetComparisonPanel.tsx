@@ -197,6 +197,27 @@ function normalizeSymbol(value: string): string {
     .replace(/[^A-Z0-9]/g, "");
 }
 
+function isLikelyUsEquitySymbol(symbol: string): boolean {
+  if (!symbol) return false;
+  if (!/^[A-Z]{1,5}$/.test(symbol)) return false;
+  const blocked = new Set([
+    "USDTRY",
+    "EURUSD",
+    "XAU",
+    "XAG",
+    "WTI",
+    "BRENT",
+    "SPX",
+    "NDX",
+    "BIST30",
+    "BTC",
+    "ETH",
+    "BNB",
+    "SOL",
+  ]);
+  return !blocked.has(symbol);
+}
+
 function stripPunctuation(value: string): string {
   return value
     .replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü\s]/g, " ")
@@ -335,7 +356,9 @@ function extractAnalyzeAssets(rawInput: string, assetsApi: AssetsApiResponse): A
   return deduped.map((item) => ({
     symbol: item.symbol,
     originalInput: item.originalInput,
-    class: classBySymbol[item.symbol] ?? AssetClass.Unknown,
+    class:
+      classBySymbol[item.symbol] ??
+      (isLikelyUsEquitySymbol(item.symbol) ? AssetClass.Equity : AssetClass.Unknown),
   }));
 }
 

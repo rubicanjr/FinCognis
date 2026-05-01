@@ -129,9 +129,6 @@ export async function POST(request: Request) {
     timeHorizon: parsed.data.timeHorizon,
     analysisMode: parsed.data.analysisMode,
   });
-  const unknownList = analyzed
-    .filter((asset) => asset.class === AssetClass.Unknown)
-    .map((asset) => asset.originalInput);
   const classSet = new Set(analyzed.map((asset) => asset.class));
   const contextWarnings = buildReturnContextWarnings(classSet);
 
@@ -139,14 +136,6 @@ export async function POST(request: Request) {
     assets: analyzed,
     warnings: [
       ...contextWarnings,
-      ...(unknownList.length > 0
-        ? [
-            {
-              level: "warning" as const,
-              message: `Tanınmayan varlıklar: ${unknownList.join(", ")}. Geçerli varlıklar analiz edildi.`,
-            },
-          ]
-        : []),
     ],
     meta: {
       mode: "realtime_gateway",
