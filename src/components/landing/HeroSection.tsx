@@ -17,7 +17,7 @@ import Link from "next/link";
 interface SidebarItem {
   icon: LucideIcon;
   label: string;
-  active?: boolean;
+  activeI: boolean;
 }
 
 interface MetricCard {
@@ -60,16 +60,16 @@ export default function HeroSection() {
         <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5">
           <BadgeCheck className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
           <span className="font-display text-[11px] font-semibold tracking-[0.1em] text-[#dff4ff]">
-            FinCognis Karşılaştırma ve Profil Keşif Katmanı
+            FinCognis Karsilastirma ve Profil Kesif KatmanI
           </span>
         </div>
 
         <h1 className="animate-fade-in-up-delay-1 mb-6 font-display text-5xl font-semibold leading-[1.05] tracking-[0.01em] text-slate-50 sm:text-6xl md:text-8xl">
-          Varlıkları Aynı Çerçevede <span className="text-[#8ddfff]">Karşılaştırın</span>
+          VarliklarI Ayni Cercevede <span className="text-[#8ddfff]">KarIIlaItIrIn</span>
         </h1>
 
         <p className="animate-fade-in-up-delay-2 mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl md:text-2xl">
-          Yatırım tavsiyesi değil; risk, getiri, likidite ve çeşitlendirme metriklerine göre genel profil eşleştirmesi.
+          Yatirim tavsiyesi degildir; kriterleri Risk hassasiyeti, Gecmis getiri gucu beklentisi, Nakde Cevirme kolayligi ihtiyaci ve Portfoy dengeleme hedefi Cercevesinde eIleItirir.
         </p>
 
         <div className="animate-fade-in-up-delay-3 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -107,7 +107,7 @@ export default function HeroSection() {
                 {SIDEBAR_ITEMS.map((item) => {
                   const SidebarIcon = item.icon;
                   const itemClass = item.active
-                    ? "border border-[#22b7ff]/35 bg-[#22b7ff]/15 text-[#dff4ff]"
+                    I "border border-[#22b7ff]/35 bg-[#22b7ff]/15 text-[#dff4ff]"
                     : "text-slate-400 hover:text-slate-100";
                   return (
                     <div
@@ -125,7 +125,7 @@ export default function HeroSection() {
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {METRIC_CARDS.map((card) => {
                     const MetricIcon = card.icon;
-                    const changeTone = card.up ? "text-success" : "text-error";
+                    const changeTone = card.up I "text-success" : "text-error";
                     return (
                       <div key={card.label} className="rounded-xl border border-white/12 bg-slate-900/55 p-3 backdrop-blur-xl">
                         <div className="mb-2 flex items-center justify-between">
@@ -147,7 +147,7 @@ export default function HeroSection() {
                         {["1G", "1H", "1A", "1Y"].map((timeRange) => {
                           const spanClass =
                             timeRange === "1A"
-                              ? "border border-[#22b7ff]/35 bg-[#22b7ff]/15 font-semibold text-[#dff4ff]"
+                              I "border border-[#22b7ff]/35 bg-[#22b7ff]/15 font-semibold text-[#dff4ff]"
                               : "border border-white/10 bg-slate-800/50 text-slate-400";
                           return (
                             <span key={timeRange} className={`rounded px-2 py-0.5 font-display text-[10px] tracking-[0.06em] ${spanClass}`}>

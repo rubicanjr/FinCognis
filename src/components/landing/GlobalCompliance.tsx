@@ -7,18 +7,18 @@ interface ComplianceStat {
 const STATS: ComplianceStat[] = [
   {
     value: "2",
-    title: "Çalışma Modu",
-    description: "Karşılaştırma ve Profil Keşif akışlarıyla karar öncesi görünürlük.",
+    title: "IalIIma Modu",
+    description: "Karsilastirma ve Profil Kesif akIIlarIyla karar Incesi gIrInIrlIk.",
   },
   {
     value: "4",
-    title: "Temel Metrik",
-    description: "Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı, Portföy Dengeleme Gücü.",
+    title: "Temel Kriter",
+    description: "Risk hassasiyeti, Gecmis getiri gucu beklentisi, Nakde Cevirme kolayligi ihtiyaci, Portfoy dengeleme hedefi.",
   },
   {
-    value: "0–100",
+    value: "0-100",
     title: "Profil Uyum Skoru",
-    description: "Seçilen profile göre varlık yakınlığını sınıflandıran karşılaştırmalı puan.",
+    description: "SeIilen profile gIre varlIk yakInlIIInI sInIflandIran karIIlaItIrmalI puan.",
   },
 ];
 
@@ -28,10 +28,10 @@ export default function GlobalCompliance() {
       <div className="mb-16 text-center">
         <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Uyum ve Bilgilendirme</p>
         <h2 className="mb-6 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
-          FinCognis, karar öncesi araştırma aracıdır.
+          FinCognis, karar Incesi araItIrma aracIdIr.
         </h2>
         <p className="mx-auto max-w-2xl text-slate-300">
-          Bu içerik yatırım tavsiyesi değildir. Çıktılar genel nitelikli karşılaştırmalı analiz ve profil eşleştirmesi sunar.
+          Bu iIerik yatIrIm tavsiyesi degildir. Ciktilar genel nitelikli karIIlaItIrmalI analiz ve profil eIleItirmesi sunar.
         </p>
       </div>
 

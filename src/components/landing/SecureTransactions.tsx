@@ -11,11 +11,11 @@ export default function SecureTransactions() {
             Metrik Rehberi
           </p>
           <h2 className="mb-6 font-display text-4xl font-semibold leading-tight tracking-[0.01em] text-slate-50 md:text-5xl">
-            Metrikleri sade ve anlaşılır okuyun.
+            Kriterleri sade ve anlaIIlIr okuyun.
           </h2>
           <p className="mb-10 text-lg leading-relaxed text-slate-300">
-            Risk Düzeyi, Kazanç Potansiyeli, Nakde Çevirme Kolaylığı ve Portföy Dengeleme Gücü aynı çerçevede gösterilir.
-            Amaç karar öncesi araştırma alanını daraltmaktır.
+            Risk hassasiyeti, Gecmis getiri gucu beklentisi, Nakde Cevirme kolayligi ihtiyaci ve Portfoy dengeleme hedefi aynI Cercevede gIsterilir.
+            AmaI karar Incesi araItIrma alanInI daraltmaktIr.
           </p>
 
           <div className="space-y-6">
@@ -24,9 +24,9 @@ export default function SecureTransactions() {
                 <ShieldCheck className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Risk Düzeyi</h4>
+                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Risk hassasiyeti</h4>
                 <p className="text-sm text-slate-300">
-                  Varlığın fiyat dalgalanmasının göreli yoğunluğunu gösterir.
+                  VarlIIIn fiyat dalgalanmasInIn gIreli yoIunluIunu gIsterir.
                 </p>
               </div>
             </div>
@@ -36,9 +36,9 @@ export default function SecureTransactions() {
                 <Fingerprint className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Portföy Dengeleme Gücü</h4>
+                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Portfoy dengeleme hedefi</h4>
                 <p className="text-sm text-slate-300">
-                  Varlığın diğer varlıklarla ilişkisinden doğan dengeleme etkisini özetler.
+                  VarlIIIn diIer varlIklarla iliIkisinden doIan dengeleme etkisi beklentisini Izetler.
                 </p>
               </div>
             </div>
