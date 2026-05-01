@@ -86,8 +86,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
       className={`${inter.variable} ${cormorantGaramond.variable} ${rajdhani.variable} h-full min-h-full bg-surface text-on-surface`}
       style={{ backgroundColor: "rgb(var(--surface))", color: "rgb(var(--on-surface))" }}
-    >
+      >
       <head>
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="shortcut icon" href="/favicon.png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
