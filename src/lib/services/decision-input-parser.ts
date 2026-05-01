@@ -1,6 +1,5 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import {
-  AssetClass,
   AssetParserService,
   buildDefaultAliasDictionary,
   buildDefaultClassDictionary,
@@ -12,12 +11,9 @@ import {
 } from "@/lib/contracts/universal-asset-schemas";
 import type { DecisionIntent } from "@/lib/contracts/decision-types";
 
-const classBySymbol = buildDefaultClassDictionary();
-const knownSymbols = new Set(Object.keys(classBySymbol));
-
 const parser = new AssetParserService({
   aliasDictionary: buildDefaultAliasDictionary(),
-  classBySymbol,
+  classBySymbol: buildDefaultClassDictionary(),
 });
 
 const TURKISH_CHAR_MAP: Record<string, string> = {
@@ -27,20 +23,20 @@ const TURKISH_CHAR_MAP: Record<string, string> = {
   o: "o",
   s: "s",
   u: "u",
-  "ç": "c",
-  "ğ": "g",
-  "ı": "i",
-  "ö": "o",
-  "ş": "s",
-  "ü": "u",
+  "Ã§": "c",
+  "ÄŸ": "g",
+  "Ä±": "i",
+  "Ã¶": "o",
+  "ÅŸ": "s",
+  "Ã¼": "u",
 };
 
 const STOP_WORDS = new Set(["eklemeli", "karsilastir", "yerine", "nasil", "sadece"]);
 
 const INTENT_RULES: Array<{ intent: DecisionIntent; key: string; pattern: RegExp }> = [
-  { intent: "REPLACE", key: "replace", pattern: /\b(yerine|degistir|değiştir|replace|swap)\b/i },
-  { intent: "COMPARE", key: "compare", pattern: /\b(karsilastir|karşılaştır|kiyasla|kıyasla|compare|vs|ve)\b/i },
-  { intent: "ADD", key: "add", pattern: /\b(ekle|eklemeli|portfoye|portföye|dahil|add)\b/i },
+  { intent: "REPLACE", key: "replace", pattern: /\b(yerine|degistir|deÄŸiÅŸtir|replace|swap)\b/i },
+  { intent: "COMPARE", key: "compare", pattern: /\b(karsilastir|karÅŸÄ±laÅŸtÄ±r|kiyasla|kÄ±yasla|compare|vs|ve)\b/i },
+  { intent: "ADD", key: "add", pattern: /\b(ekle|eklemeli|portfoye|portfÃ¶ye|dahil|add)\b/i },
 ];
 
 export const IntentExtractionSchema = z.object({
@@ -81,7 +77,7 @@ function canonicalizeText(value: string): string {
 }
 
 function stripPunctuation(value: string): string {
-  return value.replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü\s]/g, " ").replace(/\s+/g, " ").trim();
+  return value.replace(/[^0-9A-Za-zÃ‡ÄÄ°Ã–ÅÃœÃ§ÄŸÄ±Ã¶ÅŸÃ¼\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function removeStopWords(tokens: string[]): string[] {
@@ -92,28 +88,8 @@ function extractKnownSymbols(
   normalizedInput: string
 ): { symbols: string[]; warnings: AssetParserWarning[] } {
   const parsed = parser.parse(normalizedInput);
-  const recognized = parsed.assets.reduce<string[]>(
-    (acc, asset) => (knownSymbols.has(asset.symbol) ? [...acc, asset.symbol] : acc),
-    []
-  );
-  const unknownCandidate = parsed.assets.find(
-    (asset) => asset.class === AssetClass.Unknown && asset.originalInput.length >= 3
-  );
-  const fallbackSymbols = unknownCandidate ? [unknownCandidate.symbol] : [];
-  const symbols = [...new Set(recognized.length > 0 ? recognized : fallbackSymbols)];
-
-  const warnings = [
-    ...parsed.warnings.filter((warning) => warning.level === "info"),
-    ...(recognized.length === 0 && fallbackSymbols.length > 0
-      ? [
-          {
-            level: "warning" as const,
-            message: `Tanınmayan varlık: ${fallbackSymbols[0]}. Geçerli varlıklar varsa analiz devam eder.`,
-          },
-        ]
-      : []),
-  ];
-
+  const symbols = [...new Set(parsed.assets.map((asset) => asset.symbol).filter((symbol) => symbol.length >= 2))];
+  const warnings = [...parsed.warnings.filter((warning) => warning.level === "info")];
   return { symbols, warnings };
 }
 

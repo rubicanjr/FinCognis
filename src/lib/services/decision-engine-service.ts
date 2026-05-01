@@ -28,6 +28,30 @@ interface DecisionScenario {
 
 const classBySymbol = buildDefaultClassDictionary();
 
+function isLikelyEquitySymbol(symbol: string): boolean {
+  if (!symbol) return false;
+  if (!/^[A-Z]{1,5}$/.test(symbol)) return false;
+  const blocked = new Set([
+    "BTC",
+    "ETH",
+    "BNB",
+    "SOL",
+    "XAU",
+    "XAG",
+    "WTI",
+    "BRENT",
+    "SPX",
+    "NDX",
+    "BIST30",
+    "USDTRY",
+    "EURUSD",
+    "QQQ",
+    "SPY",
+    "EUROBOND",
+  ]);
+  return !blocked.has(symbol);
+}
+
 const MARKET_SYMBOL_PROXY: Record<string, string> = {
   BIST30: "THYAO",
   EURUSD: "EURUSD",
@@ -125,7 +149,7 @@ async function analyzeBySymbols(
     symbols.map((symbol) => ({
       symbol,
       originalInput: symbol,
-      class: classBySymbol[symbol] ?? AssetClass.Unknown,
+      class: classBySymbol[symbol] ?? (isLikelyEquitySymbol(symbol) ? AssetClass.Equity : AssetClass.Unknown),
     })),
     gateway
   );
