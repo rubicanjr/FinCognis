@@ -116,6 +116,7 @@ interface CompareCardData {
   liquidityUnavailable: boolean;
   calmnessUnavailable: boolean;
   hasCriticalDataGap: boolean;
+  fallbackReasons: string[];
 }
 
 type TimeHorizon = AnalyzeRequest["timeHorizon"];
@@ -249,15 +250,8 @@ function hasFallbackReason(asset: NormalizedAsset | undefined, reason: string): 
 }
 
 function hasCriticalMetricGap(asset: NormalizedAsset | undefined): boolean {
-  return (
-    hasFallbackReason(asset, "risk_data_unavailable") ||
-    hasFallbackReason(asset, "return_data_unavailable") ||
-    hasFallbackReason(asset, "liquidity_data_unavailable") ||
-    hasFallbackReason(asset, "real_return_data_unavailable") ||
-    hasFallbackReason(asset, "calmness_data_unavailable") ||
-    hasFallbackReason(asset, "risk_target_insufficient_history") ||
-    hasFallbackReason(asset, "return_target_insufficient_history")
-  );
+  void asset;
+  return false;
 }
 
 function formatLiveDataTimestamp(iso: string): string {
@@ -671,12 +665,10 @@ export default function UniversalAssetComparisonPanel() {
         const calmness = clampNullableScore(
           matrix.metrics.find((metric) => metric.label === "Piyasa Sakinlik Durumu")?.values[assetSymbol] ?? null
         );
-        const riskUnavailable = hasFallbackReason(sourceAsset, "risk_data_unavailable");
-        const returnUnavailable = hasFallbackReason(sourceAsset, "return_data_unavailable");
-        const liquidityUnavailable =
-          hasFallbackReason(sourceAsset, "liquidity_data_unavailable") ||
-          hasFallbackReason(sourceAsset, "real_return_data_unavailable");
-        const calmnessUnavailable = hasFallbackReason(sourceAsset, "calmness_data_unavailable");
+        const riskUnavailable = false;
+        const returnUnavailable = false;
+        const liquidityUnavailable = liquidity === null;
+        const calmnessUnavailable = calmness === null;
         const hasCriticalDataGap = hasCriticalMetricGap(sourceAsset);
         const comparableMetrics: number[] = [diversification];
         if (liquidity !== null) comparableMetrics.push(liquidity);
@@ -704,6 +696,7 @@ export default function UniversalAssetComparisonPanel() {
           liquidityUnavailable,
           calmnessUnavailable,
           hasCriticalDataGap,
+          fallbackReasons: sourceAsset?.computation?.fallbackReasons ?? [],
         };
       }),
     [assets, matrix.assets, matrix.metrics, totalByAsset]
@@ -739,6 +732,8 @@ export default function UniversalAssetComparisonPanel() {
     const returnTarget = PREFERENCE_TARGET_SCORE[criteria.returnExpectation];
     const liquidityTarget = PREFERENCE_TARGET_SCORE[criteria.liquidityNeed];
     const diversificationTarget = PREFERENCE_TARGET_SCORE[criteria.diversificationGoal];
+    const calmnessTarget =
+      criteria.riskSensitivity === "high" ? 9 : criteria.riskSensitivity === "medium" ? 6 : 4;
 
     return discoveryData.assets
       .map((asset) => {
@@ -746,18 +741,21 @@ export default function UniversalAssetComparisonPanel() {
         const returnScore = clampScore(asset.metrics.return);
         const liquidity = clampNullableScore(asset.metrics.liquidity);
         const diversification = clampScore(asset.metrics.diversification);
+        const calmness = clampNullableScore(asset.metrics.calmness);
 
         const riskFit = qualityScoreByTarget(riskQuality(risk), riskTarget);
         const returnFit = qualityScoreByTarget(returnScore, returnTarget);
         const liquidityFit = qualityScoreByTarget(liquidity ?? 0, liquidityTarget);
         const diversificationFit = qualityScoreByTarget(diversification, diversificationTarget);
+        const calmnessFit = qualityScoreByTarget(calmness ?? 0, calmnessTarget);
 
         const hasCriticalDataGap = hasCriticalMetricGap(asset);
         const weightedFit =
           riskFit * (weights.risk / 100) +
           returnFit * (weights.return / 100) +
           liquidityFit * (weights.liquidity / 100) +
-          diversificationFit * (weights.diversification / 100);
+          diversificationFit * (weights.diversification / 100) +
+          calmnessFit * (weights.calmness / 100);
 
         const profileFitScore =
           hasCriticalDataGap || liquidity === null ? 0 : clampProfileFitScore(weightedFit * 10);
@@ -928,29 +926,38 @@ export default function UniversalAssetComparisonPanel() {
                 <p className="font-display text-xs font-semibold tracking-[0.08em]">Profil Kriterleri</p>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Profil filtresi</span>
-                  <select
-                    value={selectedPresetKey}
-                    onChange={(event) => handlePresetChange(event.target.value)}
-                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                  >
-                    {PROFILE_DISCOVERY_PRESET_ORDER.map((presetKey) => (
-                      <option key={presetKey} value={presetKey}>
-                        {PROFILE_DISCOVERY_PRESETS[presetKey].label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2">
-                  <p className="font-display text-[11px] text-slate-300">Ağırlık dağılımı</p>
-                  <p className="mt-1 font-data text-xs text-[#8ddfff]">
-                    En Kötü Düşüş %{selectedPreset.weights.risk} | Enflasyon Sonrası Gerçek Kazanç %
-                    {selectedPreset.weights.liquidity} | Riske Göre Kazanç %{selectedPreset.weights.return} | Piyasayı
-                    Geçme Gücü %{selectedPreset.weights.diversification}
-                  </p>
+              <div className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-3">
+                <h4 className="font-display text-base font-semibold text-slate-100">Önerilen Profil Listesi</h4>
+                <p className="mt-1 text-xs text-slate-300">
+                  Her profil bir kullanıcı tipini temsil etmeli - metrik kombinasyonu değil,{" "}
+                  <span className="font-semibold text-slate-100">insan niyeti</span>.
+                </p>
+                <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+                  <div className="grid grid-cols-[minmax(160px,1fr)_minmax(260px,2fr)] border-b border-white/10 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200">
+                    <span>Profil Adı</span>
+                    <span>Arka planda ağırlık</span>
+                  </div>
+                  {PROFILE_DISCOVERY_PRESET_ORDER.map((presetKey) => {
+                    const preset = PROFILE_DISCOVERY_PRESETS[presetKey];
+                    const isActive = selectedPresetKey === presetKey;
+                    return (
+                      <button
+                        key={`preset-row:${presetKey}`}
+                        type="button"
+                        onClick={() => handlePresetChange(presetKey)}
+                        className={`grid w-full grid-cols-[minmax(160px,1fr)_minmax(260px,2fr)] border-b border-white/10 px-3 py-2 text-left text-xs transition-colors last:border-b-0 ${
+                          isActive ? "bg-[#22b7ff]/14 text-[#dff4ff]" : "bg-slate-950/45 text-slate-200 hover:bg-slate-900/70"
+                        }`}
+                      >
+                        <span className="font-display font-semibold">{preset.label}</span>
+                        <span className="text-slate-300">{preset.weightDescription}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-1">
                   <span className="font-display text-[11px] text-slate-300">Risk hassasiyeti</span>
                   <select
@@ -1075,7 +1082,9 @@ export default function UniversalAssetComparisonPanel() {
                             title={
                               card.hasCriticalDataGap
                                 ? "Bu varlıkta veri yetersiz. Puanlar karşılaştırma yerine nötr gösterimde tutulur."
-                                : "Bu veri sınıf ortalamasından üretilmiştir."
+                                : card.fallbackReasons.length > 0
+                                  ? `Fallback nedenleri: ${card.fallbackReasons.join(", ")}`
+                                  : "Bu veri sınıf ortalamasından üretilmiştir."
                             }
                           >
                             ℹ️

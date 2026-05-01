@@ -24,6 +24,11 @@ function buildReturnContextWarnings(classes: Set<AssetClass>) {
     {
       level: "info",
       message:
+        "Resmi enflasyon verisi geçici olarak alınamazsa, metrik kontrollü proxy enflasyon varsayımıyla devam eder ve fallback metadata alanında işaretlenir.",
+    },
+    {
+      level: "info",
+      message:
         "Portföy Dengeleme Gücü, seçilen zaman dilimindeki tarihsel korelasyonlara dayanır. Kriz dönemlerinde korelasyonlar yükselebilir ve dengeleme etkisi zayıflayabilir.",
     },
     {

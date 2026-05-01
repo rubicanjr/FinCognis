@@ -69,6 +69,8 @@ const QUOTE_TTL_MS = 15_000;
 const HISTORY_TTL_MS = 5 * 60_000;
 const LIQUIDITY_TTL_MS = 5 * 60_000;
 const REQUEST_TIMEOUT_MS = 6_000;
+const REQUEST_RETRY_COUNT = 2;
+const REQUEST_RETRY_DELAY_MS = 250;
 const REQUEST_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -102,6 +104,15 @@ const PROVIDER_SYMBOL_OVERRIDES: Record<string, string> = {
   XAUUSD: "XAUUSD=X",
 };
 
+const SPECIAL_SYMBOL_CANDIDATES: Record<string, string[]> = {
+  XAU: ["XAUUSD=X", "GC=F"],
+  XAUUSD: ["XAUUSD=X", "GC=F"],
+  XAG: ["XAGUSD=X", "SI=F"],
+  XAGUSD: ["XAGUSD=X", "SI=F"],
+  WTI: ["CL=F"],
+  BRENT: ["BZ=F"],
+};
+
 const BASE_LIQUIDITY_BY_SYMBOL = ASSET_UNIVERSE.reduce<Record<string, LiquidityProfile>>((acc, asset) => {
   acc[asset.ticker.toUpperCase()] = LIQUIDITY_TABLE[asset.liquidityTier];
   return acc;
@@ -120,6 +131,10 @@ function buildProviderSymbolCandidates(symbol: string): string[] {
   if (!normalized) return [];
 
   const candidates = new Set<string>();
+  const specialCandidates = SPECIAL_SYMBOL_CANDIDATES[normalized] ?? [];
+  for (const candidate of specialCandidates) {
+    candidates.add(candidate);
+  }
   const preferred = resolveProviderSymbol(normalized);
   if (preferred) candidates.add(preferred);
   candidates.add(normalized);
@@ -184,25 +199,34 @@ function mapVolumeBand(avgDailyVolume: number | null): MarketLiquidity["volumeBa
 }
 
 async function fetchJson(url: string): Promise<unknown> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const response = await fetch(url, {
-      cache: "no-store",
-      headers: {
-        Accept: "application/json",
-        "Accept-Language": "en-US,en;q=0.9,tr-TR;q=0.8,tr;q=0.7",
-        "User-Agent": REQUEST_USER_AGENT,
-      },
-      signal: controller.signal,
-    });
-    if (!response.ok) return null;
-    return (await response.json()) as unknown;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
+  for (let attempt = 0; attempt <= REQUEST_RETRY_COUNT; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetch(url, {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json",
+          "Accept-Language": "en-US,en;q=0.9,tr-TR;q=0.8,tr;q=0.7",
+          "User-Agent": REQUEST_USER_AGENT,
+        },
+        signal: controller.signal,
+      });
+      if (response.ok) {
+        return (await response.json()) as unknown;
+      }
+      const shouldRetry = response.status === 429 || response.status >= 500;
+      if (!shouldRetry || attempt >= REQUEST_RETRY_COUNT) {
+        return null;
+      }
+    } catch {
+      if (attempt >= REQUEST_RETRY_COUNT) return null;
+    } finally {
+      clearTimeout(timeout);
+    }
+    await new Promise((resolve) => setTimeout(resolve, REQUEST_RETRY_DELAY_MS * (attempt + 1)));
   }
+  return null;
 }
 
 function parseQuotePayload(

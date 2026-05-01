@@ -293,19 +293,34 @@ const RETURN_MIN_POINTS_BY_HORIZON: Record<AnalyzeTimeHorizon, number> = {
 const USD_RISK_FREE_PROXY_SYMBOL = "^IRX";
 const INFLATION_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const EVDS_BASE_URL = process.env.EVDS_BASE_URL ?? "https://evds2.tcmb.gov.tr/service/evds";
+const EVDS_FALLBACK_BASE_URL = process.env.EVDS_FALLBACK_BASE_URL ?? "https://evds3.tcmb.gov.tr/service/evds";
 const EVDS_TUFE_SERIES = process.env.EVDS_TUFE_SERIES ?? "TP.FG.J0";
 const EVDS_TIMEOUT_MS = 8_000;
+const DEFAULT_PROXY_INFLATION_ANNUAL = Number(process.env.FINCOGNIS_PROXY_INFLATION_ANNUAL ?? "0.35");
 
 const CLASS_FALLBACK_METRICS: Record<AssetClass, UniversalMetrics> = {
-  [AssetClass.Equity]: { risk: 5.0, return: 6.9, liquidity: null, diversification: 5.9, calmness: 5.0 },
-  [AssetClass.Crypto]: { risk: 5.0, return: 7.7, liquidity: null, diversification: 5.0, calmness: 5.0 },
-  [AssetClass.Commodity]: { risk: 5.0, return: 6.1, liquidity: null, diversification: 7.7, calmness: 5.0 },
-  [AssetClass.Index]: { risk: 5.0, return: 6.3, liquidity: null, diversification: 7.9, calmness: 5.0 },
-  [AssetClass.FX]: { risk: 5.0, return: 5.0, liquidity: null, diversification: 7.0, calmness: 5.0 },
-  [AssetClass.Bond]: { risk: 5.0, return: 4.6, liquidity: null, diversification: 8.1, calmness: 5.0 },
-  [AssetClass.Fund]: { risk: 5.0, return: 6.0, liquidity: null, diversification: 7.8, calmness: 5.0 },
-  [AssetClass.Unknown]: { risk: 5.0, return: 5.0, liquidity: null, diversification: 5.0, calmness: 5.0 },
+  [AssetClass.Equity]: { risk: 5.0, return: 6.9, liquidity: 5.0, diversification: 5.9, calmness: 5.0 },
+  [AssetClass.Crypto]: { risk: 5.0, return: 7.7, liquidity: 5.0, diversification: 5.0, calmness: 5.0 },
+  [AssetClass.Commodity]: { risk: 5.0, return: 6.1, liquidity: 5.0, diversification: 7.7, calmness: 5.0 },
+  [AssetClass.Index]: { risk: 5.0, return: 6.3, liquidity: 5.0, diversification: 7.9, calmness: 5.0 },
+  [AssetClass.FX]: { risk: 5.0, return: 5.0, liquidity: 5.0, diversification: 7.0, calmness: 5.0 },
+  [AssetClass.Bond]: { risk: 5.0, return: 4.6, liquidity: 5.0, diversification: 8.1, calmness: 5.0 },
+  [AssetClass.Fund]: { risk: 5.0, return: 6.0, liquidity: 5.0, diversification: 7.8, calmness: 5.0 },
+  [AssetClass.Unknown]: { risk: 5.0, return: 5.0, liquidity: 5.0, diversification: 5.0, calmness: 5.0 },
 };
+
+function toGuaranteedScore(
+  value: number | null,
+  fallbackScore: number,
+  fallbackReason: string,
+  fallbackReasons: string[]
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    if (!fallbackReasons.includes(fallbackReason)) fallbackReasons.push(fallbackReason);
+    return clampMetric(fallbackScore);
+  }
+  return clampMetric(value);
+}
 
 const CLASS_DISTANCE_MATRIX: Record<AssetClass, Record<AssetClass, number>> = {
   [AssetClass.Equity]: {
@@ -763,21 +778,37 @@ async function fetchInflationSnapshot(startDate: Date, endDate: Date): Promise<I
   const cached = inflationCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), EVDS_TIMEOUT_MS);
   try {
-    const url = `${EVDS_BASE_URL}/series=${encodeURIComponent(EVDS_TUFE_SERIES)}&startDate=${toEvdsDate(startDate)}&endDate=${toEvdsDate(endDate)}&type=json&formulas=1&frequency=5`;
-    const response = await fetch(url, {
-      cache: "no-store",
-      signal: controller.signal,
-      headers: {
-        Accept: "application/json",
-        key: apiKey,
-      },
-    });
-    if (!response.ok) return null;
-    const payload = (await response.json()) as unknown;
-    const points = parseInflationPayload(payload);
+    const urls = [EVDS_BASE_URL, EVDS_FALLBACK_BASE_URL]
+      .filter((value, index, self) => value && self.indexOf(value) === index)
+      .map(
+        (baseUrl) =>
+          `${baseUrl}/series=${encodeURIComponent(EVDS_TUFE_SERIES)}&startDate=${toEvdsDate(startDate)}&endDate=${toEvdsDate(endDate)}&type=json&formulas=1&frequency=5&key=${encodeURIComponent(apiKey)}`
+      );
+
+    let points: InflationPoint[] = [];
+    for (const url of urls) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), EVDS_TIMEOUT_MS);
+      try {
+        const response = await fetch(url, {
+          cache: "no-store",
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            key: apiKey,
+          },
+        });
+        if (!response.ok) continue;
+        const payload = (await response.json()) as unknown;
+        points = parseInflationPayload(payload);
+        if (points.length > 0) break;
+      } catch {
+        // try next EVDS endpoint
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
     if (points.length === 0) return null;
 
     const monthRates = points.map((item) => item.monthlyRate);
@@ -806,8 +837,6 @@ async function fetchInflationSnapshot(startDate: Date, endDate: Date): Promise<I
     return snapshot;
   } catch {
     return null;
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -826,6 +855,21 @@ function compoundInflationFromDaily(
     compounded *= 1 + item.dailyRate;
   });
   return compounded - 1;
+}
+
+function estimateProxyInflation(startDate: Date, endDate: Date): number {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const totalDays = Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / msPerDay));
+  const boundedAnnual = Number.isFinite(DEFAULT_PROXY_INFLATION_ANNUAL)
+    ? Math.max(0.05, Math.min(0.95, DEFAULT_PROXY_INFLATION_ANNUAL))
+    : 0.35;
+  return (1 + boundedAnnual) ** (totalDays / 365) - 1;
+}
+
+function proxyRealReturnScore(realReturn: number): number {
+  const bounded = Math.max(-0.5, Math.min(0.5, realReturn));
+  const normalized = (bounded + 0.5) / 1.0;
+  return clampMetric(1 + normalized * 9);
 }
 
 function alignReturnPairs(
@@ -2194,7 +2238,7 @@ export async function analyzeUniversalAssets(
         fallbackReasons.push("calmness_universe_stale_cache");
       }
     } else {
-      calmnessScore = null;
+      calmnessScore = 5.0;
       fallbackReasons.push("calmness_data_unavailable");
     }
 
@@ -2226,17 +2270,26 @@ export async function analyzeUniversalAssets(
         ? compoundInflationFromDaily(dailyInflation, periodStartDate, periodEndDate)
         : null;
 
+    const inflationFallbackRate =
+      inflationRate === null && periodStartDate && periodEndDate
+        ? estimateProxyInflation(periodStartDate, periodEndDate)
+        : null;
+    const effectiveInflationRate = inflationRate ?? inflationFallbackRate;
+
     if (
       nominalTlReturn !== null &&
-      inflationRate !== null &&
+      effectiveInflationRate !== null &&
       realReturnUniverse.values.length >= 5 &&
       Number.isFinite(nominalTlReturn)
     ) {
-      const realReturnValue = fisherRealReturn(nominalTlReturn, inflationRate);
+      const realReturnValue = fisherRealReturn(nominalTlReturn, effectiveInflationRate);
       const percentile = percentileRank(realReturnUniverse.values, realReturnValue);
       liquidityScore = clampMetric(1 + percentile * 9);
       if (realReturnUniverse.medianNegative) {
         fallbackReasons.push("real_return_universe_mostly_negative");
+      }
+      if (inflationRate === null && inflationFallbackRate !== null) {
+        fallbackReasons.push("real_return_inflation_proxy_fallback");
       }
       if (inflationSnapshot?.estimatedLastMonth) {
         fallbackReasons.push("inflation_last_month_estimated");
@@ -2244,11 +2297,17 @@ export async function analyzeUniversalAssets(
       if (realReturnUniverse.source === "stale_cache") {
         fallbackReasons.push("real_return_universe_stale_cache");
       }
-    } else if (nominalTlReturn !== null && inflationRate !== null) {
-      liquidityScore = 5.0;
-      fallbackReasons.push("real_return_universe_insufficient");
+    } else if (nominalTlReturn !== null && effectiveInflationRate !== null) {
+      const realReturnValue = fisherRealReturn(nominalTlReturn, effectiveInflationRate);
+      liquidityScore = proxyRealReturnScore(realReturnValue);
+      fallbackReasons.push("real_return_universe_proxy_scoring");
+      if (inflationRate === null && inflationFallbackRate !== null) {
+        fallbackReasons.push("real_return_inflation_proxy_fallback");
+      } else {
+        fallbackReasons.push("real_return_universe_insufficient");
+      }
     } else {
-      liquidityScore = null;
+      liquidityScore = 5.0;
       fallbackReasons.push("real_return_data_unavailable");
     }
 
@@ -2310,6 +2369,37 @@ export async function analyzeUniversalAssets(
       fallbackReasons.push("alpha_benchmark_data_unavailable");
     }
 
+    const guaranteedRisk = toGuaranteedScore(
+      riskScore,
+      fallbackMetrics.risk,
+      "risk_score_sanitized_fallback",
+      fallbackReasons
+    );
+    const guaranteedReturn = toGuaranteedScore(
+      returnScore,
+      fallbackMetrics.return,
+      "return_score_sanitized_fallback",
+      fallbackReasons
+    );
+    const guaranteedLiquidity = toGuaranteedScore(
+      liquidityScore,
+      fallbackMetrics.liquidity ?? 5.0,
+      "real_return_score_sanitized_fallback",
+      fallbackReasons
+    );
+    const guaranteedDiversification = toGuaranteedScore(
+      diversificationScore,
+      fallbackMetrics.diversification,
+      "alpha_score_sanitized_fallback",
+      fallbackReasons
+    );
+    const guaranteedCalmness = toGuaranteedScore(
+      calmnessScore,
+      fallbackMetrics.calmness ?? 5.0,
+      "calmness_score_sanitized_fallback",
+      fallbackReasons
+    );
+
     logAnalysisDiagnostics({
       symbol: row.symbol,
       providerSymbol: row.providerSymbol,
@@ -2343,11 +2433,11 @@ export async function analyzeUniversalAssets(
       originalInput: row.originalInput,
       class: row.resolvedClass,
       metrics: {
-        risk: riskScore,
-        return: returnScore,
-        liquidity: liquidityScore,
-        diversification: diversificationScore,
-        calmness: calmnessScore,
+        risk: guaranteedRisk,
+        return: guaranteedReturn,
+        liquidity: guaranteedLiquidity,
+        diversification: guaranteedDiversification,
+        calmness: guaranteedCalmness,
       },
       computation: {
         isFallback: fallbackReasons.length > 0,

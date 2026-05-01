@@ -1,10 +1,11 @@
-export type PreferenceLevel = "low" | "medium" | "high";
+﻿export type PreferenceLevel = "low" | "medium" | "high";
 
 export interface MetricWeights {
   risk: number;
   return: number;
   liquidity: number;
   diversification: number;
+  calmness: number;
 }
 
 export interface ProfileCriteriaDefaults {
@@ -15,117 +16,125 @@ export interface ProfileCriteriaDefaults {
 }
 
 export type ProfilePresetKey =
-  | "low_risk_high_liquidity"
-  | "high_liquidity"
-  | "strong_diversification"
-  | "high_return_potential"
-  | "balanced"
-  | "short_term_low_volatility"
-  | "portfolio_diversification_focused";
+  | "dengeli"
+  | "sermayemi_koruyayim"
+  | "enflasyona_karsi_kazanayim"
+  | "piyasayi_yenmek_istiyorum"
+  | "verimli_kazanc"
+  | "sakin_piyasa_ariyorum"
+  | "uzun_vadeli_buyume";
 
 export interface ProfilePresetDefinition {
   key: ProfilePresetKey;
   label: string;
   summary: string;
+  weightDescription: string;
   weights: MetricWeights;
   defaults: ProfileCriteriaDefaults;
 }
 
 export const PROFILE_DISCOVERY_PRESET_ORDER: ProfilePresetKey[] = [
-  "low_risk_high_liquidity",
-  "high_liquidity",
-  "strong_diversification",
-  "high_return_potential",
-  "balanced",
-  "short_term_low_volatility",
-  "portfolio_diversification_focused",
+  "dengeli",
+  "sermayemi_koruyayim",
+  "enflasyona_karsi_kazanayim",
+  "piyasayi_yenmek_istiyorum",
+  "verimli_kazanc",
+  "sakin_piyasa_ariyorum",
+  "uzun_vadeli_buyume",
 ];
 
 export const PROFILE_DISCOVERY_PRESETS: Record<ProfilePresetKey, ProfilePresetDefinition> = {
-  low_risk_high_liquidity: {
-    key: "low_risk_high_liquidity",
-    label: "Daha düşük risk düzeyi + yüksek nakde çevirme kolaylığı",
-    summary: "Risk hassasiyeti ve nakde çevirme ihtiyacı yüksek profiller için genel eşleştirme.",
-    weights: { risk: 45, liquidity: 35, return: 10, diversification: 10 },
-    defaults: {
-      riskSensitivity: "high",
-      returnExpectation: "medium",
-      liquidityNeed: "high",
-      diversificationGoal: "medium",
-    },
-  },
-  high_liquidity: {
-    key: "high_liquidity",
-    label: "Daha yüksek nakde çevirme kolaylığı",
-    summary: "Nakde çevirme kolaylığı odaklı karar öncesi tarama görünümü.",
-    weights: { risk: 20, liquidity: 45, return: 20, diversification: 15 },
-    defaults: {
-      riskSensitivity: "medium",
-      returnExpectation: "medium",
-      liquidityNeed: "high",
-      diversificationGoal: "medium",
-    },
-  },
-  strong_diversification: {
-    key: "strong_diversification",
-    label: "Daha güçlü portföy dengeleme katkısı",
-    summary: "Portföy dengeleme gücü yüksek olabilecek profiller için karşılaştırmalı sınıflandırma.",
-    weights: { risk: 20, liquidity: 15, return: 15, diversification: 50 },
+  dengeli: {
+    key: "dengeli",
+    label: "Dengeli",
+    summary: "Beş metrik dengeli ağırlıkla okunur; tek bir metrik baskın değildir.",
+    weightDescription: "Beş metrik eşit ağırlık",
+    weights: { risk: 20, return: 20, liquidity: 20, diversification: 20, calmness: 20 },
     defaults: {
       riskSensitivity: "medium",
       returnExpectation: "medium",
       liquidityNeed: "medium",
-      diversificationGoal: "high",
+      diversificationGoal: "medium",
     },
   },
-  high_return_potential: {
-    key: "high_return_potential",
-    label: "Daha yüksek kazanç potansiyeli",
-    summary: "Kazanç potansiyeli odaklı profiller için genel eşleştirme.",
-    weights: { risk: 20, liquidity: 15, return: 50, diversification: 15 },
+  sermayemi_koruyayim: {
+    key: "sermayemi_koruyayim",
+    label: "Sermayemi Koruyayım",
+    summary: "Düşüş ve sakinlik önceliklidir; diğer metrikler destekleyici olarak değerlendirilir.",
+    weightDescription: "En Kötü Düşüş %50 + Piyasa Sakinlik %30 + diğerleri %20",
+    weights: { risk: 50, return: 8, liquidity: 6, diversification: 6, calmness: 30 },
     defaults: {
-      riskSensitivity: "low",
+      riskSensitivity: "high",
+      returnExpectation: "low",
+      liquidityNeed: "medium",
+      diversificationGoal: "medium",
+    },
+  },
+  enflasyona_karsi_kazanayim: {
+    key: "enflasyona_karsi_kazanayim",
+    label: "Enflasyona Karşı Kazanayım",
+    summary: "Reel kazanç önceliklidir; ikinci odak piyasaya göre görece güçtür.",
+    weightDescription: "Enflasyon Sonrası Gerçek Kazanç %60 + Piyasayı Geçme %20 + diğerleri %20",
+    weights: { risk: 8, return: 6, liquidity: 60, diversification: 20, calmness: 6 },
+    defaults: {
+      riskSensitivity: "medium",
       returnExpectation: "high",
       liquidityNeed: "medium",
       diversificationGoal: "medium",
     },
   },
-  balanced: {
-    key: "balanced",
-    label: "Dengeli profil",
-    summary: "Risk düzeyi, kazanç potansiyeli, nakde çevirme kolaylığı ve portföy dengeleme gücü arasında dengeli görünüm.",
-    weights: { risk: 25, liquidity: 25, return: 25, diversification: 25 },
+  piyasayi_yenmek_istiyorum: {
+    key: "piyasayi_yenmek_istiyorum",
+    label: "Piyasayı Yenmek İstiyorum",
+    summary: "Piyasa üstü performans ve riske göre verim önceliklendirilir.",
+    weightDescription: "Piyasayı Geçme Gücü %50 + Riske Göre Kazanç %30 + diğerleri %20",
+    weights: { risk: 8, return: 30, liquidity: 6, diversification: 50, calmness: 6 },
+    defaults: {
+      riskSensitivity: "low",
+      returnExpectation: "high",
+      liquidityNeed: "medium",
+      diversificationGoal: "high",
+    },
+  },
+  verimli_kazanc: {
+    key: "verimli_kazanc",
+    label: "Verimli Kazanç",
+    summary: "Riske göre kazanç odaklıdır; büyük düşüş riski ikinci seviyede izlenir.",
+    weightDescription: "Riske Göre Kazanç %60 + En Kötü Düşüş %20 + diğerleri %20",
+    weights: { risk: 20, return: 60, liquidity: 7, diversification: 7, calmness: 6 },
     defaults: {
       riskSensitivity: "medium",
-      returnExpectation: "medium",
+      returnExpectation: "high",
       liquidityNeed: "medium",
       diversificationGoal: "medium",
     },
   },
-  short_term_low_volatility: {
-    key: "short_term_low_volatility",
-    label: "Kısa vadeli oynaklık hassasiyeti düşük",
-    summary: "Kısa vadede daha düşük oynaklık arayan profiller için eşleştirme.",
-    weights: { risk: 50, liquidity: 30, return: 10, diversification: 10 },
+  sakin_piyasa_ariyorum: {
+    key: "sakin_piyasa_ariyorum",
+    label: "Sakin Piyasa Arıyorum",
+    summary: "Piyasa sakinliği ve düşüş hassasiyetini önceleyen profildir.",
+    weightDescription: "Piyasa Sakinlik Durumu %50 + En Kötü Düşüş %30 + diğerleri %20",
+    weights: { risk: 30, return: 6, liquidity: 7, diversification: 7, calmness: 50 },
     defaults: {
       riskSensitivity: "high",
       returnExpectation: "low",
-      liquidityNeed: "high",
+      liquidityNeed: "medium",
       diversificationGoal: "medium",
     },
   },
-  portfolio_diversification_focused: {
-    key: "portfolio_diversification_focused",
-    label: "Portföy dengeleme odaklı",
-    summary: "Portföy dağılım etkisi odaklı genel profil eşleştirmesi.",
-    weights: { risk: 20, liquidity: 15, return: 15, diversification: 50 },
+  uzun_vadeli_buyume: {
+    key: "uzun_vadeli_buyume",
+    label: "Uzun Vadeli Büyüme",
+    summary: "Reel büyüme ve piyasaya göre görece güç odaklı uzun dönem yaklaşımıdır.",
+    weightDescription: "Enflasyon Sonrası Gerçek Kazanç %40 + Piyasayı Geçme %40 + diğerleri %20",
+    weights: { risk: 8, return: 8, liquidity: 40, diversification: 40, calmness: 4 },
     defaults: {
       riskSensitivity: "medium",
-      returnExpectation: "medium",
-      liquidityNeed: "medium",
+      returnExpectation: "high",
+      liquidityNeed: "low",
       diversificationGoal: "high",
     },
   },
 };
 
-export const DEFAULT_PROFILE_PRESET_KEY: ProfilePresetKey = "balanced";
+export const DEFAULT_PROFILE_PRESET_KEY: ProfilePresetKey = "dengeli";

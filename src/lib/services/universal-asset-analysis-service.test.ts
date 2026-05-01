@@ -94,6 +94,47 @@ class MockGateway implements MarketDataGatewayPort {
   }
 }
 
+class SparseDataGateway implements MarketDataGatewayPort {
+  getSupportedAssets(): AssetCatalogItem[] {
+    return [];
+  }
+
+  async getQuote(symbol: string): Promise<MarketQuote | null> {
+    return {
+      symbol,
+      providerSymbol: symbol === "XAU" ? "XAUUSD=X" : `${symbol}.IS`,
+      price: 100,
+      changePercent: 0,
+      volume: null,
+      currency: "USD",
+      timestampIso: new Date().toISOString(),
+    };
+  }
+
+  async getHistory(symbol: string, _options?: MarketHistoryOptions): Promise<MarketHistory> {
+    const providerSymbol = symbol === "XAU" ? "XAUUSD=X" : `${symbol}.IS`;
+    return {
+      symbol,
+      providerSymbol,
+      points: [],
+      returns: [],
+    };
+  }
+
+  async getLiquidity(symbol: string, _options?: MarketLiquidityOptions): Promise<MarketLiquidity> {
+    return {
+      symbol,
+      providerSymbol: symbol === "XAU" ? "XAUUSD=X" : `${symbol}.IS`,
+      avgDailyVolume: null,
+      volumeBand: "unknown",
+      profile: {
+        liquidationDays: 5,
+        marginAddOn: 0.02,
+      },
+    };
+  }
+}
+
 describe("analyzeUniversalAssets", () => {
   it("passes selected time horizon to gateway history calls", async () => {
     const gateway = new MockGateway();
@@ -128,5 +169,24 @@ describe("analyzeUniversalAssets", () => {
 
     const analyzed = await analyzeUniversalAssets(input, gateway, { timeHorizon: "1y" });
     expect(analyzed[0].computation?.fallbackReasons).toContain("alpha_not_statistically_significant");
+  });
+
+  it("never returns null metrics when data sources are sparse", async () => {
+    const gateway = new SparseDataGateway();
+    const input = [
+      { symbol: "TUPRS", originalInput: "TUPRS", class: AssetClass.Equity },
+      { symbol: "XAU", originalInput: "XAU", class: AssetClass.Commodity },
+      { symbol: "BTC", originalInput: "BTC", class: AssetClass.Crypto },
+    ];
+
+    const analyzed = await analyzeUniversalAssets(input, gateway, { timeHorizon: "1y", analysisMode: "compare" });
+
+    analyzed.forEach((asset) => {
+      expect(asset.metrics.risk).toBeTypeOf("number");
+      expect(asset.metrics.return).toBeTypeOf("number");
+      expect(asset.metrics.liquidity).not.toBeNull();
+      expect(asset.metrics.diversification).toBeTypeOf("number");
+      expect(asset.metrics.calmness).not.toBeNull();
+    });
   });
 });
