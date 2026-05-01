@@ -12,9 +12,12 @@ export interface MarketHistoryOptions {
   interval?: "1d";
 }
 
+export type MarketDataSource = "financial_datasets_mcp" | "yahoo_finance";
+
 export interface MarketQuote {
   symbol: string;
   providerSymbol: string;
+  dataSource?: MarketDataSource;
   price: number;
   changePercent: number;
   volume: number | null;
@@ -34,6 +37,7 @@ export interface MarketHistoryPoint {
 export interface MarketHistory {
   symbol: string;
   providerSymbol: string;
+  dataSource?: MarketDataSource;
   points: MarketHistoryPoint[];
   returns: number[];
 }
@@ -41,6 +45,7 @@ export interface MarketHistory {
 export interface MarketLiquidity {
   symbol: string;
   providerSymbol: string;
+  dataSource?: MarketDataSource;
   profile: LiquidityProfile;
   avgDailyVolume: number | null;
   volumeBand: "very_high" | "high" | "medium" | "low" | "unknown";
@@ -198,6 +203,28 @@ function mapVolumeBand(avgDailyVolume: number | null): MarketLiquidity["volumeBa
   return "low";
 }
 
+function isUSAssetSymbol(symbol: string): boolean {
+  if (!symbol) return false;
+  if (symbol.includes(".IS")) return false;
+  if (symbol.includes("=X")) return false;
+  if (symbol.includes("-USD")) return false;
+  if (symbol.includes("=F")) return false;
+  if (symbol.startsWith("^")) {
+    return symbol === "^GSPC" || symbol === "^NDX";
+  }
+  return /^[A-Z]{1,5}$/.test(symbol);
+}
+
+function resolveDataSource(symbol: string, providerSymbol: string): MarketDataSource {
+  return isUSAssetSymbol(symbol) || isUSAssetSymbol(providerSymbol)
+    ? "financial_datasets_mcp"
+    : "yahoo_finance";
+}
+
+function logResolvedDataSource(symbol: string, providerSymbol: string, dataSource: MarketDataSource): void {
+  console.info(`[market-data-gateway] symbol=${symbol} provider=${providerSymbol} source=${dataSource}`);
+}
+
 async function fetchJson(url: string): Promise<unknown> {
   for (let attempt = 0; attempt <= REQUEST_RETRY_COUNT; attempt += 1) {
     const controller = new AbortController();
@@ -247,10 +274,13 @@ function parseQuotePayload(
   const currency = readString(first, "currency");
   const marketTime = readFiniteNumber(first, "regularMarketTime");
   const timestampIso = marketTime !== null ? new Date(marketTime * 1000).toISOString() : null;
+  const dataSource = resolveDataSource(symbol, providerSymbol);
+  logResolvedDataSource(symbol, providerSymbol, dataSource);
 
   return {
     symbol,
     providerSymbol,
+    dataSource,
     price,
     changePercent,
     volume,
@@ -264,11 +294,13 @@ function parseHistoryPayload(
   symbol: string,
   providerSymbol: string
 ): MarketHistory {
+  const dataSource = resolveDataSource(symbol, providerSymbol);
+  logResolvedDataSource(symbol, providerSymbol, dataSource);
   const chart = readRecord(payload, "chart");
   const resultList = readArray(chart, "result");
   const firstResult = resultList.length > 0 ? resultList[0] : null;
   if (!isObjectRecord(firstResult)) {
-    return { symbol, providerSymbol, points: [], returns: [] };
+    return { symbol, providerSymbol, dataSource, points: [], returns: [] };
   }
 
   const timestampsRaw = readOptionalNumberArray(firstResult, "timestamp");
@@ -312,7 +344,7 @@ function parseHistoryPayload(
     }
   }
 
-  return { symbol, providerSymbol, points, returns };
+  return { symbol, providerSymbol, dataSource, points, returns };
 }
 
 export class MarketDataGateway implements MarketDataGatewayPort {
@@ -364,7 +396,15 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     const symbol = normalizeSymbol(symbolInput);
     const range = options.range ?? "1y";
     const interval = options.interval ?? "1d";
-    if (!symbol) return { symbol, providerSymbol: symbol, points: [], returns: [] };
+    if (!symbol) {
+      return {
+        symbol,
+        providerSymbol: symbol,
+        dataSource: "yahoo_finance",
+        points: [],
+        returns: [],
+      };
+    }
 
     const cacheKey = `${symbol}:${range}:${interval}`;
     const cached = this.getCached(this.historyCache, cacheKey);
@@ -392,6 +432,7 @@ export class MarketDataGateway implements MarketDataGatewayPort {
       ({
         symbol,
         providerSymbol: fallbackProviderSymbol,
+        dataSource: resolveDataSource(symbol, fallbackProviderSymbol),
         points: [],
         returns: [],
       } as MarketHistory);
@@ -429,6 +470,7 @@ export class MarketDataGateway implements MarketDataGatewayPort {
     const liquidity: MarketLiquidity = {
       symbol,
       providerSymbol,
+      dataSource: resolveDataSource(symbol, providerSymbol),
       profile: baseProfile,
       avgDailyVolume,
       volumeBand: mapVolumeBand(avgDailyVolume),
