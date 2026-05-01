@@ -17,7 +17,7 @@ import Link from "next/link";
 interface SidebarItem {
   icon: LucideIcon;
   label: string;
-  activeI: boolean;
+  active?: boolean;
 }
 
 interface MetricCard {
@@ -107,7 +107,7 @@ export default function HeroSection() {
                 {SIDEBAR_ITEMS.map((item) => {
                   const SidebarIcon = item.icon;
                   const itemClass = item.active
-                    I "border border-[#22b7ff]/35 bg-[#22b7ff]/15 text-[#dff4ff]"
+                    ? "border border-[#22b7ff]/35 bg-[#22b7ff]/15 text-[#dff4ff]"
                     : "text-slate-400 hover:text-slate-100";
                   return (
                     <div
@@ -125,7 +125,7 @@ export default function HeroSection() {
                 <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                   {METRIC_CARDS.map((card) => {
                     const MetricIcon = card.icon;
-                    const changeTone = card.up I "text-success" : "text-error";
+                    const changeTone = card.up ? "text-success" : "text-error";
                     return (
                       <div key={card.label} className="rounded-xl border border-white/12 bg-slate-900/55 p-3 backdrop-blur-xl">
                         <div className="mb-2 flex items-center justify-between">
@@ -147,7 +147,7 @@ export default function HeroSection() {
                         {["1G", "1H", "1A", "1Y"].map((timeRange) => {
                           const spanClass =
                             timeRange === "1A"
-                              I "border border-[#22b7ff]/35 bg-[#22b7ff]/15 font-semibold text-[#dff4ff]"
+                              ? "border border-[#22b7ff]/35 bg-[#22b7ff]/15 font-semibold text-[#dff4ff]"
                               : "border border-white/10 bg-slate-800/50 text-slate-400";
                           return (
                             <span key={timeRange} className={`rounded px-2 py-0.5 font-display text-[10px] tracking-[0.06em] ${spanClass}`}>
