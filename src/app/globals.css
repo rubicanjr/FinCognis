@@ -264,6 +264,26 @@ html.light .landing-nav {
   box-shadow: 0 14px 40px rgba(148, 163, 184, 0.22) !important;
 }
 
+html[data-theme="light"] .landing-brand,
+html.light .landing-brand {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .landing-nav-link,
+html.light .landing-nav-link {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .landing-nav-link:hover,
+html.light .landing-nav-link:hover {
+  color: #0369a1 !important;
+}
+
+html[data-theme="light"] .landing-nav-link.font-semibold,
+html.light .landing-nav-link.font-semibold {
+  color: #0f172a !important;
+}
+
 html[data-theme="light"] .landing-footer,
 html.light .landing-footer {
   border-top-color: rgba(148, 163, 184, 0.45) !important;
@@ -354,10 +374,27 @@ html.light .tools-shell .tools-card {
   box-shadow: 0 20px 44px -32px rgba(15, 23, 42, 0.34) !important;
 }
 
+html[data-theme="light"] .tools-shell .tools-hero-title,
+html.light .tools-shell .tools-hero-title {
+  background-image: linear-gradient(92deg, #0f172a 8%, #0369a1 48%, #6d28d9 95%) !important;
+}
+
 html[data-theme="light"] .tools-shell .tools-chip,
 html.light .tools-shell .tools-chip {
   border-color: rgba(148, 163, 184, 0.45) !important;
   background: rgba(255, 255, 255, 0.92) !important;
+}
+
+html[data-theme="light"] .tools-shell .tools-mode-btn--active,
+html.light .tools-shell .tools-mode-btn--active {
+  border-color: rgba(2, 132, 199, 0.5) !important;
+  background: rgba(186, 230, 253, 0.9) !important;
+  color: #0c4a6e !important;
+}
+
+html[data-theme="light"] .tools-shell .tools-mode-btn--idle,
+html.light .tools-shell .tools-mode-btn--idle {
+  color: #334155 !important;
 }
 
 html[data-theme="light"] .tools-shell [class*="bg-slate-950"],
@@ -395,4 +432,43 @@ html.light .tools-shell .theme-toggle-btn {
   border-color: rgba(148, 163, 184, 0.75) !important;
   background: rgba(255, 255, 255, 0.9) !important;
   color: #334155 !important;
+}
+
+.heat-tone-high {
+  color: #dff4ff;
+  background-color: rgba(34, 183, 255, 0.22);
+  border-color: rgba(77, 205, 255, 0.5);
+}
+
+.heat-tone-mid {
+  color: #e2e8f0;
+  background-color: rgba(100, 116, 139, 0.25);
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.heat-tone-low {
+  color: #f1f5f9;
+  background-color: rgba(120, 113, 108, 0.28);
+  border-color: rgba(168, 162, 158, 0.45);
+}
+
+html[data-theme="light"] .heat-tone-high,
+html.light .heat-tone-high {
+  color: #0c4a6e;
+  background-color: rgba(186, 230, 253, 0.85);
+  border-color: rgba(2, 132, 199, 0.5);
+}
+
+html[data-theme="light"] .heat-tone-mid,
+html.light .heat-tone-mid {
+  color: #1e293b;
+  background-color: rgba(226, 232, 240, 0.9);
+  border-color: rgba(100, 116, 139, 0.4);
+}
+
+html[data-theme="light"] .heat-tone-low,
+html.light .heat-tone-low {
+  color: #334155;
+  background-color: rgba(226, 232, 240, 0.75);
+  border-color: rgba(148, 163, 184, 0.45);
 }

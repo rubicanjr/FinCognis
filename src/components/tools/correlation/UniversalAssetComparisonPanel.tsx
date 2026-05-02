@@ -175,11 +175,7 @@ const PANEL_CARD =
 const GLASS_CHIP =
   "tools-chip border border-white/12 bg-slate-950/55 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(148,163,184,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(2,6,23,0.55)]";
 
-const HEATMAP_TONES = [
-  "text-[#9ddcff] bg-[#22b7ff]/18 border-[#22b7ff]/35",
-  "text-slate-200 bg-slate-500/20 border-slate-300/25",
-  "text-stone-200 bg-stone-500/25 border-stone-300/30",
-] as const;
+const HEATMAP_TONES = ["heat-tone-high", "heat-tone-mid", "heat-tone-low"] as const;
 
 function normalizeAliasKey(value: string): string {
   return value
@@ -874,10 +870,10 @@ export default function UniversalAssetComparisonPanel() {
                     key={option.key}
                     type="button"
                     onClick={() => setMode(option.key)}
-                    className={`rounded-lg px-4 py-2 font-display text-sm font-semibold transition-all ${
+                    className={`tools-mode-btn rounded-lg px-4 py-2 font-display text-sm font-semibold transition-all ${
                       isActive
-                        ? "border border-[#22b7ff]/55 bg-[#22b7ff]/18 text-[#dff4ff]"
-                        : "text-slate-300 hover:text-[#8ddfff]"
+                        ? "tools-mode-btn--active border border-[#22b7ff]/55 bg-[#22b7ff]/18 text-[#dff4ff]"
+                        : "tools-mode-btn--idle text-slate-300 hover:text-[#8ddfff]"
                     }`}
                   >
                     {option.label}
@@ -887,7 +883,7 @@ export default function UniversalAssetComparisonPanel() {
             </div>
           </div>
 
-          <h2 className="mt-5 bg-[linear-gradient(92deg,#eaf6ff_10%,#8fddff_45%,#cf9dff_90%)] bg-clip-text font-display text-4xl font-semibold leading-[1.04] tracking-[0.02em] text-transparent sm:text-6xl">
+          <h2 className="tools-hero-title mt-5 bg-[linear-gradient(92deg,#eaf6ff_10%,#8fddff_45%,#cf9dff_90%)] bg-clip-text font-display text-4xl font-semibold leading-[1.04] tracking-[0.02em] text-transparent sm:text-6xl">
             {title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-300 sm:text-lg">{subtitle}</p>

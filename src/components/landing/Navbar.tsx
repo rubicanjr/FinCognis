@@ -20,7 +20,7 @@ export default function Navbar() {
       <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <ShieldCheck className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
-          <span className="font-display text-2xl font-semibold tracking-[0.02em] text-[#eaf6ff]">FinCognis</span>
+          <span className="landing-brand font-display text-2xl font-semibold tracking-[0.02em] text-[#eaf6ff]">FinCognis</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
