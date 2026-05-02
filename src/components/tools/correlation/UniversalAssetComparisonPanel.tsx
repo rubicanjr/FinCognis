@@ -170,10 +170,10 @@ const CLASS_LABELS: Record<AssetClass, string> = {
 };
 
 const PANEL_CARD =
-  "rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-4 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]";
+  "tools-card rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-4 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]";
 
 const GLASS_CHIP =
-  "border border-white/12 bg-slate-950/55 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(148,163,184,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(2,6,23,0.55)]";
+  "tools-chip border border-white/12 bg-slate-950/55 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(148,163,184,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(2,6,23,0.55)]";
 
 const HEATMAP_TONES = [
   "text-[#9ddcff] bg-[#22b7ff]/18 border-[#22b7ff]/35",
@@ -848,21 +848,21 @@ export default function UniversalAssetComparisonPanel() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[34px] border border-[#22b7ff]/20 bg-[#030915]/90 p-4 shadow-[0_40px_120px_rgba(2,8,23,0.72)] sm:p-6">
+    <section className="tools-panel-shell relative overflow-hidden rounded-[34px] border border-[#22b7ff]/20 bg-[#030915]/90 p-4 shadow-[0_40px_120px_rgba(2,8,23,0.72)] sm:p-6">
       <div
-        className="pointer-events-none absolute inset-0"
+        className="tools-panel-shell__aurora pointer-events-none absolute inset-0"
         style={{
           background:
             "radial-gradient(circle at 18% -12%, rgb(34 183 255 / 0.38) 0%, transparent 44%), radial-gradient(circle at 84% 3%, rgb(168 85 247 / 0.24) 0%, transparent 38%), linear-gradient(180deg, rgb(2 8 23) 0%, rgb(2 6 18) 100%)",
         }}
       />
-      <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="tools-panel-shell__grid pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
 
       <div className="relative z-10">
         <div className="mx-auto max-w-4xl text-center">
           <p className="inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5 font-display text-[10px] font-semibold tracking-[0.12em] text-[#8ddfff]">
             <Sparkles className="h-3.5 w-3.5" style={{ color: ACCENT_BLUE }} />
-            FinCognis Comparison Engine
+            FinCognis Karşılaştırma Motoru
           </p>
 
           <div className="mt-5 flex justify-center">

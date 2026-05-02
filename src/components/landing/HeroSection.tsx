@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeftRight,
   BadgeCheck,
   BarChart3,
@@ -46,7 +46,7 @@ const METRIC_CARDS: MetricCard[] = [
 
 export default function HeroSection() {
   return (
-    <header id="karsilastir" className="relative flex min-h-[795px] flex-col items-center justify-center overflow-hidden px-4 pb-24 pt-32 sm:px-6">
+    <header id="karsilastir" className="landing-section relative flex min-h-[795px] flex-col items-center justify-center overflow-hidden px-4 pb-24 pt-32 sm:px-6">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -60,28 +60,28 @@ export default function HeroSection() {
         <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5">
           <BadgeCheck className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
           <span className="font-display text-[11px] font-semibold tracking-[0.1em] text-[#dff4ff]">
-            FinCognis Karsilastirma ve Profil Kesif KatmanI
+            FinCognis Karşılaştırma ve Profil Keşif Katmanı
           </span>
         </div>
 
         <h1 className="animate-fade-in-up-delay-1 mb-6 font-display text-5xl font-semibold leading-[1.05] tracking-[0.01em] text-slate-50 sm:text-6xl md:text-8xl">
-          VarliklarI Ayni Cercevede <span className="text-[#8ddfff]">KarIIlaItIrIn</span>
+          Varlıkları Aynı Çerçevede <span className="text-[#8ddfff]">Karşılaştırın</span>
         </h1>
 
         <p className="animate-fade-in-up-delay-2 mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl md:text-2xl">
-          Yatirim tavsiyesi degildir; kriterleri Risk hassasiyeti, Gecmis getiri gucu beklentisi, Nakde Cevirme kolayligi ihtiyaci ve Portfoy dengeleme hedefi Cercevesinde eIleItirir.
+          Yatırım tavsiyesi değildir; kriterleri Risk hassasiyeti, Geçmiş getiri gücü beklentisi, Nakde çevirme kolaylığı ihtiyacı ve Portföy dengeleme hedefi çerçevesinde eşleştirir.
         </p>
 
         <div className="animate-fade-in-up-delay-3 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href="/tools"
-            className="w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-display text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
+            className="landing-primary-btn w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-display text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
           >
             Karşılaştırmayı Aç
           </Link>
           <Link
             href="/#profil-kesif"
-            className="w-full rounded-xl border border-white/12 bg-slate-900/55 px-8 py-4 text-center font-display text-lg font-semibold text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] active:scale-95 sm:w-auto"
+            className="landing-secondary-btn w-full rounded-xl border border-white/12 bg-slate-900/55 px-8 py-4 text-center font-display text-lg font-semibold text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] active:scale-95 sm:w-auto"
           >
             Profil Keşfi İncele
           </Link>
@@ -89,7 +89,7 @@ export default function HeroSection() {
       </div>
 
       <div className="animate-fade-in-up-delay-3 relative mx-auto mt-20 w-full max-w-6xl">
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:p-4">
+        <div className="landing-card overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:p-4">
           <div className="w-full select-none overflow-hidden rounded-xl border border-white/12 bg-slate-950/70" aria-label="FinCognis Dashboard Önizleme">
             <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
               <span className="h-3 w-3 rounded-full bg-error" />

@@ -22,10 +22,10 @@ export function ComparisonPanel({ vm }: ComparisonPanelProps) {
     <div className="mt-4 rounded-2xl bg-surface p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-          6) Kurum Karsilastirmasi ({quotes.length} kurum)
+          6) Kurum Karşılaştırması ({quotes.length} kurum)
         </p>
         <p className="text-xs text-on-surface-variant">
-          Manuel oran girisi ile kurumun size sundugu ozel tarife uygulanir.
+          Manuel oran girişi ile kurumun size sunduğu özel tarife uygulanır.
         </p>
       </div>
       <div className="overflow-x-auto">
@@ -33,13 +33,13 @@ export function ComparisonPanel({ vm }: ComparisonPanelProps) {
           <thead>
             <tr className="text-left text-on-surface-variant">
               <th className="px-2 py-2">Kurum</th>
-              <th className="px-2 py-2">Tur</th>
-              <th className="px-2 py-2">Kademe Orani</th>
+              <th className="px-2 py-2">Tür</th>
+              <th className="px-2 py-2">Kademe Oranı</th>
               <th className="px-2 py-2">Manuel Oran</th>
               <th className="px-2 py-2">Toplam Maliyet</th>
               <th className="px-2 py-2">Efektif %</th>
               <th className="px-2 py-2">Round-trip Senaryo</th>
-              <th className="px-2 py-2">Secim</th>
+              <th className="px-2 py-2">Seçim</th>
             </tr>
           </thead>
           <tbody>

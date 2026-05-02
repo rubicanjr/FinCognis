@@ -213,3 +213,186 @@ svg.lucide {
   stroke-width: 1.5px !important;
   vector-effect: non-scaling-stroke;
 }
+
+/* Landing and tools theme surfaces */
+.landing-shell {
+  background: #030915;
+  color: rgb(241 245 249);
+}
+
+.landing-shell__aurora {
+  background:
+    radial-gradient(circle at 18% -12%, rgb(34 183 255 / 0.34) 0%, transparent 46%),
+    radial-gradient(circle at 84% 3%, rgb(168 85 247 / 0.22) 0%, transparent 38%),
+    linear-gradient(180deg, rgb(2 8 23) 0%, rgb(2 6 18) 100%);
+}
+
+.landing-shell__grid {
+  opacity: 0.3;
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+html[data-theme="light"] .landing-shell,
+html.light .landing-shell {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 45%, #eaf2fc 100%);
+  color: #0f172a;
+}
+
+html[data-theme="light"] .landing-shell__aurora,
+html.light .landing-shell__aurora {
+  background:
+    radial-gradient(circle at 18% -12%, rgb(56 189 248 / 0.2) 0%, transparent 46%),
+    radial-gradient(circle at 84% 3%, rgb(99 102 241 / 0.14) 0%, transparent 40%),
+    linear-gradient(180deg, rgb(248 251 255) 0%, rgb(238 244 251) 100%);
+}
+
+html[data-theme="light"] .landing-shell__grid,
+html.light .landing-shell__grid {
+  opacity: 0.36;
+  background-image:
+    linear-gradient(to right, rgba(100, 116, 139, 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(100, 116, 139, 0.18) 1px, transparent 1px);
+}
+
+html[data-theme="light"] .landing-nav,
+html.light .landing-nav {
+  border-bottom-color: rgba(148, 163, 184, 0.45) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  box-shadow: 0 14px 40px rgba(148, 163, 184, 0.22) !important;
+}
+
+html[data-theme="light"] .landing-footer,
+html.light .landing-footer {
+  border-top-color: rgba(148, 163, 184, 0.45) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+html[data-theme="light"] .landing-primary-btn,
+html.light .landing-primary-btn {
+  border-color: rgba(56, 189, 248, 0.7) !important;
+  background: rgba(224, 242, 254, 0.95) !important;
+  color: #0c4a6e !important;
+}
+
+html[data-theme="light"] .landing-secondary-btn,
+html.light .landing-secondary-btn {
+  border-color: rgba(148, 163, 184, 0.7) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #1e293b !important;
+}
+
+html[data-theme="light"] .landing-shell .landing-card,
+html.light .landing-shell .landing-card {
+  border-color: rgba(148, 163, 184, 0.42) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.9)) !important;
+  box-shadow: 0 18px 42px -28px rgba(15, 23, 42, 0.38) !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="bg-slate-950"],
+html[data-theme="light"] .landing-shell [class*="bg-slate-900"],
+html[data-theme="light"] .landing-shell [class*="bg-slate-800"],
+html.light .landing-shell [class*="bg-slate-950"],
+html.light .landing-shell [class*="bg-slate-900"],
+html.light .landing-shell [class*="bg-slate-800"] {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="text-slate-50"],
+html[data-theme="light"] .landing-shell [class*="text-slate-100"],
+html.light .landing-shell [class*="text-slate-50"],
+html.light .landing-shell [class*="text-slate-100"] {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="text-slate-300"],
+html[data-theme="light"] .landing-shell [class*="text-slate-400"],
+html.light .landing-shell [class*="text-slate-300"],
+html.light .landing-shell [class*="text-slate-400"] {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="border-white/"],
+html.light .landing-shell [class*="border-white/"] {
+  border-color: rgba(148, 163, 184, 0.42) !important;
+}
+
+html[data-theme="light"] .tools-shell,
+html.light .tools-shell {
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 45%, #eaf2fc 100%);
+}
+
+html[data-theme="light"] .tools-shell .tools-panel-shell,
+html.light .tools-shell .tools-panel-shell {
+  border-color: rgba(125, 211, 252, 0.55) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(236, 245, 255, 0.94)) !important;
+  box-shadow: 0 42px 90px -48px rgba(30, 64, 175, 0.4) !important;
+}
+
+html[data-theme="light"] .tools-shell .tools-panel-shell__aurora,
+html.light .tools-shell .tools-panel-shell__aurora {
+  background:
+    radial-gradient(circle at 18% -12%, rgb(56 189 248 / 0.22) 0%, transparent 44%),
+    radial-gradient(circle at 84% 3%, rgb(99 102 241 / 0.14) 0%, transparent 38%),
+    linear-gradient(180deg, rgb(247 250 255) 0%, rgb(236 245 255) 100%) !important;
+}
+
+html[data-theme="light"] .tools-shell .tools-panel-shell__grid,
+html.light .tools-shell .tools-panel-shell__grid {
+  opacity: 0.3 !important;
+  background-image:
+    linear-gradient(to right, rgba(100, 116, 139, 0.18) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(100, 116, 139, 0.18) 1px, transparent 1px) !important;
+}
+
+html[data-theme="light"] .tools-shell .tools-card,
+html.light .tools-shell .tools-card {
+  border-color: rgba(148, 163, 184, 0.42) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.92)) !important;
+  box-shadow: 0 20px 44px -32px rgba(15, 23, 42, 0.34) !important;
+}
+
+html[data-theme="light"] .tools-shell .tools-chip,
+html.light .tools-shell .tools-chip {
+  border-color: rgba(148, 163, 184, 0.45) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+html[data-theme="light"] .tools-shell [class*="bg-slate-950"],
+html[data-theme="light"] .tools-shell [class*="bg-slate-900"],
+html[data-theme="light"] .tools-shell [class*="bg-slate-800"],
+html.light .tools-shell [class*="bg-slate-950"],
+html.light .tools-shell [class*="bg-slate-900"],
+html.light .tools-shell [class*="bg-slate-800"] {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+html[data-theme="light"] .tools-shell [class*="text-slate-50"],
+html[data-theme="light"] .tools-shell [class*="text-slate-100"],
+html[data-theme="light"] .tools-shell [class*="text-slate-200"],
+html.light .tools-shell [class*="text-slate-50"],
+html.light .tools-shell [class*="text-slate-100"],
+html.light .tools-shell [class*="text-slate-200"] {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .tools-shell [class*="text-slate-300"],
+html[data-theme="light"] .tools-shell [class*="text-slate-400"],
+html.light .tools-shell [class*="text-slate-300"],
+html.light .tools-shell [class*="text-slate-400"] {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] .tools-shell [class*="border-white/"],
+html.light .tools-shell [class*="border-white/"] {
+  border-color: rgba(148, 163, 184, 0.45) !important;
+}
+
+html[data-theme="light"] .tools-shell .theme-toggle-btn,
+html.light .tools-shell .theme-toggle-btn {
+  border-color: rgba(148, 163, 184, 0.75) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #334155 !important;
+}

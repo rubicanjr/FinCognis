@@ -94,7 +94,7 @@ function RuntimeIssueBanner() {
 export default function ToolsPageClient() {
   return (
     <ToolsClientBoundary>
-      <div className="min-h-screen bg-surface">
+      <div className="tools-shell min-h-screen bg-surface">
         <Navbar />
         <main className="mx-auto max-w-[1320px] px-4 pb-10 pt-24 sm:px-6">
           <RuntimeIssueBanner />
