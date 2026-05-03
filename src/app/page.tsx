@@ -4,7 +4,8 @@ import HeroSection from "@/components/landing/HeroSection";
 import AnalyticsBento from "@/components/landing/AnalyticsBento";
 import SecureTransactions from "@/components/landing/SecureTransactions";
 import GlobalCompliance from "@/components/landing/GlobalCompliance";
-import TeamSection from "@/components/landing/TeamSection";
+import LandingUpdatesSection from "@/components/landing/LandingUpdatesSection";
+import ContactSection from "@/components/landing/ContactSection";
 import Footer from "@/components/landing/Footer";
 import SeoContentSection, { HOME_FAQ_ITEMS } from "@/components/landing/SeoContentSection";
 import { SITE_NAME, SITE_URL, OG_IMAGE_PATH, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
@@ -118,7 +119,8 @@ export default function HomePage() {
         <AnalyticsBento />
         <SecureTransactions />
         <GlobalCompliance />
-        <TeamSection />
+        <LandingUpdatesSection />
+        <ContactSection />
         <SeoContentSection />
         <Footer />
       </div>

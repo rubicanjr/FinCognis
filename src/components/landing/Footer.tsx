@@ -13,20 +13,23 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-8">
-          <Link href="/#karsilastir" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Karşılaştır
-          </Link>
-          <Link href="/#profil-kesif" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Profil Keşfet
-          </Link>
           <Link href="/#metrik-rehberi" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Metrikler
           </Link>
           <Link href="/#risk" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Risk
           </Link>
-          <Link href="/#ekip" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+          <Link href="/ekip" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Ekip
+          </Link>
+          <Link href="/#haberler" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Haberler
+          </Link>
+          <Link href="/#ekonomik-takvim" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Ekonomik Takvim
+          </Link>
+          <Link href="/#iletisim" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            İletişim
           </Link>
           <Link href="/tools" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Araçlar (/tools)

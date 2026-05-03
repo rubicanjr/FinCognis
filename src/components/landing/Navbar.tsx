@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, ShieldCheck, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 
 const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean }> = [
-  { label: "Karşılaştır", href: "/#karsilastir", highlighted: true },
-  { label: "Profil Keşfet", href: "/#profil-kesif" },
   { label: "Metrikler", href: "/#metrik-rehberi" },
   { label: "Risk", href: "/#risk" },
-  { label: "Ekip", href: "/#ekip" },
+  { label: "Ekip", href: "/ekip" },
+  { label: "Haberler", href: "/#haberler" },
+  { label: "Ekonomik Takvim", href: "/#ekonomik-takvim" },
+  { label: "İletişim", href: "/#iletisim", highlighted: true },
 ];
 
 export default function Navbar() {
@@ -19,12 +20,9 @@ export default function Navbar() {
   return (
     <nav className="landing-nav fixed top-0 z-50 w-full border-b border-[#22b7ff]/20 bg-[#030915]/75 shadow-[0_14px_35px_rgba(2,8,23,0.65)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-3">
-          <ShieldCheck className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
-          <span className="landing-brand font-display text-2xl font-semibold tracking-[0.02em] text-[#eaf6ff]">FinCognis</span>
-        </Link>
+        <div className="hidden h-10 w-8 md:block" aria-hidden="true" />
 
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-6 md:flex">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.label}

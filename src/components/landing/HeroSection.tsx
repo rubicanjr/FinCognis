@@ -65,11 +65,11 @@ export default function HeroSection() {
         </div>
 
         <h1 className="animate-fade-in-up-delay-1 mb-6 font-display text-5xl font-semibold leading-[1.05] tracking-[0.01em] text-slate-50 sm:text-6xl md:text-8xl">
-          Varlıkları Aynı Çerçevede <span className="text-[#8ddfff]">Karşılaştırın</span>
+          Yatırım kararlarını <span className="text-[#8ddfff]">sistemle al</span>
         </h1>
 
         <p className="animate-fade-in-up-delay-2 mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl md:text-2xl">
-          Yatırım tavsiyesi değildir; kriterleri Risk hassasiyeti, Geçmiş getiri gücü beklentisi, Nakde çevirme kolaylığı ihtiyacı ve Portföy dengeleme hedefi çerçevesinde eşleştirir.
+          FinCognis ile karar vermeden önce riski görün, yatırım gücünüzü artırın.
         </p>
 
         <div className="animate-fade-in-up-delay-3 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -249,6 +249,48 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <a
+            href="https://www.spindorai.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-slate-950/65 p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
+          >
+            <img
+              src="https://www.google.com/s2/favicons?sz=128&domain=spindorai.com"
+              alt="Spindor AI"
+              className="h-20 w-20 rounded-2xl object-contain"
+              loading="lazy"
+            />
+          </a>
+          <a
+            href="https://www.masqot.co/"
+            target="_blank"
+            rel="noreferrer"
+            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-slate-950/65 p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
+          >
+            <img
+              src="/partners/masqot.png"
+              alt="Masqot"
+              className="h-20 w-auto object-contain"
+              loading="lazy"
+            />
+          </a>
+          <a
+            href="https://natuvisio.com/tr"
+            target="_blank"
+            rel="noreferrer"
+            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-slate-950/65 p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
+          >
+            <img
+              src="https://www.google.com/s2/favicons?sz=128&domain=natuvisio.com"
+              alt="Natuvisio"
+              className="h-20 w-20 rounded-full object-contain"
+              loading="lazy"
+            />
+          </a>
         </div>
       </div>
     </header>
