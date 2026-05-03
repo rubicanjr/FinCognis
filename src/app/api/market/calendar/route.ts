@@ -15,9 +15,26 @@ interface CalendarEntry {
 }
 
 const INVESTING_CALENDAR_URL = "https://tr.investing.com/economic-calendar";
-const INVESTING_CALENDAR_SERVICE_URL = "https://tr.investing.com/economic-calendar/Service/getCalendarFilteredData";
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+const ENDPOINTS: Record<CalendarCategory, string> = {
+  economic: "https://tr.investing.com/economic-calendar/Service/getCalendarFilteredData",
+  holidays: "https://tr.investing.com/holiday-calendar/Service/getCalendarFilteredData",
+  dividends: "https://tr.investing.com/dividends-calendar/Service/getCalendarFilteredData",
+  splits: "https://tr.investing.com/stock-split-calendar/Service/getCalendarFilteredData",
+  ipo: "https://tr.investing.com/ipo-calendar/Service/getCalendarFilteredData",
+};
+
+const REFERERS: Record<CalendarCategory, string> = {
+  economic: "https://tr.investing.com/economic-calendar/",
+  holidays: "https://tr.investing.com/holiday-calendar/",
+  dividends: "https://tr.investing.com/dividends-calendar/",
+  splits: "https://tr.investing.com/stock-split-calendar/",
+  ipo: "https://tr.investing.com/ipo-calendar/",
+};
+
+const COUNTRY_FILTERS = ["25", "32", "6", "37", "72", "22", "17", "39", "14", "10", "35", "43", "56", "36", "110", "11", "26", "12", "4", "5"];
 
 function stripTags(value: string): string {
   return value
@@ -71,35 +88,135 @@ function parseRows(html: string): CalendarEntry[] {
   return entries;
 }
 
-function mapRangeToCurrentTab(range: CalendarRange): string {
-  if (range === "yesterday") return "yesterday";
-  if (range === "tomorrow") return "tomorrow";
-  if (range === "week") return "thisWeek";
-  return "today";
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
-function buildServiceBody(range: CalendarRange): URLSearchParams {
+function buildDateRange(range: CalendarRange): { from: string; to: string } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(start);
+
+  if (range === "yesterday") {
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() - 1);
+  } else if (range === "tomorrow") {
+    start.setDate(start.getDate() + 1);
+    end.setDate(end.getDate() + 1);
+  } else if (range === "week") {
+    end.setDate(end.getDate() + 7);
+  }
+
+  return { from: formatDate(start), to: formatDate(end) };
+}
+
+function parseGenericRows(html: string, category: CalendarCategory): CalendarEntry[] {
+  const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) ?? [];
+  const entries: CalendarEntry[] = [];
+
+  for (const row of rows) {
+    if (!/<td/i.test(row)) continue;
+    const cells = Array.from(row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi))
+      .map((match) => stripTags(match[1]))
+      .filter(Boolean);
+    if (cells.length < 2) continue;
+
+    const [c1 = "-", c2 = "-", c3 = "-", c4 = "-", c5 = "-", c6 = "-", c7 = "-"] = cells;
+
+    if (category === "holidays") {
+      entries.push({
+        id: `${category}-${entries.length + 1}`,
+        timeLabel: c1 || "Tüm Gün",
+        currency: c2 || "-",
+        event: c3 || c2,
+        importance: "Orta",
+        actual: "-",
+        forecast: "-",
+        previous: "-",
+      });
+      continue;
+    }
+
+    if (category === "dividends") {
+      entries.push({
+        id: `${category}-${entries.length + 1}`,
+        timeLabel: c2 || c1,
+        currency: "-",
+        event: c1,
+        importance: "Orta",
+        actual: c3 || "-",
+        forecast: c4 || "-",
+        previous: c5 || "-",
+      });
+      continue;
+    }
+
+    if (category === "splits") {
+      entries.push({
+        id: `${category}-${entries.length + 1}`,
+        timeLabel: c2 || c1,
+        currency: "-",
+        event: c1,
+        importance: "Orta",
+        actual: c3 || "-",
+        forecast: c4 || "-",
+        previous: c5 || "-",
+      });
+      continue;
+    }
+
+    entries.push({
+      id: `${category}-${entries.length + 1}`,
+      timeLabel: c2 || c1,
+      currency: "-",
+      event: c1,
+      importance: "Orta",
+      actual: c3 || "-",
+      forecast: c4 || "-",
+      previous: c5 || "-",
+    });
+  }
+
+  return entries;
+}
+
+function buildServiceBody(category: CalendarCategory, range: CalendarRange): URLSearchParams {
+  const { from, to } = buildDateRange(range);
   const body = new URLSearchParams();
+  for (const countryId of COUNTRY_FILTERS) {
+    body.append("country[]", countryId);
+  }
+  body.set("dateFrom", from);
+  body.set("dateTo", to);
   body.set("timeZone", "55");
   body.set("timeFilter", "timeRemain");
-  body.set("currentTab", mapRangeToCurrentTab(range));
+  body.set("currentTab", "custom");
   body.set("limit_from", "0");
   body.set("submitFilters", "0");
+  if (category === "dividends") {
+    body.set("date", from);
+  }
   return body;
 }
 
-async function fetchCalendarRowsFromService(range: CalendarRange): Promise<CalendarEntry[]> {
-  const response = await fetch(INVESTING_CALENDAR_SERVICE_URL, {
+async function fetchCalendarRowsFromService(category: CalendarCategory, range: CalendarRange): Promise<CalendarEntry[]> {
+  const endpoint = ENDPOINTS[category];
+  const referer = REFERERS[category];
+
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       Accept: "application/json, text/javascript, */*; q=0.01",
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
       Origin: "https://tr.investing.com",
-      Referer: "https://tr.investing.com/economic-calendar/",
+      Referer: referer,
       "User-Agent": UA,
       "X-Requested-With": "XMLHttpRequest",
     },
-    body: buildServiceBody(range).toString(),
+    body: buildServiceBody(category, range).toString(),
     cache: "no-store",
   });
 
@@ -107,7 +224,10 @@ async function fetchCalendarRowsFromService(range: CalendarRange): Promise<Calen
   const payload = (await response.json()) as { data?: string };
   const rowsHtml = typeof payload.data === "string" ? payload.data : "";
   if (!rowsHtml) return [];
-  return parseRows(rowsHtml);
+  if (category === "economic") {
+    return parseRows(rowsHtml);
+  }
+  return parseGenericRows(rowsHtml, category);
 }
 
 async function fetchCalendarRowsFromPage(): Promise<CalendarEntry[]> {
@@ -127,11 +247,13 @@ async function fetchCalendarRowsFromPage(): Promise<CalendarEntry[]> {
 
 function filterByCategory(entries: CalendarEntry[], category: CalendarCategory): CalendarEntry[] {
   const normalized = (entry: CalendarEntry) => `${entry.event} ${entry.currency}`.toLowerCase();
-  if (category === "economic") return entries;
-  if (category === "holidays") return entries.filter((entry) => /(tatil|holiday|bayram)/i.test(normalized(entry)));
-  if (category === "dividends") return entries.filter((entry) => /(temett|dividend|kar payı)/i.test(normalized(entry)));
-  if (category === "splits") return entries.filter((entry) => /(split|bölünme|hisse bölün)/i.test(normalized(entry)));
-  return entries.filter((entry) => /(ipo|halka arz|arz)/i.test(normalized(entry)));
+  if (category === "economic") {
+    return entries.filter((entry) => !/(tatil|holiday|bayram|temett|dividend|split|bölünme|ipo|halka arz)/i.test(normalized(entry)));
+  }
+  if (category === "holidays") return entries;
+  if (category === "dividends") return entries;
+  if (category === "splits") return entries;
+  return entries;
 }
 
 export const dynamic = "force-dynamic";
@@ -150,7 +272,7 @@ export async function GET(request: Request) {
 
   let entries: CalendarEntry[] = [];
   try {
-    entries = await fetchCalendarRowsFromService(range);
+    entries = await fetchCalendarRowsFromService(category, range);
     if (entries.length === 0) {
       entries = await fetchCalendarRowsFromPage();
     }
@@ -170,4 +292,3 @@ export async function GET(request: Request) {
     { status: 200 }
   );
 }
-

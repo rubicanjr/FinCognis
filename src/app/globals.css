@@ -473,6 +473,13 @@ html.light .tools-shell .theme-toggle-btn {
   font-weight: 700;
 }
 
+html[data-theme="light"] .presence-badge,
+html.light .presence-badge {
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #065f46 !important;
+}
+
 html[data-theme="light"] .heat-tone-high,
 html.light .heat-tone-high {
   color: #0c4a6e;

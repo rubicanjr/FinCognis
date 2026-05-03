@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
+import OnlineUsersBadge from "@/components/landing/OnlineUsersBadge";
 
 const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean; finLab?: boolean }> = [
   { label: "Ana Sayfa", href: "/" },
@@ -42,6 +43,7 @@ export default function Navbar() {
               )}
             </Link>
           ))}
+          <OnlineUsersBadge />
         </div>
 
         <div className="flex items-center gap-3">

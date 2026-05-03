@@ -38,6 +38,7 @@ function formatDate(value?: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Istanbul",
   });
 }
 
@@ -75,11 +76,37 @@ async function fetchArticleParagraphs(url: string): Promise<string[]> {
       html.match(/<div[^>]*class="[^"]*(?:article|content|WYSIWYG)[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
     const area = articleMatch?.[1] ?? html;
     const paragraphs = area.match(/<p[^>]*>([\s\S]*?)<\/p>/gi) ?? [];
+    const jsonLdBlocks = Array.from(html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi));
 
-    return paragraphs
+    const textFromJsonLd: string[] = [];
+    for (const block of jsonLdBlocks) {
+      try {
+        const raw = block[1]?.trim();
+        if (!raw) continue;
+        const parsed = JSON.parse(raw) as unknown;
+        const queue = Array.isArray(parsed) ? parsed : [parsed];
+        for (const item of queue) {
+          if (!item || typeof item !== "object") continue;
+          const record = item as Record<string, unknown>;
+          const body = typeof record.articleBody === "string" ? stripHtml(record.articleBody) : "";
+          if (body.length > 80) {
+            const chunks = body.split(/(?<=[.!?])\s+(?=[A-ZÇĞİÖŞÜ])/).map((chunk) => chunk.trim()).filter((chunk) => chunk.length > 35);
+            textFromJsonLd.push(...chunks);
+          }
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    const cleanedParagraphs = paragraphs
       .map((paragraph) => stripHtml(paragraph))
       .filter((text) => text.length > 40)
-      .slice(0, 18);
+      .slice(0, 24);
+
+    if (cleanedParagraphs.length > 0) return cleanedParagraphs;
+    if (textFromJsonLd.length > 0) return textFromJsonLd.slice(0, 24);
+    return [];
   } catch {
     return [];
   }
@@ -114,9 +141,7 @@ export default async function NewsDetailPage({ searchParams }: NewsDetailPagePro
                   </p>
                 ))
               ) : (
-                <p className="text-slate-300">
-                  Haber metni şu anda tam olarak işlenemedi. İçerik kısa süre içinde yeniden senkronize edilecektir.
-                </p>
+                <p className="text-slate-300">Haber içeriği hazırlanıyor. Lütfen kısa süre sonra tekrar kontrol edin.</p>
               )}
             </section>
           </article>
@@ -126,4 +151,3 @@ export default async function NewsDetailPage({ searchParams }: NewsDetailPagePro
     </div>
   );
 }
-
