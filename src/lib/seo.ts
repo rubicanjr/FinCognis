@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const DEFAULT_SITE_URL = "https://fincognis.onrender.com";
+const DEFAULT_SITE_URL = "https://fincognis.com";
 
 function normalizeSiteUrl(url?: string | null): string {
   if (!url) {
@@ -18,7 +18,7 @@ function normalizeSiteUrl(url?: string | null): string {
   }
 }
 
-export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
+export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL) || DEFAULT_SITE_URL;
 export const SITE_NAME = "FinCognis";
 export const OG_IMAGE_PATH = "/social-preview.png";
 

@@ -44,6 +44,27 @@ const METRIC_CARDS: MetricCard[] = [
   { icon: ArrowLeftRight, label: "Portföy Dengeleme Gücü", value: "6.3 / 10", change: "Dengeli", up: true },
 ];
 
+const SPONSORS = [
+  {
+    name: "Spindor AI",
+    href: "https://www.spindorai.com/",
+    logo: "https://www.google.com/s2/favicons?sz=128&domain=spindorai.com",
+    className: "h-14 w-14 rounded-2xl",
+  },
+  {
+    name: "Masqot",
+    href: "https://www.masqot.co/",
+    logo: "/partners/masqot.png",
+    className: "h-10 w-auto",
+  },
+  {
+    name: "Natuvisio",
+    href: "https://natuvisio.com/tr",
+    logo: "https://www.google.com/s2/favicons?sz=128&domain=natuvisio.com",
+    className: "h-14 w-14 rounded-full",
+  },
+];
+
 export default function HeroSection() {
   return (
     <header id="karsilastir" className="landing-section relative flex min-h-[730px] flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-28 sm:px-6">
@@ -68,7 +89,7 @@ export default function HeroSection() {
           Yatırım kararlarını <span className="landing-accent-text">sistemle al</span>
         </h1>
 
-        <p className="animate-fade-in-up-delay-2 mx-auto mb-9 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl">
+        <p className="animate-fade-in-up-delay-2 mx-auto mb-9 text-base leading-relaxed text-slate-300 sm:text-lg md:max-w-none md:whitespace-nowrap md:text-xl">
           FinCognis ile karar vermeden önce riski görün, yatırım gücünüzü artırın.
         </p>
 
@@ -251,46 +272,26 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <a
-            href="https://www.spindorai.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-slate-950/65 p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
-          >
-            <img
-              src="https://www.google.com/s2/favicons?sz=128&domain=spindorai.com"
-              alt="Spindor AI"
-              className="h-20 w-20 rounded-2xl object-contain"
-              loading="lazy"
-            />
-          </a>
-          <a
-            href="https://www.masqot.co/"
-            target="_blank"
-            rel="noreferrer"
-            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-white p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
-          >
-            <img
-              src="/partners/masqot.png"
-              alt="Masqot"
-              className="h-20 w-auto object-contain"
-              loading="lazy"
-            />
-          </a>
-          <a
-            href="https://natuvisio.com/tr"
-            target="_blank"
-            rel="noreferrer"
-            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-slate-950/65 p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
-          >
-            <img
-              src="https://www.google.com/s2/favicons?sz=128&domain=natuvisio.com"
-              alt="Natuvisio"
-              className="h-20 w-20 rounded-full object-contain"
-              loading="lazy"
-            />
-          </a>
+        <div className="landing-card mt-6 overflow-hidden rounded-2xl border border-white/12 bg-slate-950/50 py-3 backdrop-blur-xl">
+          <div className="landing-sponsor-marquee">
+            {[...SPONSORS, ...SPONSORS, ...SPONSORS].map((sponsor, index) => (
+              <a
+                key={`${sponsor.name}-${index}`}
+                href={sponsor.href}
+                target="_blank"
+                rel="noreferrer"
+                className="landing-sponsor-item group"
+                aria-label={sponsor.name}
+              >
+                <img
+                  src={sponsor.logo}
+                  alt={sponsor.name}
+                  className={`landing-sponsor-logo object-contain ${sponsor.className}`}
+                  loading="lazy"
+                />
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </header>

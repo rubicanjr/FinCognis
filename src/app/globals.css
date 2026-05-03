@@ -473,6 +473,70 @@ html.light .tools-shell .theme-toggle-btn {
   font-weight: 700;
 }
 
+@keyframes sponsor-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+.landing-sponsor-marquee {
+  display: flex;
+  width: max-content;
+  gap: 1rem;
+  animation: sponsor-marquee-scroll 42s linear infinite;
+  will-change: transform;
+}
+
+.landing-sponsor-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 210px;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.28);
+  padding: 0.8rem 1.3rem;
+  transition: border-color 220ms ease, background-color 220ms ease;
+}
+
+.landing-sponsor-logo {
+  filter: grayscale(1) brightness(1.15);
+  opacity: 0.38;
+  transition: filter 260ms ease, opacity 260ms ease, transform 260ms ease;
+}
+
+.landing-sponsor-item:hover {
+  border-color: rgba(125, 211, 252, 0.5);
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.landing-sponsor-item:hover .landing-sponsor-logo {
+  filter: grayscale(0) brightness(1);
+  opacity: 1;
+  transform: scale(1.03);
+}
+
+html[data-theme="light"] .landing-sponsor-item,
+html.light .landing-sponsor-item {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+html[data-theme="light"] .landing-sponsor-logo,
+html.light .landing-sponsor-logo {
+  filter: grayscale(1) brightness(0.9);
+  opacity: 0.34;
+}
+
+html[data-theme="light"] .landing-sponsor-item:hover,
+html.light .landing-sponsor-item:hover {
+  border-color: rgba(2, 132, 199, 0.5);
+  background: rgba(255, 255, 255, 0.96);
+}
+
 html[data-theme="light"] .presence-badge,
 html.light .presence-badge {
   border-color: rgba(16, 185, 129, 0.55) !important;

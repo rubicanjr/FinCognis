@@ -49,14 +49,14 @@ export default function BoardSection() {
       <div className="mb-12 text-center">
         <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Yönetim Kurulu</p>
         <h2 className="font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
-          Stratejik Yönetişim Ekibi
+          Stratejik Yönetim Ekibi
         </h2>
         <p className="mx-auto mt-4 max-w-3xl text-slate-300">
           Büyüme, SEO, yapay zekâ, altyapı mimarisi, topluluk yönetimi ve hukuk odağında FinCognis stratejisini yöneten kurul.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {BOARD_MEMBERS.map((member) => (
           <article
             key={member.name}
@@ -86,4 +86,3 @@ export default function BoardSection() {
     </section>
   );
 }
-

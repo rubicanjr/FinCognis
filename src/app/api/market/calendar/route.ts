@@ -18,7 +18,8 @@ const INVESTING_CALENDAR_URL = "https://tr.investing.com/economic-calendar";
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-const ENDPOINTS: Record<CalendarCategory, string> = {
+const PRIMARY_ENDPOINT = "https://tr.investing.com/economic-calendar/Service/getCalendarFilteredData";
+const FALLBACK_ENDPOINTS: Record<CalendarCategory, string> = {
   economic: "https://tr.investing.com/economic-calendar/Service/getCalendarFilteredData",
   holidays: "https://tr.investing.com/holiday-calendar/Service/getCalendarFilteredData",
   dividends: "https://tr.investing.com/dividends-calendar/Service/getCalendarFilteredData",
@@ -34,7 +35,13 @@ const REFERERS: Record<CalendarCategory, string> = {
   ipo: "https://tr.investing.com/ipo-calendar/",
 };
 
-const COUNTRY_FILTERS = ["25", "32", "6", "37", "72", "22", "17", "39", "14", "10", "35", "43", "56", "36", "110", "11", "26", "12", "4", "5"];
+const TAB_ALIASES: Record<CalendarCategory, string[]> = {
+  economic: ["today", "custom"],
+  holidays: ["holidays", "holiday", "hol"],
+  dividends: ["dividends", "dividend"],
+  splits: ["splits", "split"],
+  ipo: ["ipo"],
+};
 
 function stripTags(value: string): string {
   return value
@@ -183,51 +190,61 @@ function parseGenericRows(html: string, category: CalendarCategory): CalendarEnt
   return entries;
 }
 
-function buildServiceBody(category: CalendarCategory, range: CalendarRange): URLSearchParams {
+function buildServiceBody(category: CalendarCategory, range: CalendarRange, tabAlias?: string): URLSearchParams {
   const { from, to } = buildDateRange(range);
   const body = new URLSearchParams();
-  for (const countryId of COUNTRY_FILTERS) {
-    body.append("country[]", countryId);
-  }
   body.set("dateFrom", from);
   body.set("dateTo", to);
   body.set("timeZone", "55");
-  body.set("timeFilter", "timeRemain");
-  body.set("currentTab", "custom");
+  body.set("timeFilter", "timeOnly");
+  body.set("currentTab", tabAlias ?? (category === "economic" ? "custom" : category));
   body.set("limit_from", "0");
-  body.set("submitFilters", "0");
-  if (category === "dividends") {
-    body.set("date", from);
-  }
+  body.set("submitFilters", "1");
+  body.set("country[]", "");
+  body.set("importance[]", "-1");
+  body.set("importance[]", "0");
+  body.set("importance[]", "1");
+  body.set("importance[]", "2");
+  body.set("importance[]", "3");
+  body.set("category[]", "");
+  body.set("date", from);
   return body;
 }
 
 async function fetchCalendarRowsFromService(category: CalendarCategory, range: CalendarRange): Promise<CalendarEntry[]> {
-  const endpoint = ENDPOINTS[category];
   const referer = REFERERS[category];
+  const attempts: Array<{ endpoint: string; alias: string }> = [];
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      Origin: "https://tr.investing.com",
-      Referer: referer,
-      "User-Agent": UA,
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: buildServiceBody(category, range).toString(),
-    cache: "no-store",
-  });
-
-  if (!response.ok) return [];
-  const payload = (await response.json()) as { data?: string };
-  const rowsHtml = typeof payload.data === "string" ? payload.data : "";
-  if (!rowsHtml) return [];
-  if (category === "economic") {
-    return parseRows(rowsHtml);
+  for (const alias of TAB_ALIASES[category]) {
+    attempts.push({ endpoint: PRIMARY_ENDPOINT, alias });
   }
-  return parseGenericRows(rowsHtml, category);
+  attempts.push({ endpoint: FALLBACK_ENDPOINTS[category], alias: category });
+
+  for (const attempt of attempts) {
+    const response = await fetch(attempt.endpoint, {
+      method: "POST",
+      headers: {
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        Origin: "https://tr.investing.com",
+        Referer: referer,
+        "User-Agent": UA,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: buildServiceBody(category, range, attempt.alias).toString(),
+      cache: "no-store",
+    });
+
+    if (!response.ok) continue;
+    const payload = (await response.json()) as { data?: string };
+    const rowsHtml = typeof payload.data === "string" ? payload.data : "";
+    if (!rowsHtml) continue;
+
+    const parsed = category === "economic" ? parseRows(rowsHtml) : parseGenericRows(rowsHtml, category);
+    if (parsed.length > 0) return parsed;
+  }
+
+  return [];
 }
 
 async function fetchCalendarRowsFromPage(): Promise<CalendarEntry[]> {
@@ -273,7 +290,7 @@ export async function GET(request: Request) {
   let entries: CalendarEntry[] = [];
   try {
     entries = await fetchCalendarRowsFromService(category, range);
-    if (entries.length === 0) {
+    if (entries.length === 0 && category === "economic") {
       entries = await fetchCalendarRowsFromPage();
     }
   } catch {
