@@ -574,3 +574,136 @@ html[data-theme="light"] .landing-finlab-tag,
 html.light .landing-finlab-tag {
   color: #0f766e;
 }
+
+/* High-contrast light mode baseline: white surfaces + black text */
+html[data-theme="light"],
+html.light {
+  color-scheme: light;
+}
+
+html[data-theme="light"] body,
+html.light body {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+html[data-theme="light"] .landing-shell,
+html.light .landing-shell,
+html[data-theme="light"] .tools-shell,
+html.light .tools-shell {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+html[data-theme="light"] .landing-shell__aurora,
+html.light .landing-shell__aurora,
+html[data-theme="light"] .tools-panel-shell__aurora,
+html.light .tools-panel-shell__aurora {
+  background: none !important;
+}
+
+html[data-theme="light"] .landing-shell__grid,
+html.light .landing-shell__grid,
+html[data-theme="light"] .tools-panel-shell__grid,
+html.light .tools-panel-shell__grid {
+  opacity: 1 !important;
+  background-image:
+    linear-gradient(to right, rgba(17, 17, 17, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 17, 0.06) 1px, transparent 1px) !important;
+}
+
+html[data-theme="light"] .landing-nav,
+html.light .landing-nav,
+html[data-theme="light"] .landing-footer,
+html.light .landing-footer {
+  background: #ffffff !important;
+  border-color: #d4d4d8 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] .landing-shell .landing-card,
+html.light .landing-shell .landing-card,
+html[data-theme="light"] .tools-shell .tools-card,
+html.light .tools-shell .tools-card,
+html[data-theme="light"] .tools-shell .tools-panel-shell,
+html.light .tools-shell .tools-panel-shell {
+  background: #ffffff !important;
+  border-color: #d4d4d8 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06) !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="bg-slate-950"],
+html[data-theme="light"] .landing-shell [class*="bg-slate-900"],
+html[data-theme="light"] .landing-shell [class*="bg-slate-800"],
+html[data-theme="light"] .tools-shell [class*="bg-slate-950"],
+html[data-theme="light"] .tools-shell [class*="bg-slate-900"],
+html[data-theme="light"] .tools-shell [class*="bg-slate-800"],
+html.light .landing-shell [class*="bg-slate-950"],
+html.light .landing-shell [class*="bg-slate-900"],
+html.light .landing-shell [class*="bg-slate-800"],
+html.light .tools-shell [class*="bg-slate-950"],
+html.light .tools-shell [class*="bg-slate-900"],
+html.light .tools-shell [class*="bg-slate-800"] {
+  background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="text-slate-50"],
+html[data-theme="light"] .landing-shell [class*="text-slate-100"],
+html[data-theme="light"] .landing-shell [class*="text-slate-200"],
+html[data-theme="light"] .landing-shell [class*="text-slate-300"],
+html[data-theme="light"] .landing-shell [class*="text-slate-400"],
+html[data-theme="light"] .tools-shell [class*="text-slate-50"],
+html[data-theme="light"] .tools-shell [class*="text-slate-100"],
+html[data-theme="light"] .tools-shell [class*="text-slate-200"],
+html[data-theme="light"] .tools-shell [class*="text-slate-300"],
+html[data-theme="light"] .tools-shell [class*="text-slate-400"],
+html.light .landing-shell [class*="text-slate-50"],
+html.light .landing-shell [class*="text-slate-100"],
+html.light .landing-shell [class*="text-slate-200"],
+html.light .landing-shell [class*="text-slate-300"],
+html.light .landing-shell [class*="text-slate-400"],
+html.light .tools-shell [class*="text-slate-50"],
+html.light .tools-shell [class*="text-slate-100"],
+html.light .tools-shell [class*="text-slate-200"],
+html.light .tools-shell [class*="text-slate-300"],
+html.light .tools-shell [class*="text-slate-400"] {
+  color: #111111 !important;
+}
+
+html[data-theme="light"] .landing-nav-link,
+html.light .landing-nav-link {
+  color: #111111 !important;
+}
+
+html[data-theme="light"] .landing-nav-link:hover,
+html.light .landing-nav-link:hover {
+  color: #000000 !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="border-white/"],
+html[data-theme="light"] .tools-shell [class*="border-white/"],
+html.light .landing-shell [class*="border-white/"],
+html.light .tools-shell [class*="border-white/"] {
+  border-color: #d4d4d8 !important;
+}
+
+html[data-theme="light"] .landing-primary-btn,
+html.light .landing-primary-btn {
+  background: #111111 !important;
+  border-color: #111111 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="light"] .landing-secondary-btn,
+html.light .landing-secondary-btn,
+html[data-theme="light"] .theme-toggle-btn,
+html.light .theme-toggle-btn {
+  background: #ffffff !important;
+  border-color: #a1a1aa !important;
+  color: #111111 !important;
+}
+
+html[data-theme="light"] .landing-accent-text,
+html.light .landing-accent-text {
+  color: #111111 !important;
+}
