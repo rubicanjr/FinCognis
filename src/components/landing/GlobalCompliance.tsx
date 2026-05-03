@@ -24,9 +24,12 @@ const STATS: ComplianceStat[] = [
 
 export default function GlobalCompliance() {
   return (
-    <section id="uyum-bildirimi" className="landing-section mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <section id="risk" className="landing-section mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <span id="uyum-bildirimi" className="sr-only">
+        Uyum Bildirimi
+      </span>
       <div className="mb-16 text-center">
-        <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Uyum ve Bilgilendirme</p>
+        <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Risk ve Bilgilendirme</p>
         <h2 className="mb-6 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
           FinCognis, karar öncesi araştırma aracıdır.
         </h2>

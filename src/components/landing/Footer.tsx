@@ -14,16 +14,19 @@ export default function Footer() {
 
         <div className="flex flex-wrap justify-center gap-8">
           <Link href="/#karsilastir" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Karşılaştırma Modu
+            Karşılaştır
           </Link>
           <Link href="/#profil-kesif" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Profil Keşif Modu
+            Profil Keşfet
           </Link>
           <Link href="/#metrik-rehberi" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Metrik Rehberi
+            Metrikler
           </Link>
-          <Link href="/#uyum-bildirimi" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Uyum Bildirimi
+          <Link href="/#risk" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Risk
+          </Link>
+          <Link href="/#ekip" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Ekip
           </Link>
           <Link href="/tools" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Araçlar (/tools)

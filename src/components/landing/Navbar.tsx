@@ -6,10 +6,11 @@ import { Menu, ShieldCheck, X } from "lucide-react";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 
 const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean }> = [
-  { label: "Karşılaştırma Modu", href: "/#karsilastir", highlighted: true },
-  { label: "Profil Keşif Modu", href: "/#profil-kesif" },
-  { label: "Metrik Rehberi", href: "/#metrik-rehberi" },
-  { label: "Uyum Bildirimi", href: "/#uyum-bildirimi" },
+  { label: "Karşılaştır", href: "/#karsilastir", highlighted: true },
+  { label: "Profil Keşfet", href: "/#profil-kesif" },
+  { label: "Metrikler", href: "/#metrik-rehberi" },
+  { label: "Risk", href: "/#risk" },
+  { label: "Ekip", href: "/#ekip" },
 ];
 
 export default function Navbar() {
