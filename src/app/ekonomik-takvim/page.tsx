@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import EconomicCalendarPanel from "@/components/landing/EconomicCalendarPanel";
@@ -35,4 +35,3 @@ export default function EconomicCalendarPage() {
     </div>
   );
 }
-

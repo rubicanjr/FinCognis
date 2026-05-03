@@ -291,31 +291,36 @@ export default function AssetSearchInput({
       ) : null}
 
       <div className="relative">
-        <div className="flex items-center gap-3 rounded-xl border border-white/12 bg-slate-950/65 px-3 py-3 backdrop-blur-xl transition-all duration-300 focus-within:border-[#22b7ff]/60 focus-within:shadow-[0_0_0_1px_rgba(34,183,255,0.38),0_0_28px_rgba(34,183,255,0.22)]">
-          <Search className="h-5 w-5 text-slate-300" />
-          <input
-            id="asset-query"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setMessage(null);
-              if (!isOpen) setIsOpen(true);
-            }}
-            onFocus={() => setIsOpen(true)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-400"
-            placeholder={placeholder}
-            autoComplete="off"
-            spellCheck={false}
-            role="combobox"
-            aria-expanded={shouldShowDropdown}
-            aria-controls={listboxId}
-            aria-autocomplete="list"
-            aria-label="Karşılaştırma varlık girişi"
-            disabled={disabled}
-          />
-          {isLoading || verifying ? <LoaderCircle className="h-4 w-4 animate-spin text-[#8ddfff]" /> : null}
+        <div className="asset-search-neon-shell rounded-xl p-[1px]">
+          <div className="flex items-center gap-3 rounded-[calc(0.75rem-1px)] bg-slate-950/90 px-3 py-3 backdrop-blur-xl">
+            <span className="relative inline-flex h-6 w-6 items-center justify-center">
+              <span className="asset-search-icon-ring pointer-events-none absolute inset-0 rounded-full" />
+              <Search className="relative z-[1] h-4 w-4 text-slate-200" />
+            </span>
+            <input
+              id="asset-query"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setMessage(null);
+                if (!isOpen) setIsOpen(true);
+              }}
+              onFocus={() => setIsOpen(true)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-400"
+              placeholder={placeholder}
+              autoComplete="off"
+              spellCheck={false}
+              role="combobox"
+              aria-expanded={shouldShowDropdown}
+              aria-controls={listboxId}
+              aria-autocomplete="list"
+              aria-label="Karşılaştırma varlık girişi"
+              disabled={disabled}
+            />
+            {isLoading || verifying ? <LoaderCircle className="h-4 w-4 animate-spin text-[#8ddfff]" /> : null}
+          </div>
         </div>
 
         {shouldShowDropdown ? (

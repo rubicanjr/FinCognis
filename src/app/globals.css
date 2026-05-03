@@ -712,3 +712,55 @@ html[data-theme="light"] .landing-accent-text,
 html.light .landing-accent-text {
   color: #111111 !important;
 }
+
+@keyframes asset-neon-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes asset-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.asset-search-neon-shell {
+  background-image: linear-gradient(110deg, #22d3ee, #3b82f6, #a855f7, #f97316, #22d3ee);
+  background-size: 280% 280%;
+  animation: asset-neon-flow 4.5s linear infinite;
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.22),
+    0 0 26px rgba(56, 189, 248, 0.24);
+}
+
+.asset-search-icon-ring {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(rgba(2, 6, 23, 0.82), rgba(2, 6, 23, 0.82)) padding-box,
+    conic-gradient(from 0deg, #22d3ee, #3b82f6, #a855f7, #f97316, #22d3ee) border-box;
+  animation: asset-ring-spin 3s linear infinite;
+}
+
+html[data-theme="light"] .asset-search-neon-shell,
+html.light .asset-search-neon-shell {
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.28),
+    0 0 20px rgba(14, 165, 233, 0.2);
+}
+
+html[data-theme="light"] .asset-search-icon-ring,
+html.light .asset-search-icon-ring {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    conic-gradient(from 0deg, #22d3ee, #3b82f6, #a855f7, #f97316, #22d3ee) border-box;
+}
