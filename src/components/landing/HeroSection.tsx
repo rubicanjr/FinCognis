@@ -269,7 +269,7 @@ export default function HeroSection() {
             href="https://www.masqot.co/"
             target="_blank"
             rel="noreferrer"
-            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-slate-950/65 p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
+            className="landing-card flex items-center justify-center rounded-2xl border border-white/12 bg-white p-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
           >
             <img
               src="/partners/masqot.png"

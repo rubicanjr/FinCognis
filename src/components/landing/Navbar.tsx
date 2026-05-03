@@ -6,12 +6,14 @@ import { Menu, X } from "lucide-react";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 
 const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean }> = [
+  { label: "Ana Sayfa", href: "/" },
+  { label: "Haberler", href: "/haberler" },
+  { label: "Ekonomik Takvim", href: "/ekonomik-takvim" },
   { label: "Metrikler", href: "/#metrik-rehberi" },
   { label: "Risk", href: "/#risk" },
   { label: "Ekip", href: "/ekip" },
-  { label: "Haberler", href: "/#haberler" },
-  { label: "Ekonomik Takvim", href: "/#ekonomik-takvim" },
-  { label: "İletişim", href: "/#iletisim", highlighted: true },
+  { label: "Yönetim Kurulu", href: "/yonetim-kurulu" },
+  { label: "İletişim", href: "/iletisim", highlighted: true },
 ];
 
 export default function Navbar() {
@@ -20,8 +22,6 @@ export default function Navbar() {
   return (
     <nav className="landing-nav fixed top-0 z-50 w-full border-b border-[#22b7ff]/20 bg-[#030915]/75 shadow-[0_14px_35px_rgba(2,8,23,0.65)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between px-6 py-4">
-        <div className="hidden h-10 w-8 md:block" aria-hidden="true" />
-
         <div className="hidden items-center gap-6 md:flex">
           {NAV_ITEMS.map((item) => (
             <Link

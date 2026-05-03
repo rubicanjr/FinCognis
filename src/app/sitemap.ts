@@ -12,6 +12,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${SITE_URL}/haberler`,
+      lastModified,
+      changeFrequency: "hourly",
+      priority: 0.9,
+    },
+    {
+      url: `${SITE_URL}/ekonomik-takvim`,
+      lastModified,
+      changeFrequency: "hourly",
+      priority: 0.9,
+    },
+    {
+      url: `${SITE_URL}/ekip`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/yonetim-kurulu`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/iletisim`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: `${SITE_URL}/tools`,
       lastModified,
       changeFrequency: "weekly",

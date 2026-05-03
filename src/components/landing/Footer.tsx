@@ -13,6 +13,15 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-8">
+          <Link href="/" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Ana Sayfa
+          </Link>
+          <Link href="/haberler" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Haberler
+          </Link>
+          <Link href="/ekonomik-takvim" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Ekonomik Takvim
+          </Link>
           <Link href="/#metrik-rehberi" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Metrikler
           </Link>
@@ -22,13 +31,10 @@ export default function Footer() {
           <Link href="/ekip" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Ekip
           </Link>
-          <Link href="/#haberler" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Haberler
+          <Link href="/yonetim-kurulu" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            Yönetim Kurulu
           </Link>
-          <Link href="/#ekonomik-takvim" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Ekonomik Takvim
-          </Link>
-          <Link href="/#iletisim" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+          <Link href="/iletisim" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             İletişim
           </Link>
           <Link href="/tools" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
