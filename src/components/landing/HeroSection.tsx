@@ -55,7 +55,7 @@ const SPONSORS = [
     name: "Masqot",
     href: "https://www.masqot.co/",
     logo: "/partners/masqot.png",
-    className: "h-10 w-auto",
+    className: "h-10 w-auto landing-sponsor-logo--masqot",
   },
   {
     name: "Natuvisio",
