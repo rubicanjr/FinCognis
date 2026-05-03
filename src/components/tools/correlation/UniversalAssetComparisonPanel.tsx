@@ -720,7 +720,7 @@ export default function UniversalAssetComparisonPanel() {
   }
 
   return (
-    <section className="tools-panel-shell relative overflow-hidden rounded-[34px] border border-[#22b7ff]/20 bg-[#030915]/90 p-4 shadow-[0_40px_120px_rgba(2,8,23,0.72)] sm:p-6">
+    <section className="tools-panel-shell relative overflow-visible rounded-[34px] border border-[#22b7ff]/20 bg-[#030915]/90 p-4 shadow-[0_40px_120px_rgba(2,8,23,0.72)] sm:p-6">
       <div
         className="tools-panel-shell__aurora pointer-events-none absolute inset-0"
         style={{
@@ -784,13 +784,13 @@ export default function UniversalAssetComparisonPanel() {
           </div>
 
           {mode === "compare" ? (
-            <div>
+            <div className="relative z-[90]">
               <AssetSearchInput
                 selectedAssets={selectedCompareAssets}
                 onSelectionChange={setSelectedCompareAssets}
                 maxSelection={5}
               />
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="relative z-10 mt-3 flex flex-wrap gap-2">
                 {QUICK_PICK_ASSETS.map((asset) => (
                   <button
                     key={`quick-pick:${asset.ticker}`}

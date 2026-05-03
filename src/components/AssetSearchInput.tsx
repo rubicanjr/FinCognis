@@ -264,7 +264,10 @@ export default function AssetSearchInput({
     isOpen && query.trim().length >= 2 && (results.length > 0 || isLoading || verifying);
 
   return (
-    <div ref={containerRef} className="rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-2 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]">
+    <div
+      ref={containerRef}
+      className="relative z-[120] isolate overflow-visible rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-2 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]"
+    >
       <label htmlFor="asset-query" className="mb-2 block px-2 font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300">
         {label}
       </label>
@@ -319,7 +322,7 @@ export default function AssetSearchInput({
           <div
             id={listboxId}
             role="listbox"
-            className="absolute z-40 mt-2 max-h-80 w-full overflow-y-auto rounded-xl border border-white/12 bg-slate-950/95 p-1 shadow-[0_20px_40px_rgba(2,6,23,0.65)] backdrop-blur-xl"
+            className="absolute z-[140] mt-2 max-h-80 w-full overflow-y-auto rounded-xl border border-white/12 bg-slate-950/95 p-1 shadow-[0_20px_40px_rgba(2,6,23,0.65)] backdrop-blur-xl"
           >
             {results.map((result, index) => {
               const isActive = index === highlightedIndex;
