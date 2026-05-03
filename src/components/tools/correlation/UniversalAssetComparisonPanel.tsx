@@ -962,9 +962,9 @@ export default function UniversalAssetComparisonPanel() {
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Karşılaştırılan Varlık Kartları</p>
                 <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                   {compareCards.map((card, index) => (
-                    <article key={`compare-card:${card.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
+                    <article key={`compare-card:${card.symbol}`} className={`${GLASS_CHIP} tools-premium-copy animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
                       <div className="flex items-center justify-between">
-                        <h4 className="font-display text-lg font-semibold text-slate-100">{card.symbol}</h4>
+                        <h4 className="tools-card-asset-symbol">{card.symbol}</h4>
                         {card.isFallback ? (
                           <span
                             className="rounded-full border border-white/20 bg-slate-900/70 px-2 py-0.5 text-xs text-slate-200"
@@ -982,55 +982,55 @@ export default function UniversalAssetComparisonPanel() {
                       </div>
                       <div className="mt-3 space-y-2 text-sm">
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>En Kötü Düşüş</span>
+                          <span className="tools-card-metric-label">En Kötü Düşüş</span>
                           {card.riskUnavailable ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("En Kötü Düşüş", card.risk)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("En Kötü Düşüş", card.risk)}`}>
                               {card.risk.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Riske Göre Kazanç</span>
+                          <span className="tools-card-metric-label">Riske Göre Kazanç</span>
                           {card.returnUnavailable ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Riske Göre Kazanç", card.return)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Riske Göre Kazanç", card.return)}`}>
                               {card.return.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Enflasyon Sonrası Gerçek Kazanç</span>
+                          <span className="tools-card-metric-label">Enflasyon Sonrası Gerçek Kazanç</span>
                           {card.liquidityUnavailable || card.liquidity === null ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Enflasyon Sonrası Gerçek Kazanç", card.liquidity)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Enflasyon Sonrası Gerçek Kazanç", card.liquidity)}`}>
                               {card.liquidity.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Piyasayı Geçme Gücü</span>
-                          <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Piyasayı Geçme Gücü", card.diversification)}`}>
+                          <span className="tools-card-metric-label">Piyasayı Geçme Gücü</span>
+                          <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Piyasayı Geçme Gücü", card.diversification)}`}>
                             {card.diversification.toFixed(1)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
-                          <span>Piyasa Sakinlik Durumu</span>
+                          <span className="tools-card-metric-label">Piyasa Sakinlik Durumu</span>
                           {card.calmnessUnavailable || card.calmness === null ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 font-data text-slate-300">Veri yok</span>
+                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`rounded-md border px-2 py-0.5 font-data ${heatCellTone("Piyasa Sakinlik Durumu", card.calmness)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Piyasa Sakinlik Durumu", card.calmness)}`}>
                               {card.calmness.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="mt-3 border-t border-white/10 pt-2">
                           <div className="flex items-center justify-between text-slate-100">
-                            <span className="font-display text-xs">Skor</span>
-                            <span className="font-data text-base font-semibold">
+                            <span className="tools-card-score-label">Skor</span>
+                            <span className="tools-card-score-value">
                               {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
                             </span>
                           </div>

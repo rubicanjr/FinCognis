@@ -235,6 +235,77 @@ svg.lucide {
   background-size: 28px 28px;
 }
 
+.tools-shell__base {
+  background: #030915;
+}
+
+.tools-shell__aurora {
+  background:
+    radial-gradient(circle at 14% -10%, rgba(34, 183, 255, 0.3), transparent 46%),
+    radial-gradient(circle at 86% 2%, rgba(168, 85, 247, 0.18), transparent 42%);
+}
+
+.tools-shell__grid {
+  opacity: 1;
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.tools-premium-banner {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.9));
+}
+
+.tools-premium-copy {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.tools-card-asset-symbol {
+  font-family: var(--font-body), "Inter", sans-serif;
+  font-size: 1.66rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #f8fafc;
+}
+
+.tools-card-metric-label {
+  font-family: var(--font-body), "Inter", sans-serif;
+  font-size: 1.03rem;
+  font-weight: 520;
+  letter-spacing: 0.005em;
+  color: #e2e8f0;
+}
+
+.tools-card-metric-value {
+  font-family: var(--font-body), "Inter", sans-serif;
+  font-size: 1.04rem;
+  font-weight: 640;
+  letter-spacing: 0.014em;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+.tools-card-score-label {
+  font-family: var(--font-body), "Inter", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #cbd5e1;
+}
+
+.tools-card-score-value {
+  font-family: var(--font-body), "Inter", sans-serif;
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 750;
+  letter-spacing: 0.014em;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  color: #f8fafc;
+}
+
 html[data-theme="light"] .landing-shell,
 html.light .landing-shell {
   background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 45%, #eaf2fc 100%);
@@ -255,6 +326,50 @@ html.light .landing-shell__grid {
   background-image:
     linear-gradient(to right, rgba(100, 116, 139, 0.18) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(100, 116, 139, 0.18) 1px, transparent 1px);
+}
+
+html[data-theme="light"] .tools-shell__base,
+html.light .tools-shell__base {
+  background: #ffffff !important;
+}
+
+html[data-theme="light"] .tools-shell__aurora,
+html.light .tools-shell__aurora {
+  background: none !important;
+}
+
+html[data-theme="light"] .tools-shell__grid,
+html.light .tools-shell__grid {
+  background-image:
+    linear-gradient(to right, rgba(17, 17, 17, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 17, 0.06) 1px, transparent 1px) !important;
+}
+
+html[data-theme="light"] .tools-premium-banner,
+html.light .tools-premium-banner {
+  background: #ffffff !important;
+  border-color: #d4d4d8 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06) !important;
+}
+
+html[data-theme="light"] .tools-card-asset-symbol,
+html.light .tools-card-asset-symbol {
+  color: #111111;
+}
+
+html[data-theme="light"] .tools-card-metric-label,
+html.light .tools-card-metric-label {
+  color: #1f2937;
+}
+
+html[data-theme="light"] .tools-card-score-label,
+html.light .tools-card-score-label {
+  color: #374151;
+}
+
+html[data-theme="light"] .tools-card-score-value,
+html.light .tools-card-score-value {
+  color: #111111;
 }
 
 html[data-theme="light"] .landing-nav,

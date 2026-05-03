@@ -1,69 +1,89 @@
-﻿import { Fingerprint, ShieldCheck } from "lucide-react";
+﻿import { Activity, Gauge, MessageSquareText, Orbit, Workflow } from "lucide-react";
+
+interface AdvantageCard {
+  icon: typeof Activity;
+  title: string;
+  description: string;
+  size?: "wide";
+}
+
+const ADVANTAGES: AdvantageCard[] = [
+  {
+    icon: MessageSquareText,
+    title: "Personalized Support",
+    description: "Her yatırım profiline göre uyarlanmış karar desteği ve uzman geri bildirimi.",
+  },
+  {
+    icon: Workflow,
+    title: "With You Every Step",
+    description: "İlk analizden uygulama aksiyonlarına kadar şeffaf ve ölçülebilir süreç yönetimi.",
+  },
+  {
+    icon: Activity,
+    title: "Measurable Impact",
+    description: "Sinyal kalitesi, risk skoru ve karar doğruluğu metriklerini düzenli olarak izleyin.",
+  },
+  {
+    icon: Orbit,
+    title: "Future-Ready Solutions",
+    description: "Değişken piyasa koşullarına hızla adapte olan esnek karar altyapısı.",
+  },
+  {
+    icon: Gauge,
+    title: "Transparent Process",
+    description: "Karar adımlarının tamamını görünür hale getiren açık süreç ve zaman çizelgesi.",
+    size: "wide",
+  },
+];
+
+const METRICS = [
+  { value: "350+", label: "memnun kullanıcı" },
+  { value: "%90", label: "müşteri tutundurma" },
+  { value: "4.97", label: "ortalama puan" },
+];
 
 export default function SecureTransactions() {
   return (
-    <section id="metrik-rehberi" className="landing-section relative overflow-hidden py-20">
-      <div className="pointer-events-none absolute right-0 top-0 h-full w-1/3 bg-[#22b7ff]/20 blur-[120px]" />
+    <section id="metrik-rehberi" className="landing-section mx-auto max-w-6xl px-4 py-24 sm:px-6">
+      <div className="mb-14 text-center">
+        <span className="inline-flex rounded-full border border-white/12 bg-white/5 px-4 py-1 font-display text-xs font-semibold tracking-[0.1em] text-[#8ddfff]">
+          Perks
+        </span>
+        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Why Teams Choose FinCognis</h2>
+      </div>
 
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-4 sm:px-6 lg:grid-cols-2">
-        <div>
-          <p className="mb-4 font-display text-xs font-semibold tracking-[0.12em] text-[#8ddfff]">Metrik Rehberi</p>
-          <h2 className="mb-6 font-display text-4xl font-semibold leading-tight tracking-[0.01em] text-slate-50 md:text-5xl">
-            Kriterleri sade ve anlaşılır okuyun.
-          </h2>
-          <p className="mb-10 text-lg leading-relaxed text-slate-300">
-            Risk hassasiyeti, Geçmiş getiri gücü beklentisi, Nakde çevirme kolaylığı ihtiyacı ve Portföy dengeleme hedefi aynı çerçevede gösterilir.
-            Amaç karar öncesi araştırma alanını daraltmaktır.
-          </p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
+        {ADVANTAGES.map((card) => {
+          const Icon = card.icon;
+          const spanClass = card.size === "wide" ? "md:col-span-4" : "md:col-span-2";
+          return (
+            <article
+              key={card.title}
+              className={`landing-card rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(11,19,38,0.72),rgba(5,10,24,0.86))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55 ${spanClass}`}
+            >
+              <div className="mb-4 inline-flex rounded-lg border border-[#22b7ff]/30 bg-[#22b7ff]/12 p-2.5">
+                <Icon className="h-4 w-4 text-[#8ddfff]" />
+              </div>
+              <h3 className="font-display text-xl font-semibold text-slate-100">{card.title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-slate-300">{card.description}</p>
+            </article>
+          );
+        })}
+      </div>
 
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex-shrink-0 rounded-lg border border-[#22b7ff]/35 bg-[#22b7ff]/12 p-2">
-                <ShieldCheck className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Risk hassasiyeti</h4>
-                <p className="text-sm text-slate-300">
-                  Varlığın fiyat dalgalanmasının göreli yoğunluğunu gösterir.
-                </p>
-              </div>
+      <div className="relative mt-20 overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_50%_125%,rgba(34,211,238,0.35),rgba(3,10,24,0.92)_56%)] px-6 py-14 text-center sm:px-10">
+        <div className="pointer-events-none absolute -bottom-24 left-1/2 h-64 w-[130%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/25" />
+        <div className="pointer-events-none absolute -bottom-28 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/15" />
+
+        <h3 className="font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Don’t take our word for it.</h3>
+
+        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3">
+          {METRICS.map((metric) => (
+            <div key={metric.label}>
+              <p className="font-data text-4xl font-semibold text-slate-50">{metric.value}</p>
+              <p className="mt-2 font-display text-sm text-slate-300">{metric.label}</p>
             </div>
-
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex-shrink-0 rounded-lg border border-[#22b7ff]/35 bg-[#22b7ff]/12 p-2">
-                <Fingerprint className="h-5 w-5 text-[#8ddfff]" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h4 className="font-display text-lg font-semibold tracking-[0.01em] text-slate-100">Portföy dengeleme hedefi</h4>
-                <p className="text-sm text-slate-300">
-                  Varlığın diğer varlıklarla ilişkisinden doğan dengeleme etkisi beklentisini özetler.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-[#22b7ff]/20 blur-3xl" />
-          <div className="landing-card relative rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl">
-            <div className="mb-8 flex items-center justify-between">
-              <div className="flex gap-2">
-                <div className="h-3 w-3 rounded-full bg-error" />
-                <div className="h-3 w-3 rounded-full bg-warning" />
-                <div className="h-3 w-3 rounded-full bg-success" />
-              </div>
-              <span className="font-data text-xs text-slate-400">KASA_AKTIF_S01</span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="h-12 animate-pulse rounded-xl border border-white/12 bg-slate-900/55" />
-              <div className="h-12 rounded-xl border border-white/12 bg-slate-900/55" />
-              <div className="flex h-32 items-center justify-center rounded-xl border border-white/12 bg-slate-900/55">
-                <Fingerprint className="h-10 w-10 text-[#8ddfff]" strokeWidth={1.5} />
-              </div>
-              <div className="h-12 rounded-xl border border-white/12 bg-slate-900/55" />
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
