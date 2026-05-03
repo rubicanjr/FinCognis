@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { fetchInvestingNews } from "@/lib/investing";
@@ -47,23 +48,25 @@ export default async function NewsPage() {
                 <p className="mt-2 text-sm text-slate-300">Bağlantı yeniden kurulduğunda içerik otomatik olarak yenilenecektir.</p>
               </article>
             ) : (
-              items.map((item) => (
+              items.map((item) => {
+                const articleId = Buffer.from(item.link).toString("base64url");
+                const detailHref = `/haberler/${articleId}?u=${encodeURIComponent(item.link)}&t=${encodeURIComponent(item.title)}&d=${encodeURIComponent(item.description)}&p=${encodeURIComponent(item.pubDate)}`;
+                return (
                 <article key={`${item.link}-${item.pubDate}`} className="landing-card rounded-2xl border border-white/12 bg-slate-950/60 p-6 backdrop-blur-xl">
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noreferrer"
+                  <Link
+                    href={detailHref}
                     className="font-display text-2xl font-semibold leading-tight text-slate-100 transition-colors hover:text-[#8ddfff]"
                   >
                     {item.title}
-                  </a>
+                  </Link>
                   <p className="mt-3 text-sm text-slate-300">{item.description}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                     <span className="rounded-full border border-white/12 bg-slate-900/65 px-3 py-1">Piyasa Akışı</span>
                     <span>{formatDate(item.pubDate)}</span>
                   </div>
                 </article>
-              ))
+                );
+              })
             )}
           </section>
         </main>

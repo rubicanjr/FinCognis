@@ -8,13 +8,20 @@ interface CalendarTab {
   label: string;
 }
 
+interface RangeTab {
+  key: "yesterday" | "today" | "tomorrow" | "week";
+  label: string;
+}
+
 interface CalendarEntry {
   id: string;
   timeLabel: string;
+  currency: string;
   event: string;
-  region: string;
   importance: "Yüksek" | "Orta" | "Düşük";
-  category: string;
+  actual: string;
+  forecast: string;
+  previous: string;
 }
 
 const CALENDAR_TABS: Array<CalendarTab & { apiKey: string }> = [
@@ -45,8 +52,16 @@ const CALENDAR_TABS: Array<CalendarTab & { apiKey: string }> = [
   },
 ];
 
+const RANGE_TABS: RangeTab[] = [
+  { key: "yesterday", label: "Dün" },
+  { key: "today", label: "Bugün" },
+  { key: "tomorrow", label: "Yarın" },
+  { key: "week", label: "Bu Hafta" },
+];
+
 export default function EconomicCalendarPanel() {
   const [activeTab, setActiveTab] = useState(CALENDAR_TABS[0]?.key ?? "economic");
+  const [activeRange, setActiveRange] = useState<RangeTab["key"]>("today");
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string>("");
@@ -63,7 +78,7 @@ export default function EconomicCalendarPanel() {
     async function loadEntries() {
       setLoading(true);
       try {
-        const response = await fetch(`/api/market/calendar?tab=${currentTab.apiKey}`, {
+        const response = await fetch(`/api/market/calendar?tab=${currentTab.apiKey}&range=${activeRange}`, {
           method: "GET",
           cache: "no-store",
           signal: controller.signal,
@@ -86,7 +101,7 @@ export default function EconomicCalendarPanel() {
       mounted = false;
       controller.abort();
     };
-  }, [currentTab.apiKey]);
+  }, [activeRange, currentTab.apiKey]);
 
   const updatedLabel = useMemo(() => {
     const date = new Date(updatedAt);
@@ -133,13 +148,35 @@ export default function EconomicCalendarPanel() {
         <span className="text-xs text-slate-400">{updatedLabel}</span>
       </div>
 
+      <div className="mb-4 flex flex-wrap gap-2">
+        {RANGE_TABS.map((rangeTab) => {
+          const active = rangeTab.key === activeRange;
+          return (
+            <button
+              key={rangeTab.key}
+              type="button"
+              onClick={() => setActiveRange(rangeTab.key)}
+              className={`rounded-full border px-3 py-1.5 font-display text-xs font-semibold transition-colors ${
+                active
+                  ? "border-[#22b7ff]/55 bg-[#22b7ff]/18 text-[#dff4ff]"
+                  : "border-white/12 bg-slate-900/55 text-slate-300 hover:border-[#22b7ff]/45 hover:text-[#8ddfff]"
+              }`}
+            >
+              {rangeTab.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="overflow-hidden rounded-xl border border-white/12 bg-slate-950/70">
         <div className="grid grid-cols-12 border-b border-white/10 bg-slate-900/65 px-4 py-3 font-display text-xs tracking-[0.08em] text-slate-300">
           <div className="col-span-3">Zaman</div>
-          <div className="col-span-2">Bölge</div>
+          <div className="col-span-1">Döviz</div>
           <div className="col-span-4">Olay</div>
           <div className="col-span-1 text-center">Önem</div>
-          <div className="col-span-2 text-right">Kategori</div>
+          <div className="col-span-1 text-right">Açıklanan</div>
+          <div className="col-span-1 text-right">Beklenti</div>
+          <div className="col-span-2 text-right">Önceki</div>
         </div>
 
         {loading ? (
@@ -157,8 +194,8 @@ export default function EconomicCalendarPanel() {
                 className="grid grid-cols-12 items-center gap-3 border-b border-white/8 px-4 py-3 transition-colors hover:bg-white/5"
               >
                 <div className="col-span-3 text-sm text-slate-300">{entry.timeLabel}</div>
-                <div className="col-span-2">
-                  <span className="rounded-md border border-white/15 bg-slate-900/55 px-2 py-1 text-xs font-semibold text-slate-200">{entry.region}</span>
+                <div className="col-span-1">
+                  <span className="rounded-md border border-white/15 bg-slate-900/55 px-2 py-1 text-xs font-semibold text-slate-200">{entry.currency || "-"}</span>
                 </div>
                 <div className="col-span-4 text-sm text-slate-100">{entry.event}</div>
                 <div className="col-span-1 text-center">
@@ -166,7 +203,9 @@ export default function EconomicCalendarPanel() {
                     {entry.importance}
                   </span>
                 </div>
-                <div className="col-span-2 text-right text-xs text-slate-400">{entry.category}</div>
+                <div className="col-span-1 text-right text-xs text-slate-300">{entry.actual}</div>
+                <div className="col-span-1 text-right text-xs text-slate-300">{entry.forecast}</div>
+                <div className="col-span-2 text-right text-xs text-slate-400">{entry.previous}</div>
               </article>
             ))}
           </div>
