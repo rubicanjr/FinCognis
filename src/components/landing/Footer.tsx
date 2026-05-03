@@ -28,6 +28,9 @@ export default function Footer() {
           <Link href="/#risk" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Risk
           </Link>
+          <Link href="/finlab" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
+            FinLab
+          </Link>
           <Link href="/ekip" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             Ekip
           </Link>

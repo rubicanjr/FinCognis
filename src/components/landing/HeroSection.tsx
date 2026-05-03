@@ -46,7 +46,7 @@ const METRIC_CARDS: MetricCard[] = [
 
 export default function HeroSection() {
   return (
-    <header id="karsilastir" className="landing-section relative flex min-h-[795px] flex-col items-center justify-center overflow-hidden px-4 pb-24 pt-32 sm:px-6">
+    <header id="karsilastir" className="landing-section relative flex min-h-[730px] flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-28 sm:px-6">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -64,11 +64,11 @@ export default function HeroSection() {
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-6 font-display text-5xl font-semibold leading-[1.05] tracking-[0.01em] text-slate-50 sm:text-6xl md:text-8xl">
-          Yatırım kararlarını <span className="text-[#8ddfff]">sistemle al</span>
+        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-4xl font-semibold leading-[1.08] tracking-[0.01em] text-slate-50 sm:text-5xl md:text-6xl lg:text-7xl">
+          Yatırım kararlarını <span className="landing-accent-text">sistemle al</span>
         </h1>
 
-        <p className="animate-fade-in-up-delay-2 mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl md:text-2xl">
+        <p className="animate-fade-in-up-delay-2 mx-auto mb-9 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl">
           FinCognis ile karar vermeden önce riski görün, yatırım gücünüzü artırın.
         </p>
 

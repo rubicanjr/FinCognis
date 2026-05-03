@@ -282,6 +282,7 @@ html.light .landing-nav-link:hover {
 html[data-theme="light"] .landing-nav-link.font-semibold,
 html.light .landing-nav-link.font-semibold {
   color: #0f172a !important;
+  font-weight: 700 !important;
 }
 
 html[data-theme="light"] .landing-footer,
@@ -331,7 +332,17 @@ html[data-theme="light"] .landing-shell [class*="text-slate-300"],
 html[data-theme="light"] .landing-shell [class*="text-slate-400"],
 html.light .landing-shell [class*="text-slate-300"],
 html.light .landing-shell [class*="text-slate-400"] {
-  color: #475569 !important;
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="text-\\[\\#8ddfff\\]"],
+html.light .landing-shell [class*="text-\\[\\#8ddfff\\]"] {
+  color: #0369a1 !important;
+}
+
+html[data-theme="light"] .landing-shell [class*="text-\\[\\#dff4ff\\]"],
+html.light .landing-shell [class*="text-\\[\\#dff4ff\\]"] {
+  color: #0f172a !important;
 }
 
 html[data-theme="light"] .landing-shell [class*="border-white/"],
@@ -419,7 +430,7 @@ html[data-theme="light"] .tools-shell [class*="text-slate-300"],
 html[data-theme="light"] .tools-shell [class*="text-slate-400"],
 html.light .tools-shell [class*="text-slate-300"],
 html.light .tools-shell [class*="text-slate-400"] {
-  color: #475569 !important;
+  color: #334155 !important;
 }
 
 html[data-theme="light"] .tools-shell [class*="border-white/"],
@@ -452,6 +463,16 @@ html.light .tools-shell .theme-toggle-btn {
   border-color: rgba(168, 162, 158, 0.45);
 }
 
+.landing-accent-text {
+  color: #8ddfff;
+}
+
+.landing-finlab-tag {
+  margin-left: 1px;
+  color: #5eead4;
+  font-weight: 700;
+}
+
 html[data-theme="light"] .heat-tone-high,
 html.light .heat-tone-high {
   color: #0c4a6e;
@@ -471,4 +492,14 @@ html.light .heat-tone-low {
   color: #334155;
   background-color: rgba(226, 232, 240, 0.75);
   border-color: rgba(148, 163, 184, 0.45);
+}
+
+html[data-theme="light"] .landing-accent-text,
+html.light .landing-accent-text {
+  color: #0e7490;
+}
+
+html[data-theme="light"] .landing-finlab-tag,
+html.light .landing-finlab-tag {
+  color: #0f766e;
 }

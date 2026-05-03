@@ -5,12 +5,13 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 
-const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean }> = [
+const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean; finLab?: boolean }> = [
   { label: "Ana Sayfa", href: "/" },
   { label: "Haberler", href: "/haberler" },
   { label: "Ekonomik Takvim", href: "/ekonomik-takvim" },
   { label: "Metrikler", href: "/#metrik-rehberi" },
   { label: "Risk", href: "/#risk" },
+  { label: "FinLab", href: "/finlab", finLab: true },
   { label: "Ekip", href: "/ekip" },
   { label: "Yönetim Kurulu", href: "/yonetim-kurulu" },
   { label: "İletişim", href: "/iletisim", highlighted: true },
@@ -31,7 +32,14 @@ export default function Navbar() {
                 item.highlighted ? "font-semibold tracking-[0.02em] text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"
               }`}
             >
-              {item.label}
+              {item.finLab ? (
+                <span className="inline-flex items-center">
+                  <span>Fin</span>
+                  <span className="landing-finlab-tag">Lab</span>
+                </span>
+              ) : (
+                item.label
+              )}
             </Link>
           ))}
         </div>
@@ -69,7 +77,14 @@ export default function Navbar() {
               className={`block font-display ${item.highlighted ? "font-semibold text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"}`}
               onClick={() => setMobileOpen(false)}
             >
-              {item.label}
+              {item.finLab ? (
+                <span className="inline-flex items-center">
+                  <span>Fin</span>
+                  <span className="landing-finlab-tag">Lab</span>
+                </span>
+              ) : (
+                item.label
+              )}
             </Link>
           ))}
           <Link

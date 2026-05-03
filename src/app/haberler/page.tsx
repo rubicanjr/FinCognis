@@ -6,7 +6,7 @@ import { SITE_NAME, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
   title: `${SITE_NAME} | Haberler`,
-  description: "Investing.com haber akışından dinamik olarak güncellenen finans haberleri.",
+  description: "Dinamik finans haber akışı ve piyasa gündemi.",
   path: "/haberler",
 });
 
@@ -37,22 +37,14 @@ export default async function NewsPage() {
             <h1 className="font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
               Canlı Finans Haber Akışı
             </h1>
-            <p className="mt-4 text-slate-300">
-              Bu sayfa, <a href="https://tr.investing.com/news" target="_blank" rel="noreferrer" className="text-[#8ddfff] underline">Investing.com Haberler</a> akışını dinamik olarak yansıtır.
-            </p>
+            <p className="mt-4 text-slate-300">Piyasa gündemindeki gelişmeler bu alanda dinamik olarak güncellenir.</p>
           </section>
 
           <section className="mt-8 space-y-4">
             {items.length === 0 ? (
               <article className="landing-card rounded-2xl border border-white/12 bg-slate-950/60 p-6 backdrop-blur-xl">
                 <h2 className="font-display text-2xl font-semibold text-slate-100">Haber akışı geçici olarak alınamadı</h2>
-                <p className="mt-2 text-sm text-slate-300">
-                  Doğrudan{" "}
-                  <a href="https://tr.investing.com/news" target="_blank" rel="noreferrer" className="text-[#8ddfff] underline">
-                    tr.investing.com/news
-                  </a>{" "}
-                  üzerinden güncel haberlere erişebilirsiniz.
-                </p>
+                <p className="mt-2 text-sm text-slate-300">Bağlantı yeniden kurulduğunda içerik otomatik olarak yenilenecektir.</p>
               </article>
             ) : (
               items.map((item) => (
@@ -67,7 +59,7 @@ export default async function NewsPage() {
                   </a>
                   <p className="mt-3 text-sm text-slate-300">{item.description}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
-                    <span className="rounded-full border border-white/12 bg-slate-900/65 px-3 py-1">{item.source}</span>
+                    <span className="rounded-full border border-white/12 bg-slate-900/65 px-3 py-1">Piyasa Akışı</span>
                     <span>{formatDate(item.pubDate)}</span>
                   </div>
                 </article>
@@ -80,4 +72,3 @@ export default async function NewsPage() {
     </div>
   );
 }
-
