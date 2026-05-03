@@ -274,9 +274,20 @@ function deduplicateBySymbol(assets: NormalizedAsset[]): NormalizedAsset[] {
 }
 
 function buildWarnings(inputCount: number, maxAssets: number, assets: NormalizedAsset[]): AssetParserWarning[] {
+  const unknownAssets = assets.filter((asset) => asset.class === AssetClass.Unknown);
+  const unknownLabels = unknownAssets.map((asset) => asset.originalInput || asset.symbol).filter(Boolean);
+
   return [
     ...(inputCount > maxAssets
       ? [{ level: "warning" as const, message: `Maksimum ${maxAssets} varlık işlenir. İlk ${maxAssets} varlık kullanıldı.` }]
+      : []),
+    ...(unknownLabels.length > 0
+      ? [
+          {
+            level: "warning" as const,
+            message: `Tanınmayan varlıklar: ${unknownLabels.join(", ")}. Geçerli varlıklar analiz edildi.`,
+          },
+        ]
       : []),
     ...(assets.length === 1
       ? [{ level: "info" as const, message: "Karşılaştırma önerisi: Birden fazla varlık girişi daha güçlü içgörü üretir." }]

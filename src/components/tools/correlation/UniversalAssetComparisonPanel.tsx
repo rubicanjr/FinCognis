@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { LoaderCircle, Search, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
+import { LoaderCircle, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
 import {
   AnalyzeResponseSchema,
   AssetsApiResponseSchema,
@@ -26,33 +26,18 @@ import {
   enforceNeutralInvestmentLanguage,
   sanitizeNeutralNarratives,
 } from "@/lib/compliance/investment-language-guard";
+import AssetSearchInput from "@/components/AssetSearchInput";
+import type { CatalogAssetClass } from "@/data/asset-catalog";
+import type { AssetSelectionPayload } from "@/hooks/useAssetSearch";
 
 const ACCENT_BLUE = "#22b7ff";
 
-const EXAMPLE_INPUTS = [
-  "TUPRS ve BTC karşılaştır",
-  "XAU, ETH ve THYAO karşılaştır",
-  "TUPRS BTC XAU kıyasla",
+const QUICK_PICK_ASSETS: AssetSelectionPayload[] = [
+  { ticker: "TUPRS", yahooSymbol: "TUPRS.IS", assetClass: "equity_bist", exchange: "BIST", currency: "TRY" },
+  { ticker: "BTC", yahooSymbol: "BTC-USD", assetClass: "crypto", exchange: "CRYPTO", currency: "USD" },
+  { ticker: "XAU", yahooSymbol: "GC=F", assetClass: "commodity", exchange: "COMMODITY", currency: "USD" },
+  { ticker: "SPY", yahooSymbol: "SPY", assetClass: "etf_us", exchange: "NYSE/NASDAQ", currency: "USD" },
 ];
-
-const STOP_WORDS = new Set([
-  "eklemeli",
-  "karsilastir",
-  "karşılaştır",
-  "kiyasla",
-  "kıyasla",
-  "yerine",
-  "nasil",
-  "nasıl",
-  "ve",
-  "vs",
-  "ile",
-  "mi",
-  "miyim",
-  "koyarsam",
-  "degisir",
-  "değişir",
-]);
 
 const COMPLIANCE_DISCLAIMER =
   "Bu içerik yatırım tavsiyesi değildir. FinCognis, kullanıcıların finansal karar süreçlerini desteklemek amacıyla genel nitelikli karşılaştırmalı analiz ve profil eşleştirmesi sunar. Kullanıcının kişisel finansal durumu, risk tercihi ve yatırım hedefleri dikkate alınmamıştır.";
@@ -177,50 +162,6 @@ const GLASS_CHIP =
 
 const HEATMAP_TONES = ["heat-tone-high", "heat-tone-mid", "heat-tone-low"] as const;
 
-function normalizeAliasKey(value: string): string {
-  return value
-    .toLocaleLowerCase("tr-TR")
-    .replace(/ı/g, "i")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "");
-}
-
-function normalizeSymbol(value: string): string {
-  return value
-    .toUpperCase()
-    .replace(/İ/g, "I")
-    .replace(/[^A-Z0-9]/g, "");
-}
-
-function isLikelyUsEquitySymbol(symbol: string): boolean {
-  if (!symbol) return false;
-  if (!/^[A-Z]{1,5}$/.test(symbol)) return false;
-  const blocked = new Set([
-    "USDTRY",
-    "EURUSD",
-    "XAU",
-    "XAG",
-    "WTI",
-    "BRENT",
-    "SPX",
-    "NDX",
-    "BIST30",
-    "BTC",
-    "ETH",
-    "BNB",
-    "SOL",
-  ]);
-  return !blocked.has(symbol);
-}
-
-function stripPunctuation(value: string): string {
-  return value
-    .replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function parseErrorMessage(payload: unknown, fallbackMessage: string): string {
   if (typeof payload !== "object" || payload === null) return fallbackMessage;
   if (!("error" in payload)) return fallbackMessage;
@@ -283,79 +224,13 @@ function formatLiveDataTimestamp(iso: string): string {
   }).format(date);
 }
 
-function buildClassBySymbol(assets: AssetsApiResponse["assets"]): Record<string, AssetClass> {
-  return assets.reduce<Record<string, AssetClass>>((acc, asset) => {
-    acc[asset.symbol] = asset.class;
-    return acc;
-  }, {});
-}
-
-function extractAnalyzeAssets(rawInput: string, assetsApi: AssetsApiResponse): AnalyzeRequest["assets"] {
-  const aliasDictionary = assetsApi.aliasDictionary;
-  const classBySymbol = buildClassBySymbol(assetsApi.assets);
-  const cleaned = stripPunctuation(rawInput);
-  if (!cleaned) return [];
-
-  const words = cleaned.split(/\s+/).filter(Boolean);
-  const collected: Array<{ symbol: string; originalInput: string }> = [];
-
-  let index = 0;
-  while (index < words.length) {
-    let matched = false;
-    for (let width = 3; width >= 1; width -= 1) {
-      const end = index + width;
-      if (end > words.length) continue;
-
-      const phrase = words.slice(index, end).join(" ");
-      const phraseKey = normalizeAliasKey(phrase);
-      if (!phraseKey || STOP_WORDS.has(phraseKey)) continue;
-
-      const aliased = aliasDictionary[phraseKey];
-      if (aliased) {
-        collected.push({ symbol: aliased, originalInput: phrase });
-        index = end;
-        matched = true;
-        break;
-      }
-    }
-
-    if (matched) continue;
-
-    const word = words[index];
-    const normalizedWord = normalizeAliasKey(word);
-    if (!normalizedWord || STOP_WORDS.has(normalizedWord)) {
-      index += 1;
-      continue;
-    }
-
-    const aliased = aliasDictionary[normalizedWord];
-    if (aliased) {
-      collected.push({ symbol: aliased, originalInput: word });
-      index += 1;
-      continue;
-    }
-
-    const symbol = normalizeSymbol(word);
-    if (symbol.length >= 2) {
-      collected.push({ symbol, originalInput: word });
-    }
-    index += 1;
-  }
-
-  const deduped = Object.values(
-    collected.reduce<Record<string, { symbol: string; originalInput: string }>>((acc, item) => {
-      if (!acc[item.symbol]) acc[item.symbol] = item;
-      return acc;
-    }, {})
-  ).slice(0, 8);
-
-  return deduped.map((item) => ({
-    symbol: item.symbol,
-    originalInput: item.originalInput,
-    class:
-      classBySymbol[item.symbol] ??
-      (isLikelyUsEquitySymbol(item.symbol) ? AssetClass.Equity : AssetClass.Unknown),
-  }));
+function mapCatalogClassToAssetClass(assetClass: CatalogAssetClass): AssetClass {
+  if (assetClass === "equity_bist" || assetClass === "equity_us") return AssetClass.Equity;
+  if (assetClass === "crypto") return AssetClass.Crypto;
+  if (assetClass === "commodity") return AssetClass.Commodity;
+  if (assetClass === "fx") return AssetClass.FX;
+  if (assetClass === "etf_us") return AssetClass.Fund;
+  return AssetClass.Unknown;
 }
 
 function toCatalogAnalyzeAssets(assetsApi: AssetsApiResponse): AnalyzeRequest["assets"] {
@@ -484,8 +359,10 @@ export default function UniversalAssetComparisonPanel() {
   const [mode, setMode] = useState<PanelMode>("compare");
   const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("1y");
 
-  const [rawInput, setRawInput] = useState("TUPRS ve BTC karşılaştır");
-  const [debouncedInput, setDebouncedInput] = useState(rawInput);
+  const [selectedCompareAssets, setSelectedCompareAssets] = useState<AssetSelectionPayload[]>([
+    QUICK_PICK_ASSETS[0],
+    QUICK_PICK_ASSETS[1],
+  ]);
 
   const [catalogData, setCatalogData] = useState<AssetsApiResponse | null>(null);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -532,22 +409,21 @@ export default function UniversalAssetComparisonPanel() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedInput(rawInput), 350);
-    return () => window.clearTimeout(timer);
-  }, [rawInput]);
-
-  useEffect(() => {
     if (mode !== "compare") return;
     if (!catalogData) return;
 
-    if (debouncedInput.trim().length < 2) {
+    if (selectedCompareAssets.length === 0) {
       setAnalysisData(null);
       setAnalysisError(null);
       setAnalysisLoading(false);
       return;
     }
 
-    const parsedAssets = extractAnalyzeAssets(debouncedInput, catalogData);
+    const parsedAssets: AnalyzeRequest["assets"] = selectedCompareAssets.map((asset) => ({
+      symbol: asset.ticker,
+      originalInput: asset.ticker,
+      class: mapCatalogClassToAssetClass(asset.assetClass),
+    }));
     if (parsedAssets.length === 0) {
       setAnalysisData(null);
       setAnalysisError(null);
@@ -591,7 +467,7 @@ export default function UniversalAssetComparisonPanel() {
       });
 
     return () => controller?.abort();
-  }, [catalogData, debouncedInput, mode, timeHorizon]);
+  }, [catalogData, mode, selectedCompareAssets, timeHorizon]);
 
   const catalogSignature = useMemo(() => {
     if (!catalogData) return "";
@@ -908,32 +784,26 @@ export default function UniversalAssetComparisonPanel() {
           </div>
 
           {mode === "compare" ? (
-            <div className="rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-2 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]">
-              <label htmlFor="asset-query" className="mb-2 block px-2 font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300">
-                Karşılaştırma Girdisi
-              </label>
-              <div className="flex items-center gap-3 rounded-xl border border-white/12 bg-slate-950/65 px-3 py-3 backdrop-blur-xl transition-all duration-300 focus-within:border-[#22b7ff]/60 focus-within:shadow-[0_0_0_1px_rgba(34,183,255,0.38),0_0_28px_rgba(34,183,255,0.22)]">
-                <Search className="h-5 w-5 text-slate-300" />
-                <input
-                  id="asset-query"
-                  value={rawInput}
-                  onChange={(event) => setRawInput(event.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-400"
-                  placeholder="Karşılaştırmak istediğin varlıkları yaz (örn: altın, bitcoin, thy)"
-                  aria-label="Karşılaştırma varlık girişi"
-                />
-              </div>
-              <p className="mt-2 px-1 text-xs text-slate-300">Karar vermeden önce farklarını gör.</p>
-
+            <div>
+              <AssetSearchInput
+                selectedAssets={selectedCompareAssets}
+                onSelectionChange={setSelectedCompareAssets}
+                maxSelection={5}
+              />
               <div className="mt-3 flex flex-wrap gap-2">
-                {EXAMPLE_INPUTS.map((input) => (
+                {QUICK_PICK_ASSETS.map((asset) => (
                   <button
-                    key={input}
+                    key={`quick-pick:${asset.ticker}`}
                     type="button"
-                    onClick={() => setRawInput(input)}
+                    onClick={() => {
+                      setSelectedCompareAssets((prev) => {
+                        if (prev.some((item) => item.ticker === asset.ticker) || prev.length >= 5) return prev;
+                        return [...prev, asset];
+                      });
+                    }}
                     className="rounded-full border border-white/12 bg-slate-900/55 px-3 py-1 font-display text-[11px] tracking-[0.03em] text-slate-200 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] hover:shadow-[0_10px_28px_rgba(34,183,255,0.2)]"
                   >
-                    {input}
+                    {asset.ticker} ekle
                   </button>
                 ))}
               </div>

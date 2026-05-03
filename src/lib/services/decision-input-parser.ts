@@ -1,42 +1,26 @@
 ﻿import { z } from "zod";
 import {
+  AssetClass,
   AssetParserService,
   buildDefaultAliasDictionary,
   buildDefaultClassDictionary,
   type AssetParserWarning,
 } from "@/components/tools/correlation/universal-asset-comparison";
-import {
-  AssetParserWarningSchema,
-  DecisionIntentSchema,
-} from "@/lib/contracts/universal-asset-schemas";
+import { AssetParserWarningSchema, DecisionIntentSchema } from "@/lib/contracts/universal-asset-schemas";
 import type { DecisionIntent } from "@/lib/contracts/decision-types";
 
 const parser = new AssetParserService({
   aliasDictionary: buildDefaultAliasDictionary(),
   classBySymbol: buildDefaultClassDictionary(),
 });
-
-const TURKISH_CHAR_MAP: Record<string, string> = {
-  c: "c",
-  g: "g",
-  i: "i",
-  o: "o",
-  s: "s",
-  u: "u",
-  "Ã§": "c",
-  "ÄŸ": "g",
-  "Ä±": "i",
-  "Ã¶": "o",
-  "ÅŸ": "s",
-  "Ã¼": "u",
-};
+const KNOWN_SYMBOLS = new Set(Object.keys(buildDefaultClassDictionary()));
 
 const STOP_WORDS = new Set(["eklemeli", "karsilastir", "yerine", "nasil", "sadece"]);
 
 const INTENT_RULES: Array<{ intent: DecisionIntent; key: string; pattern: RegExp }> = [
-  { intent: "REPLACE", key: "replace", pattern: /\b(yerine|degistir|deÄŸiÅŸtir|replace|swap)\b/i },
-  { intent: "COMPARE", key: "compare", pattern: /\b(karsilastir|karÅŸÄ±laÅŸtÄ±r|kiyasla|kÄ±yasla|compare|vs|ve)\b/i },
-  { intent: "ADD", key: "add", pattern: /\b(ekle|eklemeli|portfoye|portfÃ¶ye|dahil|add)\b/i },
+  { intent: "REPLACE", key: "replace", pattern: /\b(yerine|degistir|değiştir|replace|swap)\b/i },
+  { intent: "COMPARE", key: "compare", pattern: /\b(karsilastir|karşılaştır|kiyasla|kıyasla|compare|vs|ve)\b/i },
+  { intent: "ADD", key: "add", pattern: /\b(ekle|eklemeli|portfoye|portföye|dahil|add)\b/i },
 ];
 
 export const IntentExtractionSchema = z.object({
@@ -63,21 +47,19 @@ export type IntentExtraction = z.infer<typeof IntentExtractionSchema>;
 export type AssetNormalization = z.infer<typeof AssetNormalizationSchema>;
 export type DecisionInputParseResult = z.infer<typeof DecisionInputParseSchema>;
 
-function foldTurkishCharacters(value: string): string {
-  return value
-    .split("")
-    .map((char) => TURKISH_CHAR_MAP[char] ?? char)
-    .join("");
-}
-
 function canonicalizeText(value: string): string {
-  const lower = value.toLocaleLowerCase("tr-TR");
-  const folded = foldTurkishCharacters(lower);
-  return folded.replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function stripPunctuation(value: string): string {
-  return value.replace(/[^0-9A-Za-zÃ‡ÄÄ°Ã–ÅÃœÃ§ÄŸÄ±Ã¶ÅŸÃ¼\s]/g, " ").replace(/\s+/g, " ").trim();
+  return value.replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 }
 
 function removeStopWords(tokens: string[]): string[] {
@@ -88,7 +70,15 @@ function extractKnownSymbols(
   normalizedInput: string
 ): { symbols: string[]; warnings: AssetParserWarning[] } {
   const parsed = parser.parse(normalizedInput);
-  const symbols = [...new Set(parsed.assets.map((asset) => asset.symbol).filter((symbol) => symbol.length >= 2))];
+  const symbols = [
+    ...new Set(
+      parsed.assets
+        .filter((asset) => asset.class !== AssetClass.Unknown)
+        .filter((asset) => KNOWN_SYMBOLS.has(asset.symbol))
+        .map((asset) => asset.symbol)
+        .filter((symbol) => symbol.length >= 2)
+    ),
+  ];
   const warnings = [...parsed.warnings.filter((warning) => warning.level === "info")];
   return { symbols, warnings };
 }
