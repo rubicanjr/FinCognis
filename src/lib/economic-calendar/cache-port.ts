@@ -27,19 +27,14 @@ export interface CachePort {
 
 const CACHE_KEY_ROOT = "calendar_events_tr";
 const DATA_STALE_MS = 5 * 60 * 1000;
+const MEMORY_CACHE_DEFAULT_TTL_SECONDS = 24 * 60 * 60;
 
-function requireEnv(name: "UPSTASH_REDIS_REST_URL" | "UPSTASH_REDIS_REST_TOKEN"): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(
-      "Missing required Upstash configuration. Define UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN at build time.",
-    );
-  }
-  return value;
+function readUpstashEnv(): { url: string; token: string } | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  return { url, token };
 }
-
-const UPSTASH_REDIS_REST_URL = requireEnv("UPSTASH_REDIS_REST_URL");
-const UPSTASH_REDIS_REST_TOKEN = requireEnv("UPSTASH_REDIS_REST_TOKEN");
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -82,11 +77,16 @@ function toNumberResult(value: unknown): number {
 }
 
 function createUpstashCachePort(): CachePort {
+  const env = readUpstashEnv();
+  if (!env) {
+    throw new Error("Upstash cache is not configured.");
+  }
+
   const call = async (command: Array<string | number>): Promise<unknown> => {
-    const response = await fetch(UPSTASH_REDIS_REST_URL, {
+    const response = await fetch(env.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
+        Authorization: `Bearer ${env.token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(command),
@@ -133,11 +133,92 @@ function createUpstashCachePort(): CachePort {
   };
 }
 
+interface MemoryEntry {
+  payload: CachePayload;
+  expiresAt: number;
+}
+
+interface MemoryLockEntry {
+  owner: string;
+  expiresAt: number;
+}
+
+function createMemoryCachePort(): CachePort {
+  const dataStore = new Map<string, MemoryEntry>();
+  const lockStore = new Map<string, MemoryLockEntry>();
+
+  const now = (): number => Date.now();
+
+  const getDataEntry = (key: string): MemoryEntry | null => {
+    const entry = dataStore.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt <= now()) {
+      dataStore.delete(key);
+      return null;
+    }
+    return entry;
+  };
+
+  const getLockEntry = (key: string): MemoryLockEntry | null => {
+    const entry = lockStore.get(key);
+    if (!entry) return null;
+    if (entry.expiresAt <= now()) {
+      lockStore.delete(key);
+      return null;
+    }
+    return entry;
+  };
+
+  return {
+    async get(key) {
+      const entry = getDataEntry(key);
+      if (!entry) return null;
+      const isStale = now() - entry.payload.lastUpdated > DATA_STALE_MS;
+      return {
+        ...entry.payload,
+        isStale,
+      };
+    },
+    async set(key, value, ttl) {
+      const safeTtl = Math.max(1, ttl || MEMORY_CACHE_DEFAULT_TTL_SECONDS);
+      dataStore.set(key, {
+        payload: value,
+        expiresAt: now() + safeTtl * 1000,
+      });
+    },
+    async extendTtl(key, ttl) {
+      const entry = getDataEntry(key);
+      if (!entry) return;
+      const safeTtl = Math.max(1, ttl || MEMORY_CACHE_DEFAULT_TTL_SECONDS);
+      dataStore.set(key, {
+        ...entry,
+        expiresAt: now() + safeTtl * 1000,
+      });
+    },
+    async acquireLock(key, ttl, owner) {
+      const current = getLockEntry(key);
+      if (current) return false;
+      const safeTtl = Math.max(1, ttl);
+      lockStore.set(key, {
+        owner,
+        expiresAt: now() + safeTtl * 1000,
+      });
+      return true;
+    },
+    async releaseLock(key, owner) {
+      const current = getLockEntry(key);
+      if (!current) return;
+      if (current.owner !== owner) return;
+      lockStore.delete(key);
+    },
+  };
+}
+
 let cachePortSingleton: CachePort | null = null;
 
 export function getCalendarCachePort(): CachePort {
   if (cachePortSingleton) return cachePortSingleton;
-  cachePortSingleton = createUpstashCachePort();
+  cachePortSingleton = readUpstashEnv() ? createUpstashCachePort() : createMemoryCachePort();
   return cachePortSingleton;
 }
 
