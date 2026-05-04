@@ -6,7 +6,7 @@ import {
   type EconomicRange,
   type EconomicTab,
 } from "@/lib/economic-calendar/schema";
-import { fetchEconomicEvents } from "@/lib/economic-calendar/mirror";
+import { fetchCalendarData } from "@/lib/economic-calendar/mirror";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   const range = parseRange(searchParams.get("range"));
 
   try {
-    const result = await fetchEconomicEvents(tab, range);
+    const result = await fetchCalendarData(tab, range);
 
     if (result.events.length === 0) {
       return NextResponse.json(
@@ -38,7 +38,12 @@ export async function GET(request: Request) {
           updatedAt: result.updatedAt,
           events: [],
         },
-        { status: 503 },
+        {
+          status: 503,
+          headers: {
+            "X-Data-Age": result.dataAge,
+          },
+        },
       );
     }
 
@@ -49,9 +54,14 @@ export async function GET(request: Request) {
       events: result.events,
     });
 
-    return NextResponse.json(responsePayload, { status: 200 });
+    return NextResponse.json(responsePayload, {
+      status: 200,
+      headers: {
+        "X-Data-Age": result.dataAge,
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Bilinmeyen takvim hatası";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: 503 });
   }
 }

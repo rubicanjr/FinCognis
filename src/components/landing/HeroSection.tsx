@@ -73,24 +73,27 @@ export default function HeroSection() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 22% -6%, rgb(34 183 255 / 0.22) 0%, transparent 44%), radial-gradient(circle at 82% 7%, rgb(168 85 247 / 0.18) 0%, transparent 38%)",
+            "radial-gradient(circle at 50% 82%, rgb(34 211 238 / 0.26) 0%, transparent 44%), radial-gradient(circle at 12% 4%, rgb(34 183 255 / 0.18) 0%, transparent 34%), radial-gradient(circle at 88% 6%, rgb(79 70 229 / 0.16) 0%, transparent 34%), linear-gradient(180deg, rgba(2,9,21,0.98) 0%, rgba(1,7,18,0.98) 100%)",
         }}
       />
-      <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
 
-      <div className="relative z-10 mx-auto max-w-5xl text-center">
+      <div className="relative z-10 mx-auto w-full max-w-6xl rounded-[2.4rem] border border-white/10 bg-[radial-gradient(circle_at_50%_110%,rgba(34,211,238,0.24),rgba(3,10,24,0.94)_58%)] px-4 py-16 text-center shadow-[0_36px_120px_-64px_rgba(34,211,238,0.4)] sm:px-8">
+        <div className="pointer-events-none absolute -bottom-28 left-1/2 h-64 w-[130%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/28" />
+        <div className="pointer-events-none absolute -bottom-32 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/16" />
+
         <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5">
-          <BadgeCheck className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
+          <BadgeCheck className="h-4 w-4 text-[#9ce7ff]" strokeWidth={1.5} />
           <span className="kicker-label font-display text-[11px] font-semibold text-[#dff4ff]">
             FinCognis Karşılaştırma ve Profil Keşif Katmanı
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-4xl font-semibold leading-[1.08] tracking-[-0.02em] text-white/90 sm:text-5xl md:text-6xl lg:text-7xl">
-          Yatırım kararlarını <span className="landing-accent-text">sistemle al</span>
+        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-4xl font-semibold leading-[1.08] tracking-[-0.022em] text-white sm:text-5xl md:text-6xl lg:text-7xl">
+          Yatırım kararlarını <span className="text-white">sistemle al</span>
         </h1>
 
-        <p className="animate-fade-in-up-delay-2 mx-auto mb-9 text-base leading-relaxed text-slate-300 sm:text-lg md:max-w-none md:whitespace-nowrap md:text-xl">
+        <p className="animate-fade-in-up-delay-2 mx-auto mb-9 text-base leading-relaxed text-slate-200 sm:text-lg md:max-w-none md:whitespace-nowrap md:text-xl">
           FinCognis ile karar vermeden önce riski görün, yatırım gücünüzü artırın.
         </p>
 
