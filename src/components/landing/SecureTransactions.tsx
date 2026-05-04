@@ -1,38 +1,42 @@
-﻿import { Activity, Gauge, MessageSquareText, Orbit, Workflow } from "lucide-react";
+﻿import { Activity, Gauge, MessageSquareText, Orbit, Workflow, Zap } from "lucide-react";
 
 interface AdvantageCard {
   icon: typeof Activity;
   title: string;
   description: string;
-  size?: "wide";
 }
 
 const ADVANTAGES: AdvantageCard[] = [
   {
     icon: MessageSquareText,
-    title: "Kişiselleştirilmiş Destek",
-    description: "Her yatırım profiline göre uyarlanmış karar desteği ve uzman geri bildirimi.",
+    title: "Karar Körlüğünü Ortadan Kaldırır",
+    description:
+      "Çoğu yatırımcı veriye sahip ama neye bakacağını bilmez. FinCognis, karar anında kritik sinyali görünür hale getirir.",
   },
   {
     icon: Workflow,
-    title: "Her Adımda Yanınızda",
-    description: "İlk analizden uygulama aksiyonlarına kadar şeffaf ve ölçülebilir süreç yönetimi.",
+    title: "Tahmin Değil Koşul Bazlı Düşünür",
+    description: "“Ne olur?” sorusunu bırakır, “hangi şartta yanlış olur?” sorusuna odaklanır.",
   },
   {
     icon: Activity,
-    title: "Ölçülebilir Etki",
-    description: "Sinyal kalitesi, risk skoru ve karar doğruluğu metriklerini düzenli olarak izleyin.",
+    title: "Riski Saklamaz, Netleştirir",
+    description: "Kazanç senaryosu değil, downside risk açıkça ortaya konur.",
   },
   {
     icon: Orbit,
-    title: "Geleceğe Hazır Çözümler",
-    description: "Değişken piyasa koşullarına hızla adapte olan esnek karar altyapısı.",
+    title: "Karar Öncesi Durdurur",
+    description: "Hızlı karar değil, doğru karar. Sistem, kritik hatalardan önce kullanıcıyı durdurur.",
   },
   {
     icon: Gauge,
-    title: "Şeffaf Süreç",
-    description: "Karar adımlarının tamamını görünür hale getiren açık süreç ve zaman çizelgesi.",
-    size: "wide",
+    title: "Veriyi Karara Çevirir",
+    description: "Dashboard değil, aksiyon üretir. Bilgi değil, karar çıktısı verir.",
+  },
+  {
+    icon: Zap,
+    title: "Aynı Hatayı Tekrar Ettirmez",
+    description: "Geçmiş kararları analiz eder, kullanıcının kendi pattern’ını yüzüne gösterir.",
   },
 ];
 
@@ -57,11 +61,10 @@ export default function SecureTransactions() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
         {ADVANTAGES.map((card) => {
           const Icon = card.icon;
-          const spanClass = card.size === "wide" ? "md:col-span-4" : "md:col-span-2";
           return (
             <article
               key={card.title}
-              className={`landing-card rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(11,19,38,0.72),rgba(5,10,24,0.86))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55 ${spanClass}`}
+              className="landing-card md:col-span-2 rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(11,19,38,0.72),rgba(5,10,24,0.86))] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/55"
             >
               <div className="mb-4 inline-flex rounded-lg border border-[#22b7ff]/30 bg-[#22b7ff]/12 p-2.5">
                 <Icon className="h-4 w-4 text-[#8ddfff]" />

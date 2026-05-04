@@ -9,7 +9,7 @@ interface Testimonial {
 const TESTIMONIALS: Testimonial[] = [
   {
     quote:
-      "FinCognis ile karar akışımız belirgin şekilde hızlandı. Risk görünürlüğü arttı ve yatırım komitesi toplantılarında çok daha net ilerliyoruz.",
+      "FinCognis ile kullanıcıların karar akışlarını belirgin şekilde hızlandırmayı amaçlıyoruz. Risk görünürlüğünü arttırmak ve yatırım komitesi toplantılarında çok daha net ilerlenmesi en büyük hedefimiz.",
     person: "Adrian Vale",
     role: "Financial Intelligence Lead",
   },
@@ -35,10 +35,9 @@ export default function GlobalCompliance() {
       </span>
 
       <div className="mb-14 text-center">
-        <span className="inline-flex rounded-full border border-white/12 bg-white/5 px-4 py-1 font-display text-xs font-semibold tracking-[0.1em] text-[#8ddfff]">
-          Referanslar
-        </span>
-        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Müşterilerimiz Ne Diyor?</h2>
+        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
+          FinCognis Ekibinin Duygu ve Düşünceleri
+        </h2>
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">

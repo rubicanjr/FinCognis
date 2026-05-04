@@ -9,33 +9,38 @@ interface ExpertiseItem {
 const EXPERTISE_ITEMS: ExpertiseItem[] = [
   {
     icon: CloudCog,
-    title: "Bulut Çözümleri",
-    description: "Veri ve karar altyapınızı ölçeklenebilir bulut mimarisiyle güçlendirin.",
+    title: "Karar Simülasyonu",
+    description:
+      "Karar vermeden önce olası senaryoları ve riskleri görünür hale getiririz. “Ne olur?” değil, “hangi koşulda kırılır?” sorusuna odaklanırız.",
   },
   {
     icon: BrainCircuit,
-    title: "Veri ve Yapay Zekâ Danışmanlığı",
-    description: "Yapay zekâ destekli modelleme ile karar kalitesini artıran danışmanlık çerçevesi.",
+    title: "Risk Görselleştirme",
+    description:
+      "Yatırım kararlarını tek bir metrikle değil, olasılık dağılımı ile değerlendiririz. Kazançtan önce downside’ı netleştiririz.",
   },
   {
     icon: LockKeyhole,
-    title: "Siber Güvenlik",
-    description: "Karar sistemlerinizi güvenlik, erişim kontrolü ve izlenebilirlik katmanlarıyla koruyun.",
+    title: "Davranışsal Hata Analizi",
+    description:
+      "Yatırımcıların en sık yaptığı sistematik hataları tespit ederiz. Kararı değil, karar alma biçimini analiz ederiz.",
   },
   {
     icon: BriefcaseBusiness,
-    title: "Dijital Çalışma Alanı Çözümleri",
-    description: "Ekiplerin araştırma ve analiz süreçlerini tek akışta birleştiren verimli çalışma altyapısı.",
+    title: "Senaryo Tabanlı Analiz",
+    description:
+      "Piyasa verisini tek başına değil, koşullar altında anlamlandırırız. Faiz, likidite, sentiment gibi faktörleri karar bağlamına oturturuz.",
   },
   {
     icon: Scale,
-    title: "Dijital Strateji",
-    description: "Risk-getiri dengesini kurumsal hedeflerle hizalayan stratejik karar çerçevesi.",
+    title: "Karar Öncesi Check Mekanizması",
+    description:
+      "Kullanıcının karar vermeden önce geçmesi gereken bir kontrol katmanı oluştururuz. Amaç hız değil, doğru anda doğru karar.",
   },
   {
     icon: ServerCog,
-    title: "BT Modernizasyonu",
-    description: "Eski sistemleri modern, hızlı ve sürdürülebilir analitik mimarilere dönüştürün.",
+    title: "Piyasa → Karar Çeviri Katmanı",
+    description: "Veriyi bilgiye değil, aksiyona dönüşecek karara çeviririz. Dashboard değil, karar arayüzü kurarız.",
   },
 ];
 
