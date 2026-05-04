@@ -72,7 +72,7 @@ export default function EconomicCalendarPanel() {
   const [activeTab, setActiveTab] = useState<EconomicTab>("economic");
   const [activeRange, setActiveRange] = useState<EconomicRange>("today");
 
-  const { events, isLoading, error, updatedAt, emptyStateMessage, toast } = useEconomicCalendar(activeTab, activeRange);
+  const { events, isLoading, error, isInitializing, updatedAt, emptyStateMessage, toast } = useEconomicCalendar(activeTab, activeRange);
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
@@ -125,7 +125,14 @@ export default function EconomicCalendarPanel() {
       </div>
 
       {toast ? (
-        <div data-testid="calendar-toast" className="mb-4 flex items-start gap-2 rounded-xl border border-red-400/35 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+        <div
+          data-testid="calendar-toast"
+          className={`mb-4 flex items-start gap-2 rounded-xl px-3 py-2 text-sm ${
+            isInitializing
+              ? "border border-[#0a84ff]/40 bg-[#0a84ff]/12 text-[#dff4ff]"
+              : "border border-red-400/35 bg-red-500/10 text-red-200"
+          }`}
+        >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{toast}</span>
         </div>
@@ -147,7 +154,7 @@ export default function EconomicCalendarPanel() {
 
           {!isLoading && (error || emptyStateMessage) ? (
             <div data-testid="calendar-empty-state" className="rounded-lg border border-white/10 bg-slate-900/55 px-4 py-6 text-center text-sm text-slate-300">
-              {SYNC_DELAY_MESSAGE}
+              {emptyStateMessage ?? SYNC_DELAY_MESSAGE}
             </div>
           ) : null}
 

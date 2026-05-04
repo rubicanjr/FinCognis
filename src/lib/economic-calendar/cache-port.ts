@@ -20,16 +20,26 @@ export interface CachePayload {
 export interface CachePort {
   get(key: string): Promise<CachePayload | null>;
   set(key: string, value: CachePayload, ttl: number): Promise<void>;
+  extendTtl(key: string, ttl: number): Promise<void>;
+  acquireLock(key: string, ttl: number, owner: string): Promise<boolean>;
+  releaseLock(key: string, owner: string): Promise<void>;
 }
 
-interface MemoryNode {
-  value: CachePayload;
-  expiresAt: number;
-}
-
-const FALLBACK_MEMORY = new Map<string, MemoryNode>();
 const CACHE_KEY_ROOT = "calendar_events_tr";
 const DATA_STALE_MS = 5 * 60 * 1000;
+
+function requireEnv(name: "UPSTASH_REDIS_REST_URL" | "UPSTASH_REDIS_REST_TOKEN"): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      "Missing required Upstash configuration. Define UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN at build time.",
+    );
+  }
+  return value;
+}
+
+const UPSTASH_REDIS_REST_URL = requireEnv("UPSTASH_REDIS_REST_URL");
+const UPSTASH_REDIS_REST_TOKEN = requireEnv("UPSTASH_REDIS_REST_TOKEN");
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -57,51 +67,26 @@ export function isCachePayload(value: unknown): value is CachePayload {
   return value.data.every(isCacheEconomicEvent);
 }
 
-function isUpstashConfigured(): boolean {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
-}
-
-function createMemoryCachePort(): CachePort {
-  return {
-    async get(key) {
-      const node = FALLBACK_MEMORY.get(key);
-      if (!node) return null;
-      if (node.expiresAt < Date.now()) {
-        FALLBACK_MEMORY.delete(key);
-        return null;
-      }
-
-      const isStale = Date.now() - node.value.lastUpdated > DATA_STALE_MS;
-      return {
-        ...node.value,
-        isStale,
-      };
-    },
-    async set(key, value, ttl) {
-      FALLBACK_MEMORY.set(key, {
-        value,
-        expiresAt: Date.now() + ttl * 1000,
-      });
-    },
-  };
-}
-
-function decodeUpstashResult(payload: unknown): string | null {
+function decodeResult(payload: unknown): unknown {
   if (!isObjectRecord(payload)) return null;
-  if (!("result" in payload)) return null;
-  const result = payload.result;
-  return typeof result === "string" ? result : null;
+  return "result" in payload ? payload.result : null;
+}
+
+function toNumberResult(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
 }
 
 function createUpstashCachePort(): CachePort {
-  const baseUrl = process.env.UPSTASH_REDIS_REST_URL ?? "";
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? "";
-
-  const call = async (command: string[]): Promise<unknown> => {
-    const response = await fetch(baseUrl, {
+  const call = async (command: Array<string | number>): Promise<unknown> => {
+    const response = await fetch(UPSTASH_REDIS_REST_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(command),
@@ -118,8 +103,8 @@ function createUpstashCachePort(): CachePort {
   return {
     async get(key) {
       const payload = await call(["GET", key]);
-      const raw = decodeUpstashResult(payload);
-      if (!raw) return null;
+      const raw = decodeResult(payload);
+      if (typeof raw !== "string") return null;
 
       const parsedUnknown: unknown = JSON.parse(raw);
       if (!isCachePayload(parsedUnknown)) return null;
@@ -131,7 +116,19 @@ function createUpstashCachePort(): CachePort {
       };
     },
     async set(key, value, ttl) {
-      await call(["SET", key, JSON.stringify(value), "EX", String(ttl)]);
+      await call(["SET", key, JSON.stringify(value), "EX", ttl]);
+    },
+    async extendTtl(key, ttl) {
+      await call(["EXPIRE", key, ttl]);
+    },
+    async acquireLock(key, ttl, owner) {
+      const payload = await call(["SET", key, owner, "NX", "EX", ttl]);
+      return decodeResult(payload) === "OK";
+    },
+    async releaseLock(key, owner) {
+      const current = decodeResult(await call(["GET", key]));
+      if (current !== owner) return;
+      await call(["DEL", key]);
     },
   };
 }
@@ -140,8 +137,7 @@ let cachePortSingleton: CachePort | null = null;
 
 export function getCalendarCachePort(): CachePort {
   if (cachePortSingleton) return cachePortSingleton;
-
-  cachePortSingleton = isUpstashConfigured() ? createUpstashCachePort() : createMemoryCachePort();
+  cachePortSingleton = createUpstashCachePort();
   return cachePortSingleton;
 }
 
@@ -185,4 +181,13 @@ export function buildCalendarCacheKey(tab: EconomicTab, range: EconomicRange): s
   return `${CACHE_KEY_ROOT}:${tab}:${range}`;
 }
 
+export function buildCalendarLockKey(tab: EconomicTab, range: EconomicRange): string {
+  return `${CACHE_KEY_ROOT}:lock:${tab}:${range}`;
+}
+
 export const CALENDAR_TTL_SECONDS = 24 * 60 * 60;
+export const CALENDAR_LOCK_TTL_SECONDS = 45;
+
+export function shouldTreatAsStale(lastUpdated: number): boolean {
+  return Date.now() - lastUpdated > DATA_STALE_MS;
+}

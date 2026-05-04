@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   EconomicMirrorResponseSchema,
   type EconomicEvent,
@@ -14,9 +14,22 @@ interface UseEconomicCalendarState {
   error: string | null;
   updatedAt: string | null;
   toast: string | null;
+  isInitializing: boolean;
 }
 
 const SYNC_DELAY_MESSAGE = "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.";
+const INITIALIZING_MESSAGE = "Veriler ilk kez hazırlanıyor, lütfen bekleyin...";
+const BACKOFF_STEPS_MS = [1200, 2400, 4000, 7000, 12000] as const;
+
+function backoffDelay(attempt: number): number {
+  return BACKOFF_STEPS_MS[Math.min(attempt, BACKOFF_STEPS_MS.length - 1)];
+}
+
+function isInitializingPayload(payload: unknown): payload is { status: "INITIALIZING"; message?: string } {
+  if (typeof payload !== "object" || payload === null) return false;
+  const candidate = payload as Record<string, unknown>;
+  return candidate.status === "INITIALIZING";
+}
 
 export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
   const [state, setState] = useState<UseEconomicCalendarState>({
@@ -25,10 +38,30 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
     error: null,
     updatedAt: null,
     toast: null,
+    isInitializing: false,
   });
+
+  const pollAttemptRef = useRef(0);
 
   useEffect(() => {
     let disposed = false;
+    let pollTimer: number | null = null;
+
+    const clearPoll = () => {
+      if (pollTimer !== null) {
+        window.clearTimeout(pollTimer);
+        pollTimer = null;
+      }
+    };
+
+    const schedulePoll = () => {
+      const delay = backoffDelay(pollAttemptRef.current);
+      pollAttemptRef.current += 1;
+      clearPoll();
+      pollTimer = window.setTimeout(() => {
+        void load(true);
+      }, delay);
+    };
 
     const load = async (silent: boolean): Promise<void> => {
       const controller = new AbortController();
@@ -49,8 +82,22 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
           cache: "no-store",
         });
 
+        const payloadUnknown: unknown = await response.json().catch(() => null);
+
+        if (response.status === 202 && isInitializingPayload(payloadUnknown)) {
+          if (disposed) return;
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            isInitializing: true,
+            error: null,
+            toast: payloadUnknown.message ?? INITIALIZING_MESSAGE,
+          }));
+          schedulePoll();
+          return;
+        }
+
         if (!response.ok) {
-          const payloadUnknown: unknown = await response.json().catch(() => null);
           const message =
             typeof payloadUnknown === "object" && payloadUnknown !== null && "error" in payloadUnknown && typeof payloadUnknown.error === "string"
               ? payloadUnknown.error
@@ -58,17 +105,18 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
           throw new Error(message);
         }
 
-        const payloadUnknown: unknown = await response.json();
         const payload = EconomicMirrorResponseSchema.parse(payloadUnknown);
-
         if (disposed) return;
 
+        pollAttemptRef.current = 0;
+        clearPoll();
         setState({
           events: payload.events,
           isLoading: false,
           error: null,
           updatedAt: payload.updatedAt,
           toast: null,
+          isInitializing: false,
         });
       } catch (error: unknown) {
         if (disposed || controller.signal.aborted) return;
@@ -76,29 +124,35 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
         setState((prev) => ({
           ...prev,
           isLoading: false,
+          isInitializing: false,
           error: message,
           toast: SYNC_DELAY_MESSAGE,
         }));
       }
     };
 
+    pollAttemptRef.current = 0;
+    clearPoll();
     void load(false);
+
     const interval = window.setInterval(() => {
       void load(true);
     }, 60_000);
 
     return () => {
       disposed = true;
+      clearPoll();
       window.clearInterval(interval);
     };
   }, [tab, range]);
 
   const emptyStateMessage = useMemo(() => {
     if (state.isLoading) return null;
+    if (state.isInitializing) return INITIALIZING_MESSAGE;
     if (state.error) return SYNC_DELAY_MESSAGE;
     if (state.events.length > 0) return null;
     return SYNC_DELAY_MESSAGE;
-  }, [state.error, state.events.length, state.isLoading]);
+  }, [state.error, state.events.length, state.isInitializing, state.isLoading]);
 
   return {
     ...state,
