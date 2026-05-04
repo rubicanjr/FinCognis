@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { EconomicRangeSchema, EconomicTabSchema, type EconomicRange, type EconomicTab } from "@/lib/economic-calendar/schema";
-import { fetchEconomicEvents } from "@/lib/economic-calendar/mirror";
+import { buildCalendarCacheKey, getCalendarCachePort, type EconomicEvent as CachedEconomicEvent } from "@/lib/economic-calendar/cache-port";
 
 interface LegacyCalendarEntry {
   id: string;
@@ -29,12 +29,12 @@ function toImportanceLabel(value: 1 | 2 | 3): "Yüksek" | "Orta" | "Düşük" {
   return "Düşük";
 }
 
-function toLegacyEntries(events: Awaited<ReturnType<typeof fetchEconomicEvents>>["events"]): LegacyCalendarEntry[] {
+function toLegacyEntries(events: CachedEconomicEvent[]): LegacyCalendarEntry[] {
   return events.map((event) => ({
-    id: event.id,
+    id: `${event.time}-${event.currency}-${event.event}`,
     timeLabel: new Date(event.time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
     currency: event.currency,
-    event: event.eventTitle,
+    event: event.event,
     importance: toImportanceLabel(event.importance),
     actual: event.actual ?? "-",
     forecast: event.forecast ?? "-",
@@ -50,13 +50,18 @@ export async function GET(request: Request) {
   const range = parseRange(searchParams.get("range"));
 
   try {
-    const result = await fetchEconomicEvents(tab, range);
+    const cachePort = getCalendarCachePort();
+    const cached = await cachePort.get(buildCalendarCacheKey(tab, range));
+    if (!cached) {
+      return NextResponse.json({ error: "Takvim verisi hazırlanıyor.", entries: [] }, { status: 503 });
+    }
+
     return NextResponse.json(
       {
         tab,
         range,
-        updatedAt: result.updatedAt,
-        entries: toLegacyEntries(result.events),
+        updatedAt: new Date(cached.lastUpdated).toISOString(),
+        entries: toLegacyEntries(cached.data),
       },
       { status: 200 },
     );

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import {
   EconomicMirrorResponseSchema,
   EconomicRangeSchema,
@@ -6,7 +6,7 @@ import {
   type EconomicRange,
   type EconomicTab,
 } from "@/lib/economic-calendar/schema";
-import { fetchCalendarData } from "@/lib/economic-calendar/mirror";
+import { buildCalendarCacheKey, cacheEventToApiEvent, getCalendarCachePort } from "@/lib/economic-calendar/cache-port";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,21 +27,24 @@ export async function GET(request: Request) {
   const range = parseRange(searchParams.get("range"));
 
   try {
-    const result = await fetchCalendarData(tab, range);
+    const cachePort = getCalendarCachePort();
+    const cacheKey = buildCalendarCacheKey(tab, range);
+    const cached = await cachePort.get(cacheKey);
 
-    if (result.events.length === 0) {
+    if (!cached) {
       return NextResponse.json(
         {
-          error: "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.",
+          code: "DATA_WARMING_UP",
+          error: "Takvim verisi hazırlanıyor. Lütfen kısa süre sonra tekrar deneyin.",
           tab,
           range,
-          updatedAt: result.updatedAt,
+          updatedAt: null,
           events: [],
         },
         {
           status: 503,
           headers: {
-            "X-Data-Age": result.dataAge,
+            "X-Data-Age": "empty",
           },
         },
       );
@@ -50,14 +53,14 @@ export async function GET(request: Request) {
     const responsePayload = EconomicMirrorResponseSchema.parse({
       tab,
       range,
-      updatedAt: result.updatedAt,
-      events: result.events,
+      updatedAt: new Date(cached.lastUpdated).toISOString(),
+      events: cached.data.map(cacheEventToApiEvent),
     });
 
     return NextResponse.json(responsePayload, {
       status: 200,
       headers: {
-        "X-Data-Age": result.dataAge,
+        "X-Data-Age": cached.isStale ? "stale" : "fresh",
       },
     });
   } catch (error) {

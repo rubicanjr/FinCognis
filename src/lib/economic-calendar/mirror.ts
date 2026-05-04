@@ -1,15 +1,14 @@
-import { createHash, randomInt } from "node:crypto";
+﻿import { createHash, randomInt } from "node:crypto";
+import {
+  CALENDAR_TTL_SECONDS,
+  apiEventToCacheEvent,
+  buildCalendarCacheKey,
+  getCalendarCachePort,
+  type CachePort,
+} from "@/lib/economic-calendar/cache-port";
 import { EconomicEventSchema, type EconomicEvent, type EconomicRange, type EconomicTab } from "@/lib/economic-calendar/schema";
 import { SELECTOR_MAP } from "@/lib/economic-calendar/selectors";
 
-interface CacheNode {
-  timestamp: number;
-  data: EconomicEvent[];
-}
-
-const CalendarCache: Record<string, CacheNode> = {};
-const RevalidationLocks: Record<string, Promise<void> | undefined> = {};
-const CACHE_TTL_MS = 60 * 1000 * 5;
 const ISTANBUL_TIMEZONE = "Europe/Istanbul";
 
 const LEGACY_ENDPOINTS: Record<EconomicTab, string> = {
@@ -99,10 +98,13 @@ interface ScrapedEventRow {
   previous: string | null;
 }
 
-interface CalendarResult {
-  updatedAt: string;
-  events: EconomicEvent[];
-  dataAge: "fresh" | "stale";
+export interface RefreshResult {
+  ok: boolean;
+  tab: EconomicTab;
+  range: EconomicRange;
+  key: string;
+  eventCount: number;
+  reason?: string;
 }
 
 function pickRandomUserAgent(): string {
@@ -225,14 +227,7 @@ function parseGenericRows(html: string, dateLabel: string, tab: EconomicTab): Ec
 
       const mapped =
         tab === "holidays"
-          ? {
-              timeLabel: col1 || "Tüm Gün",
-              currency: col2,
-              eventTitle: col3 || col2,
-              actual: null,
-              forecast: null,
-              previous: null,
-            }
+          ? { timeLabel: col1 || "Tüm Gün", currency: col2, eventTitle: col3 || col2, actual: null, forecast: null, previous: null }
           : {
               timeLabel: col2 || col1,
               currency: "-",
@@ -319,7 +314,6 @@ function buildRequestBody(tab: EconomicTab, range: EconomicRange, currentTab: st
   body.set("category[]", "");
 
   if (tab !== "economic") body.set("economicCalendarTab", tab);
-
   return body;
 }
 
@@ -349,7 +343,7 @@ function isScrapedEventRow(payload: unknown): payload is ScrapedEventRow {
   );
 }
 
-function isValidEventMap(payload: unknown): payload is EconomicEvent[] {
+export function isValidEventMap(payload: unknown): payload is EconomicEvent[] {
   return Array.isArray(payload) && payload.every((item) => EconomicEventSchema.safeParse(item).success);
 }
 
@@ -369,29 +363,6 @@ async function loadStealthDependencies(): Promise<{ puppeteerExtra: PuppeteerExt
     puppeteerExtra: puppeteerValue,
     createStealthPlugin: stealthValue as () => unknown,
   };
-}
-
-function makeCacheKey(tab: EconomicTab, range: EconomicRange): string {
-  return `${tab}:${range}`;
-}
-
-function readCache(tab: EconomicTab, range: EconomicRange): { node: CacheNode | null; isFresh: boolean } {
-  const key = makeCacheKey(tab, range);
-  const node = CalendarCache[key] ?? null;
-  if (!node) return { node: null, isFresh: false };
-  return { node, isFresh: Date.now() - node.timestamp <= CACHE_TTL_MS };
-}
-
-function writeCache(tab: EconomicTab, range: EconomicRange, events: EconomicEvent[]): void {
-  const key = makeCacheKey(tab, range);
-  CalendarCache[key] = {
-    timestamp: Date.now(),
-    data: events,
-  };
-}
-
-function formatUpdatedAt(timestamp: number): string {
-  return new Date(timestamp).toISOString();
 }
 
 async function fetchMirrorHtml(tab: EconomicTab, range: EconomicRange, tabAlias: string): Promise<string> {
@@ -505,7 +476,7 @@ async function fetchWithStealth(tab: EconomicTab, range: EconomicRange): Promise
     const rows = Array.isArray(rawRowsUnknown) ? rawRowsUnknown.filter(isScrapedEventRow) : [];
     const dateLabel = resolveDateRange(range).from;
 
-    const mapped = rows.map((row) =>
+    return rows.map((row) =>
       createEconomicEvent({
         idSeed: row.idSeed,
         dateLabel,
@@ -518,8 +489,6 @@ async function fetchWithStealth(tab: EconomicTab, range: EconomicRange): Promise
         previous: safeMetricValue(row.previous ?? ""),
       }),
     );
-
-    return isValidEventMap(mapped) ? mapped : [];
   } finally {
     await browser.close();
   }
@@ -539,75 +508,65 @@ async function fetchWithServiceEndpoints(tab: EconomicTab, range: EconomicRange)
   return parsed ?? [];
 }
 
-async function fetchFromOrigin(tab: EconomicTab, range: EconomicRange): Promise<EconomicEvent[]> {
+async function scrapeCalendarEvents(tab: EconomicTab, range: EconomicRange): Promise<EconomicEvent[]> {
   const stealthEvents = await fetchWithStealth(tab, range).catch(() => [] as EconomicEvent[]);
   if (stealthEvents.length > 0) return stealthEvents;
 
   return fetchWithServiceEndpoints(tab, range).catch(() => [] as EconomicEvent[]);
 }
 
-async function revalidateInBackground(tab: EconomicTab, range: EconomicRange): Promise<void> {
-  const key = makeCacheKey(tab, range);
-  if (RevalidationLocks[key]) return;
+export async function refreshCalendarCache(
+  tab: EconomicTab,
+  range: EconomicRange,
+  cachePort: CachePort = getCalendarCachePort(),
+): Promise<RefreshResult> {
+  const events = await scrapeCalendarEvents(tab, range);
 
-  RevalidationLocks[key] = (async () => {
-    const events = await fetchFromOrigin(tab, range);
-    if (events.length > 0 && isValidEventMap(events)) writeCache(tab, range, events);
-  })()
-    .catch(() => undefined)
-    .finally(() => {
-      delete RevalidationLocks[key];
-    });
+  if (!isValidEventMap(events) || events.length === 0) {
+    return {
+      ok: false,
+      tab,
+      range,
+      key: buildCalendarCacheKey(tab, range),
+      eventCount: 0,
+      reason: "empty_or_invalid_source",
+    };
+  }
 
-  await RevalidationLocks[key];
+  const payload = {
+    lastUpdated: Date.now(),
+    isStale: false,
+    data: events.map(apiEventToCacheEvent),
+  };
+
+  await cachePort.set(buildCalendarCacheKey(tab, range), payload, CALENDAR_TTL_SECONDS);
+
+  return {
+    ok: true,
+    tab,
+    range,
+    key: buildCalendarCacheKey(tab, range),
+    eventCount: events.length,
+  };
 }
 
-export async function fetchCalendarData(tab: EconomicTab, range: EconomicRange): Promise<CalendarResult> {
-  const cacheState = readCache(tab, range);
-
-  if (cacheState.node && cacheState.isFresh) {
-    return {
-      updatedAt: formatUpdatedAt(cacheState.node.timestamp),
-      events: cacheState.node.data,
-      dataAge: "fresh",
-    };
-  }
-
-  if (cacheState.node && !cacheState.isFresh) {
-    void revalidateInBackground(tab, range);
-    return {
-      updatedAt: formatUpdatedAt(cacheState.node.timestamp),
-      events: cacheState.node.data,
-      dataAge: "stale",
-    };
-  }
-
-  try {
-    const events = await fetchFromOrigin(tab, range);
-    if (!isValidEventMap(events) || events.length === 0) throw new Error("Economic mirror returned empty dataset");
-
-    writeCache(tab, range, events);
-    const created = readCache(tab, range).node;
-    return {
-      updatedAt: formatUpdatedAt(created?.timestamp ?? Date.now()),
-      events,
-      dataAge: "fresh",
-    };
-  } catch {
-    const fallback = readCache(tab, range).node;
-    if (fallback) {
-      return {
-        updatedAt: formatUpdatedAt(fallback.timestamp),
-        events: fallback.data,
-        dataAge: "stale",
-      };
-    }
-
-    throw new Error("Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.");
-  }
+export async function refreshCalendarCacheBatch(
+  pairs: Array<{ tab: EconomicTab; range: EconomicRange }>,
+  cachePort: CachePort = getCalendarCachePort(),
+): Promise<RefreshResult[]> {
+  const tasks = pairs.map((pair) => refreshCalendarCache(pair.tab, pair.range, cachePort));
+  return Promise.all(tasks);
 }
 
-export async function fetchEconomicEvents(tab: EconomicTab, range: EconomicRange): Promise<{ updatedAt: string; events: EconomicEvent[] }> {
-  const result = await fetchCalendarData(tab, range);
-  return { updatedAt: result.updatedAt, events: result.events };
+export async function refreshDefaultCalendarCache(cachePort: CachePort = getCalendarCachePort()): Promise<RefreshResult[]> {
+  const pairs: Array<{ tab: EconomicTab; range: EconomicRange }> = [
+    { tab: "economic", range: "today" },
+    { tab: "economic", range: "tomorrow" },
+    { tab: "economic", range: "week" },
+    { tab: "holidays", range: "today" },
+    { tab: "dividends", range: "today" },
+    { tab: "splits", range: "today" },
+    { tab: "ipo", range: "today" },
+  ];
+  return refreshCalendarCacheBatch(pairs, cachePort);
 }
