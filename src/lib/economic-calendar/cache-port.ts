@@ -58,7 +58,13 @@ function readRedisConfigOrThrow(): RedisConfig {
   return { url, token };
 }
 
-const REDIS_CONFIG = readRedisConfigOrThrow();
+let redisConfigSingleton: RedisConfig | null = null;
+
+function getRedisConfigOrThrow(): RedisConfig {
+  if (redisConfigSingleton) return redisConfigSingleton;
+  redisConfigSingleton = readRedisConfigOrThrow();
+  return redisConfigSingleton;
+}
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -157,7 +163,7 @@ let cachePortSingleton: CachePort | null = null;
 
 export function getCalendarCachePort(): CachePort {
   if (cachePortSingleton) return cachePortSingleton;
-  cachePortSingleton = createUpstashCachePort(REDIS_CONFIG);
+  cachePortSingleton = createUpstashCachePort(getRedisConfigOrThrow());
   return cachePortSingleton;
 }
 
