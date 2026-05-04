@@ -5,12 +5,20 @@ import { SELECTOR_MAP } from "@/lib/economic-calendar/selectors";
 const CACHE_TTL_MS = 60_000;
 const ISTANBUL_TIMEZONE = "Europe/Istanbul";
 
-const ENDPOINTS: Record<EconomicTab, string> = {
+const LEGACY_ENDPOINTS: Record<EconomicTab, string> = {
   economic: "https://tr.investing.com/economic-calendar/Service/getCalendarFilteredData",
   holidays: "https://tr.investing.com/holiday-calendar/Service/getCalendarFilteredData",
   dividends: "https://tr.investing.com/dividends-calendar/Service/getCalendarFilteredData",
   splits: "https://tr.investing.com/stock-split-calendar/Service/getCalendarFilteredData",
   ipo: "https://tr.investing.com/ipo-calendar/Service/getCalendarFilteredData",
+};
+
+const PAGE_URLS: Record<EconomicTab, string> = {
+  economic: "https://tr.investing.com/economic-calendar",
+  holidays: "https://tr.investing.com/holiday-calendar",
+  dividends: "https://tr.investing.com/dividends-calendar",
+  splits: "https://tr.investing.com/stock-split-calendar",
+  ipo: "https://tr.investing.com/ipo-calendar",
 };
 
 const REFERERS: Record<EconomicTab, string> = {
@@ -29,6 +37,13 @@ const TAB_ALIASES: Record<EconomicTab, string[]> = {
   ipo: ["ipo"],
 };
 
+const RANGE_LABELS: Record<EconomicRange, string> = {
+  yesterday: "D\u00fcn",
+  today: "Bug\u00fcn",
+  tomorrow: "Yar\u0131n",
+  week: "Bu Hafta",
+};
+
 const USER_AGENTS = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
@@ -38,6 +53,28 @@ const USER_AGENTS = [
 const ACCEPT_LANGS = ["tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7", "tr;q=0.9,en;q=0.8"];
 
 const cacheStore = new Map<string, { expiresAt: number; updatedAt: string; events: EconomicEvent[] }>();
+
+let stealthInitialized = false;
+
+interface PageLike {
+  setUserAgent(userAgent: string): Promise<void>;
+  setExtraHTTPHeaders(headers: Record<string, string>): Promise<void>;
+  goto(url: string, options: { waitUntil: string; timeout: number }): Promise<unknown>;
+  waitForSelector(selector: string, options: { visible: boolean; timeout: number }): Promise<unknown>;
+  waitForTimeout(milliseconds: number): Promise<void>;
+  evaluate<T, A>(pageFunction: (arg: A) => T, arg: A): Promise<T>;
+  evaluate<T>(pageFunction: () => T): Promise<T>;
+}
+
+interface BrowserLike {
+  newPage(): Promise<PageLike>;
+  close(): Promise<void>;
+}
+
+interface PuppeteerExtraLike {
+  use(plugin: unknown): void;
+  launch(options: Record<string, unknown>): Promise<BrowserLike>;
+}
 
 function nowHeaderIndex(): number {
   return Math.abs(Math.floor(Date.now() / 1000)) % USER_AGENTS.length;
@@ -60,18 +97,18 @@ function sanitizeHtmlText(value: string): string {
 
 function normalizeTurkish(value: string): string {
   return value
-    .replaceAll("Ã¼", "ü")
-    .replaceAll("Ã¶", "ö")
-    .replaceAll("Ä±", "ı")
-    .replaceAll("ÄŸ", "ğ")
-    .replaceAll("ÅŸ", "ş")
-    .replaceAll("Ã§", "ç")
-    .replaceAll("Ä°", "İ")
-    .replaceAll("Ãœ", "Ü")
-    .replaceAll("Ã–", "Ö")
-    .replaceAll("Ã‡", "Ç")
-    .replaceAll("Åž", "Ş")
-    .replaceAll("Äž", "Ğ");
+    .replaceAll("\u00c3\u00bc", "\u00fc")
+    .replaceAll("\u00c3\u00b6", "\u00f6")
+    .replaceAll("\u00c4\u00b1", "\u0131")
+    .replaceAll("\u00c4\u009f", "\u011f")
+    .replaceAll("\u00c5\u009f", "\u015f")
+    .replaceAll("\u00c3\u00a7", "\u00e7")
+    .replaceAll("\u00c4\u00b0", "\u0130")
+    .replaceAll("\u00c3\u009c", "\u00dc")
+    .replaceAll("\u00c3\u0096", "\u00d6")
+    .replaceAll("\u00c3\u0087", "\u00c7")
+    .replaceAll("\u00c5\u009e", "\u015e")
+    .replaceAll("\u00c4\u009e", "\u011e");
 }
 
 function extractCellByClass(rowHtml: string, classHint: string): string {
@@ -81,7 +118,7 @@ function extractCellByClass(rowHtml: string, classHint: string): string {
 
 function parseImportanceValue(rowHtml: string, sentimentText: string): 1 | 2 | 3 {
   const normalized = `${rowHtml} ${sentimentText}`.toLowerCase();
-  if (normalized.includes("bull3") || normalized.includes("high") || normalized.includes("yüksek")) return 3;
+  if (normalized.includes("bull3") || normalized.includes("high") || normalized.includes("y\u00fcksek")) return 3;
   if (normalized.includes("bull2") || normalized.includes("medium") || normalized.includes("orta")) return 2;
   return 1;
 }
@@ -93,7 +130,7 @@ function importanceToImpactLevel(value: 1 | 2 | 3): "High" | "Medium" | "Low" {
 }
 
 function toISOTime(dateLabel: string, timeLabel: string): string {
-  if (timeLabel === "Tüm Gün") {
+  if (timeLabel === "T\u00fcm G\u00fcn") {
     return `${dateLabel}T00:00:00+03:00`;
   }
   const normalized = timeLabel.match(/^\d{2}:\d{2}$/) ? timeLabel : "00:00";
@@ -115,7 +152,7 @@ function createEconomicEvent(payload: {
   forecast: string | null;
   previous: string | null;
 }): EconomicEvent {
-  const raw = {
+  return EconomicEventSchema.parse({
     id: hashEventId([payload.idSeed, payload.dateLabel, payload.timeLabel, payload.eventTitle]),
     time: toISOTime(payload.dateLabel, payload.timeLabel),
     currency: payload.currency || "-",
@@ -125,8 +162,7 @@ function createEconomicEvent(payload: {
     forecast: payload.forecast,
     previous: payload.previous,
     impactLevel: importanceToImpactLevel(payload.importance),
-  };
-  return EconomicEventSchema.parse(raw);
+  });
 }
 
 function safeMetricValue(value: string): string | null {
@@ -146,7 +182,7 @@ function parseEconomicRows(html: string, dateLabel: string): EconomicEvent[] {
       if (!eventTitle) return null;
 
       const eventId = rowHtml.match(selector.eventIdPattern)?.[1] ?? `economic-${index + 1}`;
-      const timeLabel = extractCellByClass(rowHtml, selector.classHints.time) || "Tüm Gün";
+      const timeLabel = extractCellByClass(rowHtml, selector.classHints.time) || "T\u00fcm G\u00fcn";
       const currency = extractCellByClass(rowHtml, selector.classHints.currency) || "-";
       return createEconomicEvent({
         idSeed: eventId,
@@ -178,7 +214,7 @@ function parseGenericRows(html: string, dateLabel: string, tab: EconomicTab): Ec
 
       const mapped =
         tab === "holidays"
-          ? { timeLabel: col1 || "Tüm Gün", currency: col2, eventTitle: col3 || col2, actual: null, forecast: null, previous: null }
+          ? { timeLabel: col1 || "T\u00fcm G\u00fcn", currency: col2, eventTitle: col3 || col2, actual: null, forecast: null, previous: null }
           : { timeLabel: col2 || col1, currency: "-", eventTitle: col1, actual: safeMetricValue(col3), forecast: safeMetricValue(col4), previous: safeMetricValue(col5) };
 
       if (!mapped.eventTitle || mapped.eventTitle === "-") return null;
@@ -284,7 +320,7 @@ function storeCache(cacheKey: string, value: { updatedAt: string; events: Econom
 
 async function fetchMirrorHtml(tab: EconomicTab, range: EconomicRange, tabAlias: string): Promise<string> {
   const idx = nowHeaderIndex();
-  const response = await fetch(ENDPOINTS[tab], {
+  const response = await fetch(LEGACY_ENDPOINTS[tab], {
     method: "POST",
     headers: {
       Accept: "application/json, text/javascript, */*; q=0.01",
@@ -314,24 +350,228 @@ async function fetchMirrorHtml(tab: EconomicTab, range: EconomicRange, tabAlias:
   return typeof payload.data === "string" ? payload.data : "";
 }
 
+interface ScrapedEventRow {
+  idSeed: string;
+  timeLabel: string;
+  currency: string;
+  eventTitle: string;
+  importance: 1 | 2 | 3;
+  actual: string | null;
+  forecast: string | null;
+  previous: string | null;
+}
+
+function isScrapedEventRow(payload: unknown): payload is ScrapedEventRow {
+  if (typeof payload !== "object" || payload === null) return false;
+  const candidate = payload as Record<string, unknown>;
+  return (
+    typeof candidate.idSeed === "string" &&
+    typeof candidate.timeLabel === "string" &&
+    typeof candidate.currency === "string" &&
+    typeof candidate.eventTitle === "string" &&
+    (candidate.importance === 1 || candidate.importance === 2 || candidate.importance === 3) &&
+    (typeof candidate.actual === "string" || candidate.actual === null) &&
+    (typeof candidate.forecast === "string" || candidate.forecast === null) &&
+    (typeof candidate.previous === "string" || candidate.previous === null)
+  );
+}
+
+function getDefaultExport(moduleValue: unknown): unknown {
+  if (typeof moduleValue !== "object" || moduleValue === null) return null;
+  return "default" in moduleValue ? (moduleValue as { default: unknown }).default : moduleValue;
+}
+
+function isPuppeteerExtra(value: unknown): value is PuppeteerExtraLike {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.use === "function" && typeof candidate.launch === "function";
+}
+
+async function loadStealthDependencies(): Promise<{ puppeteerExtra: PuppeteerExtraLike; createStealthPlugin: () => unknown }> {
+  const dynamicImport = new Function("modulePath", "return import(modulePath);") as (modulePath: string) => Promise<unknown>;
+  const puppeteerModule = await dynamicImport("puppeteer-extra");
+  const stealthModule = await dynamicImport("puppeteer-extra-plugin-stealth");
+
+  const puppeteerValue = getDefaultExport(puppeteerModule);
+  const stealthValue = getDefaultExport(stealthModule);
+
+  if (!isPuppeteerExtra(puppeteerValue) || typeof stealthValue !== "function") {
+    throw new Error("Stealth dependencies are not available");
+  }
+
+  return {
+    puppeteerExtra: puppeteerValue,
+    createStealthPlugin: stealthValue as () => unknown,
+  };
+}
+
+async function fetchWithStealth(tab: EconomicTab, range: EconomicRange): Promise<EconomicEvent[]> {
+  const { puppeteerExtra, createStealthPlugin } = await loadStealthDependencies();
+
+  if (!stealthInitialized) {
+    puppeteerExtra.use(createStealthPlugin());
+    stealthInitialized = true;
+  }
+
+  const browser = await puppeteerExtra.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--lang=tr-TR,tr", "--disable-dev-shm-usage"],
+  });
+
+  try {
+    const page = await browser.newPage();
+    const idx = nowHeaderIndex();
+    await page.setUserAgent(USER_AGENTS[idx]);
+    await page.setExtraHTTPHeaders({ "Accept-Language": ACCEPT_LANGS[idx % ACCEPT_LANGS.length] });
+
+    await page.goto(PAGE_URLS[tab], { waitUntil: "networkidle2", timeout: 45_000 });
+    await page.waitForSelector("#ecEventsTable", { visible: true, timeout: 20_000 });
+    await page.waitForTimeout(5_000);
+
+    await page.evaluate((rangeLabel: string) => {
+      const nodes = Array.from(document.querySelectorAll("button, a, span"));
+      const target = nodes.find((node) => node.textContent?.trim() === rangeLabel);
+      if (target && target instanceof HTMLElement) {
+        target.click();
+      }
+    }, RANGE_LABELS[range]);
+
+    await page.waitForTimeout(1_500);
+
+    const hasRowsInitially = await page.evaluate(
+      () => document.querySelectorAll("tr[data-event-datetime], tr[id^='eventRowId_']").length > 0,
+    );
+
+    if (!hasRowsInitially && tab === "economic") {
+      await page.evaluate(() => {
+        const clickByContent = (labels: string[]) => {
+          const nodes = Array.from(document.querySelectorAll("button, a, span"));
+          const target = nodes.find((node) => labels.some((label) => node.textContent?.includes(label)));
+          if (target && target instanceof HTMLElement) {
+            target.click();
+          }
+        };
+
+        clickByContent(["Filtreleri G\u00f6ster", "Show Filters"]);
+
+        const inputs = Array.from(
+          document.querySelectorAll<HTMLInputElement>(
+            "input[type='checkbox'][name*='importance'], input[type='checkbox'][id*='importance'], input[type='checkbox'][value='3']",
+          ),
+        );
+
+        const highImportance = inputs.find((input) => input.value === "3" || input.id.includes("importance3"));
+        if (highImportance && !highImportance.checked) {
+          highImportance.click();
+          highImportance.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+
+        clickByContent(["Uygula", "Apply", "Kaydet", "G\u00fcncelle"]);
+      });
+
+      await page.waitForTimeout(1_500);
+    }
+
+    const rawRowsUnknown: unknown = await page.evaluate(() => {
+      const normalize = (value: string | null | undefined): string => (value ?? "").replace(/\s+/g, " ").trim();
+      const rows = Array.from(document.querySelectorAll("tr[data-event-datetime], tr[id^='eventRowId_']"));
+
+      return rows
+        .map((row, index) => {
+          const read = (selectors: string[]): string => {
+            const node = selectors
+              .map((selector) => row.querySelector(selector))
+              .find((entry) => entry && normalize(entry.textContent).length > 0);
+            return normalize(node?.textContent);
+          };
+
+          const title = read(["td[data-column-key='event']", "td.event", "td.left.event"]);
+          if (!title) return null;
+
+          const timeLabel = read(["td[data-column-key='time']", "td.time", "td.first.left.time"]) || "T\u00fcm G\u00fcn";
+          const currency = read(["td[data-column-key='currency']", "td.flagCur", "td.left.flagCur.noWrap"]) || "-";
+
+          const importanceNodes = row.querySelectorAll("i.grayFullBullishIcon, i.grayHalfBullishIcon, i.grayBullishIcon, i.bullishIcon, i[class*='bull']");
+          const importanceRaw = Math.min(3, Math.max(1, importanceNodes.length || 1));
+          const importance: 1 | 2 | 3 = importanceRaw === 3 ? 3 : importanceRaw === 2 ? 2 : 1;
+
+          const actual = read(["td[data-column-key='actual']", "td.act", "td.bold.act"]) || null;
+          const forecast = read(["td[data-column-key='forecast']", "td.fore"]) || null;
+          const previous = read(["td[data-column-key='previous']", "td.prev"]) || null;
+
+          return {
+            idSeed: row.getAttribute("data-event-datetime") ?? row.getAttribute("id") ?? `dom-${index + 1}`,
+            timeLabel,
+            currency,
+            eventTitle: title,
+            importance,
+            actual,
+            forecast,
+            previous,
+          };
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null);
+    });
+
+    const rows = Array.isArray(rawRowsUnknown) ? rawRowsUnknown.filter(isScrapedEventRow) : [];
+    const dateLabel = resolveDateRange(range).from;
+
+    return rows
+      .map((row) =>
+        createEconomicEvent({
+          idSeed: row.idSeed,
+          dateLabel,
+          timeLabel: row.timeLabel,
+          currency: row.currency,
+          eventTitle: normalizeTurkish(row.eventTitle),
+          importance: row.importance,
+          actual: safeMetricValue(normalizeTurkish(row.actual ?? "")),
+          forecast: safeMetricValue(normalizeTurkish(row.forecast ?? "")),
+          previous: safeMetricValue(normalizeTurkish(row.previous ?? "")),
+        }),
+      )
+      .filter((event) => event.eventTitle.length > 0);
+  } finally {
+    await browser.close();
+  }
+}
+
+async function fetchWithServiceEndpoints(tab: EconomicTab, range: EconomicRange): Promise<EconomicEvent[]> {
+  const aliases = TAB_ALIASES[tab];
+  const dateLabel = resolveDateRange(range).from;
+
+  return (
+    await Promise.allSettled(aliases.map((alias) => fetchMirrorHtml(tab, range, alias)))
+  )
+    .map((result) => (result.status === "fulfilled" ? result.value : ""))
+    .map((html) => (tab === "economic" ? parseEconomicRows(html, dateLabel) : parseGenericRows(html, dateLabel, tab)))
+    .find((list) => list.length > 0) ?? [];
+}
+
 export async function fetchEconomicEvents(tab: EconomicTab, range: EconomicRange): Promise<{ updatedAt: string; events: EconomicEvent[] }> {
   const cacheKey = `${tab}:${range}`;
   const fromCache = getCachedResult(cacheKey);
   if (fromCache) return fromCache;
 
-  const aliases = TAB_ALIASES[tab];
-  const dateLabel = resolveDateRange(range).from;
+  let events: EconomicEvent[] = [];
 
-  const events =
-    (
-      await Promise.allSettled(aliases.map((alias) => fetchMirrorHtml(tab, range, alias)))
-    )
-      .map((result) => (result.status === "fulfilled" ? result.value : ""))
-      .map((html) => (tab === "economic" ? parseEconomicRows(html, dateLabel) : parseGenericRows(html, dateLabel, tab)))
-      .find((list) => list.length > 0) ?? [];
+  try {
+    events = await fetchWithStealth(tab, range);
+  } catch {
+    events = [];
+  }
+
+  if (events.length === 0) {
+    events = await fetchWithServiceEndpoints(tab, range);
+  }
 
   const updatedAt = new Date().toISOString();
   const payload = { updatedAt, events };
-  storeCache(cacheKey, payload);
-  return payload;
+
+  if (events.length > 0) {
+    storeCache(cacheKey, payload);
+    return payload;
+  }
+
+  throw new Error("Economic mirror returned empty dataset");
 }

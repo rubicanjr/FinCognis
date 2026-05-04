@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useMemo, useState } from "react";
 import { AlertCircle, Diamond } from "lucide-react";
@@ -30,10 +30,12 @@ const RANGE_TABS: CalendarRangeConfig[] = [
   { key: "week", label: "Bu Hafta" },
 ];
 
+const SYNC_DELAY_MESSAGE = "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.";
+
 function impactChip(importance: 1 | 2 | 3): string {
-  if (importance === 3) return "◆◆◆";
-  if (importance === 2) return "◆◆";
-  return "◆";
+  if (importance === 3) return "???";
+  if (importance === 2) return "??";
+  return "?";
 }
 
 function eventTone(importance: 1 | 2 | 3): string {
@@ -143,19 +145,13 @@ export default function EconomicCalendarPanel() {
         <div className="max-h-[720px] overflow-auto p-3">
           {isLoading ? <LoadingSkeleton /> : null}
 
-          {!isLoading && error ? (
-            <div className="rounded-lg border border-white/10 bg-slate-900/55 px-4 py-6 text-center text-sm text-slate-300">
-              Veri akışı geçici olarak yanıt vermiyor. Lütfen kısa süre sonra tekrar deneyin.
-            </div>
-          ) : null}
-
-          {!isLoading && !error && emptyStateMessage ? (
+          {!isLoading && (error || emptyStateMessage) ? (
             <div data-testid="calendar-empty-state" className="rounded-lg border border-white/10 bg-slate-900/55 px-4 py-6 text-center text-sm text-slate-300">
-              {emptyStateMessage}
+              {SYNC_DELAY_MESSAGE}
             </div>
           ) : null}
 
-          {!isLoading && !error && sortedEvents.length > 0
+          {!isLoading && !error && !emptyStateMessage && sortedEvents.length > 0
             ? sortedEvents.map((event, index) => (
                 <article
                   key={event.id}
@@ -177,10 +173,6 @@ export default function EconomicCalendarPanel() {
             : null}
         </div>
       </div>
-
-      <p className="mt-3 text-xs text-slate-400">
-        Veriler sunucu tarafında eşlenir, yerel bileşenlerle işlenir ve FinCognis arayüz standartlarıyla sunulur.
-      </p>
     </section>
   );
 }

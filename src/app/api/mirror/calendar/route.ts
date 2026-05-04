@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import {
   EconomicMirrorResponseSchema,
   EconomicRangeSchema,
@@ -9,6 +9,7 @@ import {
 import { fetchEconomicEvents } from "@/lib/economic-calendar/mirror";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function parseTab(value: string | null): EconomicTab {
   const parsed = EconomicTabSchema.safeParse(value);
@@ -27,6 +28,20 @@ export async function GET(request: Request) {
 
   try {
     const result = await fetchEconomicEvents(tab, range);
+
+    if (result.events.length === 0) {
+      return NextResponse.json(
+        {
+          error: "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.",
+          tab,
+          range,
+          updatedAt: result.updatedAt,
+          events: [],
+        },
+        { status: 503 },
+      );
+    }
+
     const responsePayload = EconomicMirrorResponseSchema.parse({
       tab,
       range,
