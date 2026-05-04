@@ -9,32 +9,32 @@ interface ExpertiseItem {
 const EXPERTISE_ITEMS: ExpertiseItem[] = [
   {
     icon: CloudCog,
-    title: "Cloud Solutions",
+    title: "Bulut Çözümleri",
     description: "Veri ve karar altyapınızı ölçeklenebilir bulut mimarisiyle güçlendirin.",
   },
   {
     icon: BrainCircuit,
-    title: "Data & AI Consulting",
+    title: "Veri ve Yapay Zekâ Danışmanlığı",
     description: "Yapay zekâ destekli modelleme ile karar kalitesini artıran danışmanlık çerçevesi.",
   },
   {
     icon: LockKeyhole,
-    title: "Cybersecurity",
+    title: "Siber Güvenlik",
     description: "Karar sistemlerinizi güvenlik, erişim kontrolü ve izlenebilirlik katmanlarıyla koruyun.",
   },
   {
     icon: BriefcaseBusiness,
-    title: "Digital Workplace Solutions",
+    title: "Dijital Çalışma Alanı Çözümleri",
     description: "Ekiplerin araştırma ve analiz süreçlerini tek akışta birleştiren verimli çalışma altyapısı.",
   },
   {
     icon: Scale,
-    title: "Digital Strategy",
+    title: "Dijital Strateji",
     description: "Risk-getiri dengesini kurumsal hedeflerle hizalayan stratejik karar çerçevesi.",
   },
   {
     icon: ServerCog,
-    title: "IT Modernization",
+    title: "BT Modernizasyonu",
     description: "Eski sistemleri modern, hızlı ve sürdürülebilir analitik mimarilere dönüştürün.",
   },
 ];
@@ -44,9 +44,9 @@ export default function AnalyticsBento() {
     <section id="profil-kesif" className="landing-section mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="mb-14 text-center">
         <span className="inline-flex rounded-full border border-white/12 bg-white/5 px-4 py-1 font-display text-xs font-semibold tracking-[0.1em] text-[#8ddfff]">
-          Services
+          Servisler
         </span>
-        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Our Expertise</h2>
+        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Uzmanlık Alanlarımız</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">

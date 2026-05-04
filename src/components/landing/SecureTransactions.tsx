@@ -10,27 +10,27 @@ interface AdvantageCard {
 const ADVANTAGES: AdvantageCard[] = [
   {
     icon: MessageSquareText,
-    title: "Personalized Support",
+    title: "Kişiselleştirilmiş Destek",
     description: "Her yatırım profiline göre uyarlanmış karar desteği ve uzman geri bildirimi.",
   },
   {
     icon: Workflow,
-    title: "With You Every Step",
+    title: "Her Adımda Yanınızda",
     description: "İlk analizden uygulama aksiyonlarına kadar şeffaf ve ölçülebilir süreç yönetimi.",
   },
   {
     icon: Activity,
-    title: "Measurable Impact",
+    title: "Ölçülebilir Etki",
     description: "Sinyal kalitesi, risk skoru ve karar doğruluğu metriklerini düzenli olarak izleyin.",
   },
   {
     icon: Orbit,
-    title: "Future-Ready Solutions",
+    title: "Geleceğe Hazır Çözümler",
     description: "Değişken piyasa koşullarına hızla adapte olan esnek karar altyapısı.",
   },
   {
     icon: Gauge,
-    title: "Transparent Process",
+    title: "Şeffaf Süreç",
     description: "Karar adımlarının tamamını görünür hale getiren açık süreç ve zaman çizelgesi.",
     size: "wide",
   },
@@ -47,9 +47,11 @@ export default function SecureTransactions() {
     <section id="metrik-rehberi" className="landing-section mx-auto max-w-6xl px-4 py-24 sm:px-6">
       <div className="mb-14 text-center">
         <span className="inline-flex rounded-full border border-white/12 bg-white/5 px-4 py-1 font-display text-xs font-semibold tracking-[0.1em] text-[#8ddfff]">
-          Perks
+          Avantajlar
         </span>
-        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Why Teams Choose FinCognis</h2>
+        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
+          Ekipler Neden FinCognis&apos;i Tercih Ediyor
+        </h2>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
@@ -75,7 +77,9 @@ export default function SecureTransactions() {
         <div className="pointer-events-none absolute -bottom-24 left-1/2 h-64 w-[130%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/25" />
         <div className="pointer-events-none absolute -bottom-28 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/15" />
 
-        <h3 className="font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Don’t take our word for it.</h3>
+        <h3 className="font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
+          Sadece bizim sözümüze güvenmeyin.
+        </h3>
 
         <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3">
           {METRICS.map((metric) => (

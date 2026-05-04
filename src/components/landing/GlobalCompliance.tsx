@@ -36,9 +36,9 @@ export default function GlobalCompliance() {
 
       <div className="mb-14 text-center">
         <span className="inline-flex rounded-full border border-white/12 bg-white/5 px-4 py-1 font-display text-xs font-semibold tracking-[0.1em] text-[#8ddfff]">
-          Testimonials
+          Referanslar
         </span>
-        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">What Our Clients Say</h2>
+        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Müşterilerimiz Ne Diyor?</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
