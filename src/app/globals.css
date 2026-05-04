@@ -4,6 +4,10 @@
 
 :root {
   --color-accent-blue: #0a84ff;
+  --type-heading-tracking: -0.02em;
+  --type-kicker-tracking: 0.12em;
+  --type-body-tracking: 0.005em;
+  --type-text-primary: rgb(241 245 249 / 0.9);
   --surface: 248 250 252;
   --surface-bright: 255 255 255;
   --surface-container: 241 245 249;
@@ -101,9 +105,11 @@ html.light {
 }
 
 body {
-  font-family: var(--font-body), "Inter", sans-serif;
+  font-family: var(--font-ui), "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
   background-color: rgb(var(--surface));
   color: rgb(var(--on-surface));
+  letter-spacing: var(--type-body-tracking);
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -121,17 +127,35 @@ body {
 }
 
 .font-headline {
-  font-family: var(--font-editorial-serif), "Cormorant Garamond", Georgia, serif;
+  font-family: var(--font-ui), "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
 }
 
 .font-display {
-  font-family: var(--font-display), "Rajdhani", "Inter", sans-serif;
-  letter-spacing: 0.01em;
+  font-family: var(--font-ui), "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  letter-spacing: 0.005em;
 }
 
 .font-data {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: var(--font-data), "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
   letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+h1,
+h2,
+.heading-tight {
+  letter-spacing: var(--type-heading-tracking);
+}
+
+.kicker-label {
+  letter-spacing: var(--type-kicker-tracking);
+  text-transform: uppercase;
+}
+
+.numeric-data {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
 .glass-panel {
@@ -264,16 +288,16 @@ svg.lucide {
 }
 
 .tools-card-asset-symbol {
-  font-family: var(--font-body), "Inter", sans-serif;
+  font-family: var(--font-ui), "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
   font-size: 1.66rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: #f8fafc;
+  color: #e2e8f0;
 }
 
 .tools-card-metric-label {
-  font-family: var(--font-body), "Inter", sans-serif;
+  font-family: var(--font-ui), "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
   font-size: 1.03rem;
   font-weight: 520;
   letter-spacing: 0.005em;
@@ -281,15 +305,16 @@ svg.lucide {
 }
 
 .tools-card-metric-value {
-  font-family: var(--font-body), "Inter", sans-serif;
+  font-family: var(--font-data), "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
   font-size: 1.04rem;
   font-weight: 640;
   letter-spacing: 0.014em;
-  font-feature-settings: "tnum" 1, "ss01" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
 .tools-card-score-label {
-  font-family: var(--font-body), "Inter", sans-serif;
+  font-family: var(--font-ui), "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
   font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -297,13 +322,14 @@ svg.lucide {
 }
 
 .tools-card-score-value {
-  font-family: var(--font-body), "Inter", sans-serif;
+  font-family: var(--font-data), "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
   font-size: 2rem;
   line-height: 1;
   font-weight: 750;
   letter-spacing: 0.014em;
-  font-feature-settings: "tnum" 1, "ss01" 1;
-  color: #f8fafc;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  color: #e2e8f0;
 }
 
 html[data-theme="light"] .landing-shell,
@@ -579,7 +605,8 @@ html.light .tools-shell .theme-toggle-btn {
 }
 
 .landing-accent-text {
-  color: #8ddfff;
+  color: var(--color-accent-blue);
+  text-shadow: 0 1px 16px rgb(10 132 255 / 0.2);
 }
 
 .landing-finlab-tag {
@@ -687,7 +714,7 @@ html.light .heat-tone-low {
 
 html[data-theme="light"] .landing-accent-text,
 html.light .landing-accent-text {
-  color: #0e7490;
+  color: #0f5bd3;
 }
 
 html[data-theme="light"] .landing-finlab-tag,
@@ -825,7 +852,8 @@ html.light .theme-toggle-btn {
 
 html[data-theme="light"] .landing-accent-text,
 html.light .landing-accent-text {
-  color: #111111 !important;
+  color: #0f5bd3 !important;
+  text-shadow: none !important;
 }
 
 @keyframes asset-neon-flow {

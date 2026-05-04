@@ -1,6 +1,6 @@
 ﻿import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter, Rajdhani } from "next/font/google";
+import { Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SITE_NAME, SITE_URL, OG_IMAGE_PATH, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
@@ -28,20 +28,20 @@ const websiteId = `${SITE_URL}#website`;
 
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-body",
+  variable: "--font-ui",
   display: "swap",
 });
 
 const cormorantGaramond = Cormorant_Garamond({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-editorial-serif",
   weight: ["500", "600", "700"],
   display: "swap",
 });
 
-const rajdhani = Rajdhani({
+const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-display",
+  variable: "--font-data",
   weight: ["500", "600", "700"],
   display: "swap",
 });
@@ -84,7 +84,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="tr"
       suppressHydrationWarning
-      className={`${inter.variable} ${cormorantGaramond.variable} ${rajdhani.variable} h-full min-h-full bg-surface text-on-surface`}
+      className={`${inter.variable} ${cormorantGaramond.variable} ${jetBrainsMono.variable} h-full min-h-full bg-surface text-on-surface`}
       style={{ backgroundColor: "rgb(var(--surface))", color: "rgb(var(--on-surface))" }}
       >
       <head>

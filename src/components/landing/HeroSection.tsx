@@ -1,4 +1,5 @@
-﻿import {
+﻿import React from "react";
+import {
   ArrowLeftRight,
   BadgeCheck,
   BarChart3,
@@ -80,12 +81,12 @@ export default function HeroSection() {
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5">
           <BadgeCheck className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
-          <span className="font-display text-[11px] font-semibold tracking-[0.1em] text-[#dff4ff]">
+          <span className="kicker-label font-display text-[11px] font-semibold text-[#dff4ff]">
             FinCognis Karşılaştırma ve Profil Keşif Katmanı
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-4xl font-semibold leading-[1.08] tracking-[0.01em] text-slate-50 sm:text-5xl md:text-6xl lg:text-7xl">
+        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-4xl font-semibold leading-[1.08] tracking-[-0.02em] text-white/90 sm:text-5xl md:text-6xl lg:text-7xl">
           Yatırım kararlarını <span className="landing-accent-text">sistemle al</span>
         </h1>
 
@@ -149,11 +150,11 @@ export default function HeroSection() {
                     const changeTone = card.up ? "text-success" : "text-error";
                     return (
                       <div key={card.label} className="rounded-xl border border-white/12 bg-slate-900/55 p-3 backdrop-blur-xl">
-                        <div className="mb-2 flex items-center justify-between">
+                        <div className="mb-2 flex items-baseline justify-between">
                           <span className="font-display text-[10px] tracking-[0.08em] text-slate-400">{card.label}</span>
-                          <MetricIcon className="h-4 w-4 text-slate-400" strokeWidth={1.5} />
+                          <MetricIcon className="relative top-px h-4 w-4 text-slate-400" strokeWidth={1.5} />
                         </div>
-                        <div className="font-data text-base font-semibold tracking-[0.01em] text-slate-100 sm:text-lg">{card.value}</div>
+                        <div className="font-data tabular-nums lining-nums text-base font-semibold tracking-[0.01em] text-slate-100 sm:text-lg">{card.value}</div>
                         <div className={`mt-1 font-display text-[10px] tracking-[0.06em] ${changeTone}`}>{card.change}</div>
                       </div>
                     );
@@ -261,7 +262,7 @@ export default function HeroSection() {
                         strokeLinecap="round"
                         transform="rotate(-90 40 40)"
                       />
-                      <text x="40" y="42" textAnchor="middle" fill="#f1f5f9" fontSize="10" fontFamily="Inter" fontWeight="700">
+                      <text x="40" y="42" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="JetBrains Mono" fontWeight="700">
                         64%
                       </text>
                     </svg>
@@ -297,3 +298,4 @@ export default function HeroSection() {
     </header>
   );
 }
+
