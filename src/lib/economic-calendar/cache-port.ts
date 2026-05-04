@@ -1,5 +1,10 @@
-﻿import { createHash } from "node:crypto";
+import { createHash } from "node:crypto";
 import { EconomicEventSchema, type EconomicEvent as ApiEconomicEvent, type EconomicRange, type EconomicTab } from "@/lib/economic-calendar/schema";
+
+export interface RedisConfig {
+  url: string;
+  token: string;
+}
 
 export interface EconomicEvent {
   time: string;
@@ -11,14 +16,26 @@ export interface EconomicEvent {
   previous: string | null;
 }
 
+export type WorkerStatus = "SUCCESS" | "WAF_BLOCKED" | "TIMEOUT" | "FATAL_ERROR";
+
+export interface WorkerState {
+  status: WorkerStatus;
+  timestamp: number;
+}
+
 export interface CachePayload {
   lastUpdated: number;
-  isStale: boolean;
   data: EconomicEvent[];
+  workerStatus: WorkerState;
+  isFallbackData: boolean;
+}
+
+export interface CachedCalendarData extends CachePayload {
+  isStale: boolean;
 }
 
 export interface CachePort {
-  get(key: string): Promise<CachePayload | null>;
+  get(key: string): Promise<CachedCalendarData | null>;
   set(key: string, value: CachePayload, ttl: number): Promise<void>;
   extendTtl(key: string, ttl: number): Promise<void>;
   acquireLock(key: string, ttl: number, owner: string): Promise<boolean>;
@@ -27,14 +44,21 @@ export interface CachePort {
 
 const CACHE_KEY_ROOT = "calendar_events_tr";
 const DATA_STALE_MS = 5 * 60 * 1000;
-const MEMORY_CACHE_DEFAULT_TTL_SECONDS = 24 * 60 * 60;
 
-function readUpstashEnv(): { url: string; token: string } | null {
+export const CALENDAR_TTL_SECONDS = 24 * 60 * 60;
+export const CALENDAR_FALLBACK_TTL_SECONDS = 5 * 60;
+export const CALENDAR_LOCK_TTL_SECONDS = 45;
+
+function readRedisConfigOrThrow(): RedisConfig {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
+  if (!url || !token) {
+    throw new Error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be defined.");
+  }
   return { url, token };
 }
+
+const REDIS_CONFIG = readRedisConfigOrThrow();
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -54,10 +78,21 @@ function isCacheEconomicEvent(value: unknown): value is EconomicEvent {
   );
 }
 
+function isWorkerState(value: unknown): value is WorkerState {
+  if (!isObjectRecord(value)) return false;
+  const status = value.status;
+  return (
+    (status === "SUCCESS" || status === "WAF_BLOCKED" || status === "TIMEOUT" || status === "FATAL_ERROR") &&
+    typeof value.timestamp === "number" &&
+    Number.isFinite(value.timestamp)
+  );
+}
+
 export function isCachePayload(value: unknown): value is CachePayload {
   if (!isObjectRecord(value)) return false;
   if (typeof value.lastUpdated !== "number" || !Number.isFinite(value.lastUpdated)) return false;
-  if (typeof value.isStale !== "boolean") return false;
+  if (typeof value.isFallbackData !== "boolean") return false;
+  if (!isWorkerState(value.workerStatus)) return false;
   if (!Array.isArray(value.data)) return false;
   return value.data.every(isCacheEconomicEvent);
 }
@@ -67,26 +102,12 @@ function decodeResult(payload: unknown): unknown {
   return "result" in payload ? payload.result : null;
 }
 
-function toNumberResult(value: unknown): number {
-  if (typeof value === "number") return value;
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function createUpstashCachePort(): CachePort {
-  const env = readUpstashEnv();
-  if (!env) {
-    throw new Error("Upstash cache is not configured.");
-  }
-
+function createUpstashCachePort(config: RedisConfig): CachePort {
   const call = async (command: Array<string | number>): Promise<unknown> => {
-    const response = await fetch(env.url, {
+    const response = await fetch(config.url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.token}`,
+        Authorization: `Bearer ${config.token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(command),
@@ -109,20 +130,19 @@ function createUpstashCachePort(): CachePort {
       const parsedUnknown: unknown = JSON.parse(raw);
       if (!isCachePayload(parsedUnknown)) return null;
 
-      const isStale = Date.now() - parsedUnknown.lastUpdated > DATA_STALE_MS;
       return {
         ...parsedUnknown,
-        isStale,
+        isStale: Date.now() - parsedUnknown.lastUpdated > DATA_STALE_MS,
       };
     },
     async set(key, value, ttl) {
-      await call(["SET", key, JSON.stringify(value), "EX", ttl]);
+      await call(["SET", key, JSON.stringify(value), "EX", Math.max(1, ttl)]);
     },
     async extendTtl(key, ttl) {
-      await call(["EXPIRE", key, ttl]);
+      await call(["EXPIRE", key, Math.max(1, ttl)]);
     },
     async acquireLock(key, ttl, owner) {
-      const payload = await call(["SET", key, owner, "NX", "EX", ttl]);
+      const payload = await call(["SET", key, owner, "NX", "EX", Math.max(1, ttl)]);
       return decodeResult(payload) === "OK";
     },
     async releaseLock(key, owner) {
@@ -133,93 +153,28 @@ function createUpstashCachePort(): CachePort {
   };
 }
 
-interface MemoryEntry {
-  payload: CachePayload;
-  expiresAt: number;
-}
-
-interface MemoryLockEntry {
-  owner: string;
-  expiresAt: number;
-}
-
-function createMemoryCachePort(): CachePort {
-  const dataStore = new Map<string, MemoryEntry>();
-  const lockStore = new Map<string, MemoryLockEntry>();
-
-  const now = (): number => Date.now();
-
-  const getDataEntry = (key: string): MemoryEntry | null => {
-    const entry = dataStore.get(key);
-    if (!entry) return null;
-    if (entry.expiresAt <= now()) {
-      dataStore.delete(key);
-      return null;
-    }
-    return entry;
-  };
-
-  const getLockEntry = (key: string): MemoryLockEntry | null => {
-    const entry = lockStore.get(key);
-    if (!entry) return null;
-    if (entry.expiresAt <= now()) {
-      lockStore.delete(key);
-      return null;
-    }
-    return entry;
-  };
-
-  return {
-    async get(key) {
-      const entry = getDataEntry(key);
-      if (!entry) return null;
-      const isStale = now() - entry.payload.lastUpdated > DATA_STALE_MS;
-      return {
-        ...entry.payload,
-        isStale,
-      };
-    },
-    async set(key, value, ttl) {
-      const safeTtl = Math.max(1, ttl || MEMORY_CACHE_DEFAULT_TTL_SECONDS);
-      dataStore.set(key, {
-        payload: value,
-        expiresAt: now() + safeTtl * 1000,
-      });
-    },
-    async extendTtl(key, ttl) {
-      const entry = getDataEntry(key);
-      if (!entry) return;
-      const safeTtl = Math.max(1, ttl || MEMORY_CACHE_DEFAULT_TTL_SECONDS);
-      dataStore.set(key, {
-        ...entry,
-        expiresAt: now() + safeTtl * 1000,
-      });
-    },
-    async acquireLock(key, ttl, owner) {
-      const current = getLockEntry(key);
-      if (current) return false;
-      const safeTtl = Math.max(1, ttl);
-      lockStore.set(key, {
-        owner,
-        expiresAt: now() + safeTtl * 1000,
-      });
-      return true;
-    },
-    async releaseLock(key, owner) {
-      const current = getLockEntry(key);
-      if (!current) return;
-      if (current.owner !== owner) return;
-      lockStore.delete(key);
-    },
-  };
-}
-
 let cachePortSingleton: CachePort | null = null;
 
 export function getCalendarCachePort(): CachePort {
   if (cachePortSingleton) return cachePortSingleton;
-  cachePortSingleton = readUpstashEnv() ? createUpstashCachePort() : createMemoryCachePort();
+  cachePortSingleton = createUpstashCachePort(REDIS_CONFIG);
   return cachePortSingleton;
+}
+
+export function createWorkerState(status: WorkerStatus): WorkerState {
+  return {
+    status,
+    timestamp: Date.now(),
+  };
+}
+
+export function createFallbackCachePayload(status: WorkerStatus): CachePayload {
+  return {
+    lastUpdated: Date.now(),
+    data: [],
+    workerStatus: createWorkerState(status),
+    isFallbackData: true,
+  };
 }
 
 function eventHash(input: string): string {
@@ -265,9 +220,6 @@ export function buildCalendarCacheKey(tab: EconomicTab, range: EconomicRange): s
 export function buildCalendarLockKey(tab: EconomicTab, range: EconomicRange): string {
   return `${CACHE_KEY_ROOT}:lock:${tab}:${range}`;
 }
-
-export const CALENDAR_TTL_SECONDS = 24 * 60 * 60;
-export const CALENDAR_LOCK_TTL_SECONDS = 45;
 
 export function shouldTreatAsStale(lastUpdated: number): boolean {
   return Date.now() - lastUpdated > DATA_STALE_MS;

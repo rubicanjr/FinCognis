@@ -52,10 +52,10 @@ export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const tab = parseTab(searchParams.get("tab"));
   const range = parseRange(searchParams.get("range"));
-  const cachePort = getCalendarCachePort();
-  const cacheKey = buildCalendarCacheKey(tab, range);
 
   try {
+    const cachePort = getCalendarCachePort();
+    const cacheKey = buildCalendarCacheKey(tab, range);
     const cached = await cachePort.get(cacheKey);
     if (cached) {
       const responsePayload = EconomicMirrorResponseSchema.parse({

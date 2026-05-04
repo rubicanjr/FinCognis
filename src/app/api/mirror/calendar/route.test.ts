@@ -1,7 +1,7 @@
 ﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CachePayload } from "@/lib/economic-calendar/cache-port";
+import type { CachedCalendarData } from "@/lib/economic-calendar/cache-port";
 
-const mockGet = vi.fn<() => Promise<CachePayload | null>>();
+const mockGet = vi.fn<() => Promise<CachedCalendarData | null>>();
 
 vi.mock("@/lib/economic-calendar/cache-port", () => ({
   buildCalendarCacheKey: (tab: string, range: string) => `calendar_events_tr:${tab}:${range}`,
@@ -35,6 +35,11 @@ describe("/api/mirror/calendar adaptive gateway", () => {
     mockGet.mockResolvedValueOnce({
       lastUpdated: Date.now() - 6 * 60 * 1000,
       isStale: true,
+      isFallbackData: false,
+      workerStatus: {
+        status: "SUCCESS",
+        timestamp: Date.now() - 6 * 60 * 1000,
+      },
       data: [
         {
           time: new Date().toISOString(),

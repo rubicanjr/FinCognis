@@ -3,6 +3,7 @@ import {
   CALENDAR_TTL_SECONDS,
   apiEventToCacheEvent,
   buildCalendarCacheKey,
+  createWorkerState,
   getCalendarCachePort,
   type CachePort,
 } from "@/lib/economic-calendar/cache-port";
@@ -509,10 +510,30 @@ async function fetchWithServiceEndpoints(tab: EconomicTab, range: EconomicRange)
 }
 
 async function scrapeCalendarEvents(tab: EconomicTab, range: EconomicRange): Promise<EconomicEvent[]> {
-  const stealthEvents = await fetchWithStealth(tab, range).catch(() => [] as EconomicEvent[]);
+  const stealthEvents = await fetchWithStealth(tab, range).catch((error: unknown) => {
+    const reason = error instanceof Error ? error.message : "unknown_stealth_error";
+    console.error({
+      event: "SCRAPE_FAILED",
+      source: "stealth",
+      tab,
+      range,
+      reason,
+    });
+    return [] as EconomicEvent[];
+  });
   if (stealthEvents.length > 0) return stealthEvents;
 
-  return fetchWithServiceEndpoints(tab, range).catch(() => [] as EconomicEvent[]);
+  return fetchWithServiceEndpoints(tab, range).catch((error: unknown) => {
+    const reason = error instanceof Error ? error.message : "unknown_service_error";
+    console.error({
+      event: "SCRAPE_FAILED",
+      source: "service_endpoint",
+      tab,
+      range,
+      reason,
+    });
+    return [] as EconomicEvent[];
+  });
 }
 
 export async function refreshCalendarCache(
@@ -535,8 +556,9 @@ export async function refreshCalendarCache(
 
   const payload = {
     lastUpdated: Date.now(),
-    isStale: false,
     data: events.map(apiEventToCacheEvent),
+    workerStatus: createWorkerState("SUCCESS"),
+    isFallbackData: false,
   };
 
   await cachePort.set(buildCalendarCacheKey(tab, range), payload, CALENDAR_TTL_SECONDS);
