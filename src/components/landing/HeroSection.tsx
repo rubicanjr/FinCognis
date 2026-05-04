@@ -79,9 +79,6 @@ export default function HeroSection() {
       <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl rounded-[2.4rem] border border-white/10 bg-[radial-gradient(circle_at_50%_110%,rgba(34,211,238,0.24),rgba(3,10,24,0.94)_58%)] px-4 py-16 text-center shadow-[0_36px_120px_-64px_rgba(34,211,238,0.4)] sm:px-8">
-        <div className="pointer-events-none absolute -bottom-28 left-1/2 h-64 w-[130%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/28" />
-        <div className="pointer-events-none absolute -bottom-32 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/16" />
-
         <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5">
           <BadgeCheck className="h-4 w-4 text-[#9ce7ff]" strokeWidth={1.5} />
           <span className="kicker-label font-display text-[11px] font-semibold text-[#dff4ff]">
@@ -113,7 +110,7 @@ export default function HeroSection() {
         </div>
       </div>
 
-      <div className="animate-fade-in-up-delay-3 relative mx-auto mt-20 w-full max-w-6xl">
+      <div className="animate-fade-in-up-delay-3 relative mx-auto mt-10 w-full max-w-6xl">
         <div className="landing-card overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:p-4">
           <div className="w-full select-none overflow-hidden rounded-xl border border-white/12 bg-slate-950/70" aria-label="FinCognis Dashboard Önizleme">
             <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
