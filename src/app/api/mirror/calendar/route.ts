@@ -1,4 +1,5 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { fetchCalendarEvents, type CalendarFetchResult } from "@/lib/economic-calendar/mirror";
 import {
   EconomicMirrorResponseSchema,
   EconomicRangeSchema,
@@ -6,12 +7,6 @@ import {
   type EconomicRange,
   type EconomicTab,
 } from "@/lib/economic-calendar/schema";
-import {
-  buildCalendarCacheKey,
-  cacheEventToApiEvent,
-  getCalendarCachePort,
-  shouldTreatAsStale,
-} from "@/lib/economic-calendar/cache-port";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,31 +21,24 @@ function parseRange(value: string | null): EconomicRange {
   return parsed.success ? parsed.data : "today";
 }
 
-function buildRefreshUrl(request: Request, tab: EconomicTab, range: EconomicRange, sync: boolean): string {
-  const url = new URL("/api/mirror/calendar/refresh", request.url);
-  url.searchParams.set("mode", "single");
-  url.searchParams.set("tab", tab);
-  url.searchParams.set("range", range);
-  if (sync) url.searchParams.set("sync", "1");
-
-  const secret = process.env.CALENDAR_REFRESH_SECRET;
-  if (secret) url.searchParams.set("secret", secret);
-
-  return url.toString();
-}
-
-async function triggerRefresh(request: Request, tab: EconomicTab, range: EconomicRange, sync: boolean): Promise<void> {
-  const url = buildRefreshUrl(request, tab, range, sync);
-  await fetch(url, {
-    method: "POST",
-    cache: "no-store",
-    signal: sync ? AbortSignal.timeout(5000) : undefined,
-  });
-}
-
-function isMissingUpstashConfig(message: string): boolean {
-  const normalized = message.toLowerCase();
-  return normalized.includes("upstash_redis_rest_url") || normalized.includes("upstash_redis_rest_token") || normalized.includes("upstash");
+async function fetchWithTimeout(tab: EconomicTab, range: EconomicRange) {
+  return Promise.race([
+    fetchCalendarEvents(tab, range),
+    new Promise<CalendarFetchResult>((resolve) => {
+      setTimeout(() => {
+        resolve({
+          status: "SOURCE_UNAVAILABLE",
+          tab,
+          range,
+          updatedAt: null,
+          events: [],
+          message: "Takvim kaynağı zaman aşımına uğradı. Lütfen kısa süre sonra tekrar deneyin.",
+          source: "none",
+          reason: "timeout",
+        });
+      }, 15_000);
+    }),
+  ]);
 }
 
 export async function GET(request: Request) {
@@ -59,86 +47,41 @@ export async function GET(request: Request) {
   const range = parseRange(searchParams.get("range"));
 
   try {
-    const cachePort = getCalendarCachePort();
-    const cacheKey = buildCalendarCacheKey(tab, range);
-    const cached = await cachePort.get(cacheKey);
-    if (cached) {
-      const responsePayload = EconomicMirrorResponseSchema.parse({
-        tab,
-        range,
-        updatedAt: new Date(cached.lastUpdated).toISOString(),
-        events: cached.data.map(cacheEventToApiEvent),
-      });
+    const result = await fetchWithTimeout(tab, range);
+    const payload = EconomicMirrorResponseSchema.parse({
+      status: result.status,
+      message: result.message,
+      tab: result.tab,
+      range: result.range,
+      updatedAt: result.updatedAt,
+      events: result.events,
+    });
 
-      return NextResponse.json(responsePayload, {
-        status: 200,
-        headers: {
-          "X-Cache-Status": "HIT",
-          "X-Data-Age": shouldTreatAsStale(cached.lastUpdated) ? "stale" : "fresh",
-        },
-      });
-    }
-
-    await triggerRefresh(request, tab, range, true).catch(() => undefined);
-
-    const warmed = await cachePort.get(cacheKey);
-    if (warmed) {
-      const responsePayload = EconomicMirrorResponseSchema.parse({
-        tab,
-        range,
-        updatedAt: new Date(warmed.lastUpdated).toISOString(),
-        events: warmed.data.map(cacheEventToApiEvent),
-      });
-
-      return NextResponse.json(responsePayload, {
-        status: 200,
-        headers: {
-          "X-Cache-Status": "FAST-WARM",
-          "X-Data-Age": shouldTreatAsStale(warmed.lastUpdated) ? "stale" : "fresh",
-        },
-      });
-    }
-
-    void triggerRefresh(request, tab, range, false);
-
-    return NextResponse.json(
-      {
-        status: "INITIALIZING",
-        message: "Veriler ilk kez hazırlanıyor, lütfen bekleyin...",
-        tab,
-        range,
-        updatedAt: null,
-        events: [],
+    return NextResponse.json(payload, {
+      status: 200,
+      headers: {
+        "X-Calendar-Status": result.status,
+        "X-Calendar-Source": result.source,
       },
-      {
-        status: 202,
-        headers: {
-          "X-Cache-Status": "MISS",
-          "X-Data-Age": "empty",
-        },
-      },
-    );
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Bilinmeyen takvim hatası";
-    if (isMissingUpstashConfig(message)) {
-      return NextResponse.json(
-        {
-          status: "INITIALIZING",
-          message: "Takvim servisi başlatılıyor, lütfen kısa süre sonra tekrar deneyin.",
-          tab,
-          range,
-          updatedAt: null,
-          events: [],
-        },
-        {
-          status: 202,
-          headers: {
-            "X-Cache-Status": "CONFIG-MISS",
-            "X-Data-Age": "empty",
-          },
-        },
-      );
-    }
-    return NextResponse.json({ error: message }, { status: 503 });
+    const message = error instanceof Error ? error.message : "Takvim verisi şu anda alınamıyor.";
+    const payload = EconomicMirrorResponseSchema.parse({
+      status: "SOURCE_UNAVAILABLE",
+      message: "Takvim verisinde geçici senkronizasyon gecikmesi var. Lütfen kısa süre sonra tekrar deneyin.",
+      tab,
+      range,
+      updatedAt: null,
+      events: [],
+    });
+
+    return NextResponse.json(payload, {
+      status: 200,
+      headers: {
+        "X-Calendar-Status": "SOURCE_UNAVAILABLE",
+        "X-Calendar-Source": "none",
+        "X-Calendar-Error": message,
+      },
+    });
   }
 }

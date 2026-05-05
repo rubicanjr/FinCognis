@@ -30,7 +30,7 @@ const RANGE_TABS: CalendarRangeConfig[] = [
   { key: "week", label: "Bu Hafta" },
 ];
 
-const SYNC_DELAY_MESSAGE = "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.";
+const SOURCE_UNAVAILABLE_MESSAGE = "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.";
 
 function impactChip(importance: 1 | 2 | 3): string {
   if (importance === 3) return "◆◆◆";
@@ -55,6 +55,18 @@ function formatUpdateTime(iso: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
+    timeZone: "Europe/Istanbul",
+  }).format(date);
+}
+
+function formatEventTime(iso: string): string {
+  const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return "--:--";
+  return new Intl.DateTimeFormat("tr-TR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Istanbul",
   }).format(date);
 }
 
@@ -71,8 +83,7 @@ function LoadingSkeleton() {
 export default function EconomicCalendarPanel() {
   const [activeTab, setActiveTab] = useState<EconomicTab>("economic");
   const [activeRange, setActiveRange] = useState<EconomicRange>("today");
-
-  const { events, isLoading, error, isInitializing, updatedAt, emptyStateMessage, toast } = useEconomicCalendar(activeTab, activeRange);
+  const { events, isLoading, updatedAt, emptyStateMessage, toast, status } = useEconomicCalendar(activeTab, activeRange);
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
@@ -128,9 +139,9 @@ export default function EconomicCalendarPanel() {
         <div
           data-testid="calendar-toast"
           className={`mb-4 flex items-start gap-2 rounded-xl px-3 py-2 text-sm ${
-            isInitializing
-              ? "border border-[#0a84ff]/40 bg-[#0a84ff]/12 text-[#dff4ff]"
-              : "border border-red-400/35 bg-red-500/10 text-red-200"
+            status === "SOURCE_UNAVAILABLE"
+              ? "border border-red-400/35 bg-red-500/10 text-red-200"
+              : "border border-[#0a84ff]/40 bg-[#0a84ff]/12 text-[#dff4ff]"
           }`}
         >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -152,20 +163,21 @@ export default function EconomicCalendarPanel() {
         <div className="max-h-[720px] overflow-auto p-3">
           {isLoading ? <LoadingSkeleton /> : null}
 
-          {!isLoading && (error || emptyStateMessage) ? (
+          {!isLoading && emptyStateMessage ? (
             <div data-testid="calendar-empty-state" className="rounded-lg border border-white/10 bg-slate-900/55 px-4 py-6 text-center text-sm text-slate-300">
-              {emptyStateMessage ?? SYNC_DELAY_MESSAGE}
+              {emptyStateMessage}
             </div>
           ) : null}
 
-          {!isLoading && !error && !emptyStateMessage && sortedEvents.length > 0
+          {!isLoading && !emptyStateMessage && sortedEvents.length > 0
             ? sortedEvents.map((event, index) => (
                 <article
                   key={event.id}
+                  data-testid="calendar-row"
                   className="animate-fade-in-up mb-2 grid grid-cols-[88px_92px_minmax(220px,1fr)_96px_120px_120px_120px] items-center gap-0 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 backdrop-blur-md"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <span className="font-data text-sm text-slate-200">{new Date(event.time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="font-data text-sm text-slate-200">{formatEventTime(event.time)}</span>
                   <span className="font-data text-sm text-slate-300">{event.currency}</span>
                   <span className="pr-2 text-sm text-slate-100">{event.eventTitle}</span>
                   <span className={`inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs ${eventTone(event.importance)}`}>
@@ -180,6 +192,10 @@ export default function EconomicCalendarPanel() {
             : null}
         </div>
       </div>
+
+      {!isLoading && status === "SOURCE_UNAVAILABLE" ? (
+        <p className="mt-3 text-xs text-slate-400">{SOURCE_UNAVAILABLE_MESSAGE}</p>
+      ) : null}
     </section>
   );
 }

@@ -1,6 +1,6 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { fetchCalendarEvents } from "@/lib/economic-calendar/mirror";
 import { EconomicRangeSchema, EconomicTabSchema, type EconomicRange, type EconomicTab } from "@/lib/economic-calendar/schema";
-import { buildCalendarCacheKey, getCalendarCachePort, type EconomicEvent as CachedEconomicEvent } from "@/lib/economic-calendar/cache-port";
 
 interface LegacyCalendarEntry {
   id: string;
@@ -29,12 +29,12 @@ function toImportanceLabel(value: 1 | 2 | 3): "Yüksek" | "Orta" | "Düşük" {
   return "Düşük";
 }
 
-function toLegacyEntries(events: CachedEconomicEvent[]): LegacyCalendarEntry[] {
+function toLegacyEntries(events: Awaited<ReturnType<typeof fetchCalendarEvents>>["events"]): LegacyCalendarEntry[] {
   return events.map((event) => ({
-    id: `${event.time}-${event.currency}-${event.event}`,
+    id: event.id,
     timeLabel: new Date(event.time).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }),
     currency: event.currency,
-    event: event.event,
+    event: event.eventTitle,
     importance: toImportanceLabel(event.importance),
     actual: event.actual ?? "-",
     forecast: event.forecast ?? "-",
@@ -43,30 +43,23 @@ function toLegacyEntries(events: CachedEconomicEvent[]): LegacyCalendarEntry[] {
 }
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const tab = parseTab(searchParams.get("tab"));
   const range = parseRange(searchParams.get("range"));
 
-  try {
-    const cachePort = getCalendarCachePort();
-    const cached = await cachePort.get(buildCalendarCacheKey(tab, range));
-    if (!cached) {
-      return NextResponse.json({ error: "Takvim verisi hazırlanıyor.", entries: [] }, { status: 503 });
-    }
-
-    return NextResponse.json(
-      {
-        tab,
-        range,
-        updatedAt: new Date(cached.lastUpdated).toISOString(),
-        entries: toLegacyEntries(cached.data),
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Bilinmeyen takvim hatası";
-    return NextResponse.json({ error: message, entries: [] }, { status: 502 });
-  }
+  const result = await fetchCalendarEvents(tab, range);
+  return NextResponse.json(
+    {
+      status: result.status,
+      tab,
+      range,
+      updatedAt: result.updatedAt,
+      entries: toLegacyEntries(result.events),
+      message: result.message,
+    },
+    { status: 200 },
+  );
 }

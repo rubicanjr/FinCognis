@@ -1,101 +1,82 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CachedCalendarData } from "@/lib/economic-calendar/cache-port";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockGet = vi.fn<() => Promise<CachedCalendarData | null>>();
-const mockGetCalendarCachePort = vi.fn();
+const mockFetchCalendarEvents = vi.fn();
 
-vi.mock("@/lib/economic-calendar/cache-port", () => ({
-  buildCalendarCacheKey: (tab: string, range: string) => `calendar_events_tr:${tab}:${range}`,
-  cacheEventToApiEvent: (event: { time: string; currency: string; event: string; importance: 1 | 2 | 3; actual: string | null; forecast: string | null; previous: string | null }) => ({
-    id: "mock-id",
-    time: event.time,
-    currency: event.currency,
-    eventTitle: event.event,
-    importance: event.importance,
-    actual: event.actual,
-    forecast: event.forecast,
-    previous: event.previous,
-    impactLevel: event.importance === 3 ? "High" : event.importance === 2 ? "Medium" : "Low",
-  }),
-  getCalendarCachePort: () => mockGetCalendarCachePort(),
-  shouldTreatAsStale: (lastUpdated: number) => Date.now() - lastUpdated > 5 * 60 * 1000,
+vi.mock("@/lib/economic-calendar/mirror", () => ({
+  fetchCalendarEvents: mockFetchCalendarEvents,
 }));
 
-describe("/api/mirror/calendar adaptive gateway", () => {
+describe("/api/mirror/calendar route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetCalendarCachePort.mockReturnValue({
-      get: mockGet,
-    });
+    vi.resetModules();
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("returns 200 with stale cached data when refresh is delayed", async () => {
-    mockGet.mockResolvedValueOnce({
-      lastUpdated: Date.now() - 6 * 60 * 1000,
-      isStale: true,
-      isFallbackData: false,
-      workerStatus: {
-        status: "SUCCESS",
-        timestamp: Date.now() - 6 * 60 * 1000,
-      },
-      data: [
+  it("returns READY response with events", async () => {
+    mockFetchCalendarEvents.mockResolvedValueOnce({
+      status: "READY",
+      tab: "economic",
+      range: "today",
+      updatedAt: "2026-05-05T10:00:00.000Z",
+      events: [
         {
-          time: new Date().toISOString(),
+          id: "evt-1",
+          time: "2026-05-05T13:00:00+03:00",
           currency: "USD",
-          event: "ABD PMI",
           importance: 3,
-          actual: null,
-          forecast: "52.0",
-          previous: "51.8",
+          eventTitle: "ABD PMI",
+          actual: "53.1",
+          forecast: "52.8",
+          previous: "52.2",
+          impactLevel: "High",
         },
       ],
+      message: null,
+      source: "stealth",
+      reason: null,
     });
 
     const { GET } = await import("@/app/api/mirror/calendar/route");
     const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=economic&range=today"));
-    const payload = (await response.json()) as {
-      events: Array<{ eventTitle: string }>;
-      updatedAt: string;
-    };
+    const payload = (await response.json()) as { status: string; events: Array<{ eventTitle: string }> };
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("X-Cache-Status")).toBe("HIT");
-    expect(response.headers.get("X-Data-Age")).toBe("stale");
+    expect(payload.status).toBe("READY");
     expect(payload.events[0]?.eventTitle).toBe("ABD PMI");
-    expect(typeof payload.updatedAt).toBe("string");
+    expect(response.headers.get("X-Calendar-Status")).toBe("READY");
   });
 
-  it("returns 202 INITIALIZING on cold start while self-warm is triggered", async () => {
-    mockGet.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
-
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 202 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { GET } = await import("@/app/api/mirror/calendar/route");
-    const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=ipo&range=yesterday"));
-    const payload = (await response.json()) as { status?: string };
-
-    expect(response.status).toBe(202);
-    expect(payload.status).toBe("INITIALIZING");
-    expect(fetchMock).toHaveBeenCalled();
-  });
-
-  it("returns 202 INITIALIZING when Upstash config is missing", async () => {
-    mockGetCalendarCachePort.mockImplementationOnce(() => {
-      throw new Error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be defined.");
+  it("returns SOURCE_UNAVAILABLE response without 5xx", async () => {
+    mockFetchCalendarEvents.mockResolvedValueOnce({
+      status: "SOURCE_UNAVAILABLE",
+      tab: "holidays",
+      range: "today",
+      updatedAt: null,
+      events: [],
+      message: "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.",
+      source: "none",
+      reason: "empty_or_invalid_source",
     });
 
     const { GET } = await import("@/app/api/mirror/calendar/route");
-    const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=economic&range=tomorrow"));
-    const payload = (await response.json()) as { status?: string; message?: string };
+    const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=holidays&range=today"));
+    const payload = (await response.json()) as { status: string; message: string | null };
 
-    expect(response.status).toBe(202);
-    expect(payload.status).toBe("INITIALIZING");
-    expect(payload.message).toContain("Takvim servisi");
-    expect(response.headers.get("X-Cache-Status")).toBe("CONFIG-MISS");
+    expect(response.status).toBe(200);
+    expect(payload.status).toBe("SOURCE_UNAVAILABLE");
+    expect(payload.message).toContain("geçici");
+    expect(response.headers.get("X-Calendar-Status")).toBe("SOURCE_UNAVAILABLE");
+  });
+
+  it("falls back to SOURCE_UNAVAILABLE when mirror throws", async () => {
+    mockFetchCalendarEvents.mockRejectedValueOnce(new Error("mirror crash"));
+
+    const { GET } = await import("@/app/api/mirror/calendar/route");
+    const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=ipo&range=tomorrow"));
+    const payload = (await response.json()) as { status: string; events: unknown[] };
+
+    expect(response.status).toBe(200);
+    expect(payload.status).toBe("SOURCE_UNAVAILABLE");
+    expect(payload.events).toEqual([]);
   });
 });

@@ -11,7 +11,8 @@
     "start:windows:fast": "powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 -Port 4173 -SkipBuild",
     "start:windows:keepalive": "powershell -ExecutionPolicy Bypass -File scripts/start-local-keepalive.ps1 -Port 4173",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@radix-ui/react-tabs": "^1.1.13",
@@ -30,6 +31,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@types/node": "22.19.17",
