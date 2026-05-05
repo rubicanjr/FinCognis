@@ -21,7 +21,7 @@ function getSessionId(): string {
 export default function OnlineUsersBadge() {
   const [displayUsers, setDisplayUsers] = useState(10);
 
-  const tooltip = useMemo(() => `${displayUsers} kişi şuan sitede`, [displayUsers]);
+  const tooltip = useMemo(() => `${displayUsers} kişi şu an sitede`, [displayUsers]);
 
   useEffect(() => {
     const sessionId = getSessionId();
@@ -46,8 +46,11 @@ export default function OnlineUsersBadge() {
       }
     };
 
-    ping();
-    const timer = window.setInterval(ping, 15000);
+    void ping();
+    const timer = window.setInterval(() => {
+      void ping();
+    }, 15000);
+
     return () => {
       mounted = false;
       window.clearInterval(timer);

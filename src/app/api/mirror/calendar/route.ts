@@ -48,6 +48,11 @@ async function triggerRefresh(request: Request, tab: EconomicTab, range: Economi
   });
 }
 
+function isMissingUpstashConfig(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return normalized.includes("upstash_redis_rest_url") || normalized.includes("upstash_redis_rest_token") || normalized.includes("upstash");
+}
+
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const tab = parseTab(searchParams.get("tab"));
@@ -115,6 +120,25 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Bilinmeyen takvim hatası";
+    if (isMissingUpstashConfig(message)) {
+      return NextResponse.json(
+        {
+          status: "INITIALIZING",
+          message: "Takvim servisi başlatılıyor, lütfen kısa süre sonra tekrar deneyin.",
+          tab,
+          range,
+          updatedAt: null,
+          events: [],
+        },
+        {
+          status: 202,
+          headers: {
+            "X-Cache-Status": "CONFIG-MISS",
+            "X-Data-Age": "empty",
+          },
+        },
+      );
+    }
     return NextResponse.json({ error: message }, { status: 503 });
   }
 }

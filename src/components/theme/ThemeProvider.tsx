@@ -42,13 +42,11 @@ function getSystemPreference(): "dark" | "light" {
 }
 
 function getDefaultThemeConfig(): ThemeConfig {
-  // 1) Read system preference once.
-  const mode = getSystemPreference();
-  // 2) Return strict default config.
+  // 1) Return deterministic SSR/CSR initial theme to prevent hydration mismatch.
   return {
-    mode,
+    mode: "dark",
     isSystemPreferred: true,
-    updatedAt: new Date().toISOString(),
+    updatedAt: "1970-01-01T00:00:00.000Z",
   };
 }
 
@@ -57,8 +55,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<ThemeConfig>(getDefaultThemeConfig);
 
   useEffect(() => {
-    // 1) Resolve persisted config from storage.
-    const persisted = readThemeConfigFromStorage(getDefaultThemeConfig());
+    // 1) Resolve persisted config from storage with client-side system preference fallback.
+    const clientDefault: ThemeConfig = {
+      mode: getSystemPreference(),
+      isSystemPreferred: true,
+      updatedAt: new Date().toISOString(),
+    };
+    const persisted = readThemeConfigFromStorage(clientDefault);
     // 2) Keep state synchronized with persisted config.
     setConfig(persisted);
   }, []);

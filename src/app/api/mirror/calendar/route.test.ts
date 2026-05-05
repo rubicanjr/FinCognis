@@ -1,7 +1,8 @@
-﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CachedCalendarData } from "@/lib/economic-calendar/cache-port";
 
 const mockGet = vi.fn<() => Promise<CachedCalendarData | null>>();
+const mockGetCalendarCachePort = vi.fn();
 
 vi.mock("@/lib/economic-calendar/cache-port", () => ({
   buildCalendarCacheKey: (tab: string, range: string) => `calendar_events_tr:${tab}:${range}`,
@@ -16,15 +17,16 @@ vi.mock("@/lib/economic-calendar/cache-port", () => ({
     previous: event.previous,
     impactLevel: event.importance === 3 ? "High" : event.importance === 2 ? "Medium" : "Low",
   }),
-  getCalendarCachePort: () => ({
-    get: mockGet,
-  }),
+  getCalendarCachePort: () => mockGetCalendarCachePort(),
   shouldTreatAsStale: (lastUpdated: number) => Date.now() - lastUpdated > 5 * 60 * 1000,
 }));
 
 describe("/api/mirror/calendar adaptive gateway", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetCalendarCachePort.mockReturnValue({
+      get: mockGet,
+    });
   });
 
   afterEach(() => {
@@ -80,5 +82,20 @@ describe("/api/mirror/calendar adaptive gateway", () => {
     expect(response.status).toBe(202);
     expect(payload.status).toBe("INITIALIZING");
     expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it("returns 202 INITIALIZING when Upstash config is missing", async () => {
+    mockGetCalendarCachePort.mockImplementationOnce(() => {
+      throw new Error("UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be defined.");
+    });
+
+    const { GET } = await import("@/app/api/mirror/calendar/route");
+    const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=economic&range=tomorrow"));
+    const payload = (await response.json()) as { status?: string; message?: string };
+
+    expect(response.status).toBe(202);
+    expect(payload.status).toBe("INITIALIZING");
+    expect(payload.message).toContain("Takvim servisi");
+    expect(response.headers.get("X-Cache-Status")).toBe("CONFIG-MISS");
   });
 });

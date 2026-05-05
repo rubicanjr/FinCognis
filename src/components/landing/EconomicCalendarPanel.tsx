@@ -33,9 +33,9 @@ const RANGE_TABS: CalendarRangeConfig[] = [
 const SYNC_DELAY_MESSAGE = "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.";
 
 function impactChip(importance: 1 | 2 | 3): string {
-  if (importance === 3) return "???";
-  if (importance === 2) return "??";
-  return "?";
+  if (importance === 3) return "◆◆◆";
+  if (importance === 2) return "◆◆";
+  return "◆";
 }
 
 function eventTone(importance: 1 | 2 | 3): string {
