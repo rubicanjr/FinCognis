@@ -1,7 +1,8 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
-import EconomicCalendarPanel from "@/components/landing/EconomicCalendarPanel";
+import EconomicCalendar from "@/components/Calendar/EconomicCalendar";
+import { getMostActiveStocks } from "@/lib/api";
 import { SITE_NAME, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
@@ -10,7 +11,9 @@ export const metadata: Metadata = createPageMetadata({
   path: "/ekonomik-takvim",
 });
 
-export default function EconomicCalendarPage() {
+export default async function EconomicCalendarPage() {
+  const stockFlow = await getMostActiveStocks();
+
   return (
     <div className="landing-shell relative min-h-screen overflow-hidden text-slate-100">
       <div className="landing-shell__aurora pointer-events-none absolute inset-0" />
@@ -24,11 +27,11 @@ export default function EconomicCalendarPage() {
               Piyasa Etkinliklerini Anlık İzleyin
             </h1>
             <p className="mt-4 max-w-3xl text-slate-300">
-              Ekonomik Takvim, Tatiller, Temettüler, Bölünmeler ve Halka Arz başlıklarını tek ekranda izleyin.
+              RapidAPI destekli akış üzerinden en aktif varlıkları canlı takip edin ve güncel market hızını tek panelde görün.
             </p>
           </section>
 
-          <EconomicCalendarPanel />
+          <EconomicCalendar state={stockFlow.state} rows={stockFlow.rows} lastUpdated={stockFlow.lastUpdated} message={stockFlow.message} />
         </main>
         <Footer />
       </div>
