@@ -49,20 +49,14 @@ const SPONSORS = [
   {
     name: "Spindor AI",
     href: "https://www.spindorai.com/",
-    logo: "/partners/spindor.svg",
-    className: "h-11 w-11 rounded-2xl",
+    logo: "/partners/spindor-s.webp",
+    className: "h-12 w-12 landing-sponsor-logo--vivid",
   },
   {
     name: "Masqot",
     href: "https://www.masqot.co/",
     logo: "/partners/masqot.png",
     className: "h-9 w-auto landing-sponsor-logo--masqot",
-  },
-  {
-    name: "Natuvisio",
-    href: "https://natuvisio.com/tr",
-    logo: "/partners/natuvisio.svg",
-    className: "h-11 w-11 rounded-full",
   },
 ];
 
@@ -273,9 +267,12 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="landing-card mt-6 overflow-hidden rounded-2xl border border-white/12 bg-slate-950/50 py-3 backdrop-blur-xl">
+        <div className="relative left-1/2 mt-8 w-screen -translate-x-1/2 overflow-hidden py-3">
+          <div className="mb-3 text-center">
+            <span className="font-display text-sm font-semibold tracking-[0.08em] text-white/75">Stratejik Partnerlerimiz</span>
+          </div>
           <div className="landing-sponsor-marquee">
-            {[...SPONSORS, ...SPONSORS, ...SPONSORS].map((sponsor, index) => (
+            {[...SPONSORS, ...SPONSORS, ...SPONSORS, ...SPONSORS].map((sponsor, index) => (
               <a
                 key={`${sponsor.name}-${index}`}
                 href={sponsor.href}
