@@ -1,0 +1,131 @@
+﻿{
+    "scannedCount":  101,
+    "orphaned":  [
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\app\\robots.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\app\\sitemap.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\AssetSearchInput.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\auth\\ToolsLoginScreen.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\Calendar\\EconomicCalendar.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\AnalyticsBento.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\BoardSection.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\ContactSection.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\EconomicCalendarPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\EconomicCalendarWidget.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\Footer.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\GlobalCompliance.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\HeroSection.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\LandingUpdatesSection.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\Navbar.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\OnlineUsersBadge.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\SecureTransactions.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\SeoContentSection.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\landing\\TeamSection.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\theme\\ThemeProvider.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\theme\\ThemeToggleButton.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\CommissionCalculator.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commissionHelpers.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\CorrelationTest.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\StressTest.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\ToolsPageClient.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\AnalyticsPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\ComparisonPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\constants.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\InsightsPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\SelectionPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\Shared.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\SupportPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\TopPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\types.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\useCommissionCalculator.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\math.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\MetricExplanation.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\types.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\universal-asset-comparison.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\UniversalAssetComparisonPanel.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\universe.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\Visuals.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\stress\\data.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\stress\\engine.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\stress\\math.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\stress\\StressResults.tsx",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\stress\\types.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\data\\asset-catalog.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\hooks\\useAssetSearch.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\hooks\\useEconomicCalendar.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\api.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\finlab.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\investing.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\seo.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\auth\\auth-session.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\auth\\google-oauth.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\auth\\tools-gateway.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\compliance\\investment-language-guard.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\contracts\\core-schemas.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\contracts\\decision-types.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\contracts\\universal-asset-schemas.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\economic-calendar\\cache-port.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\economic-calendar\\mirror.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\economic-calendar\\schema.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\economic-calendar\\selectors.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\gateways\\market-data-gateway.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\services\\decision-engine-service.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\services\\decision-input-parser.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\services\\profile-discovery-config.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\services\\universal-asset-analysis-service.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\text\\turkish-normalization.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\theme\\theme-controller.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\theme\\theme-storage.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\services\\yahoo-symbol-search.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\utils\\asset-validators.ts",
+                     "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\utils\\supabase.ts"
+                 ],
+    "mislocated":  [
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\theme\\ThemeProvider.tsx",
+                           "reason":  "Hook export inside components",
+                           "recommend":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\hooks\\theme\\ThemeProvider.tsx"
+                       },
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\useCommissionCalculator.ts",
+                           "reason":  "Hook export inside components",
+                           "recommend":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\hooks\\tools\\commission\\useCommissionCalculator.ts"
+                       }
+                   ],
+    "smelly":  [
+
+               ],
+    "violations":  [
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commissionHelpers.ts",
+                           "lines":  469
+                       },
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\useCommissionCalculator.ts",
+                           "lines":  879
+                       },
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\correlation\\UniversalAssetComparisonPanel.tsx",
+                           "lines":  1127
+                       },
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\stress\\engine.ts",
+                           "lines":  626
+                       },
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\economic-calendar\\mirror.ts",
+                           "lines":  572
+                       },
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\gateways\\market-data-gateway.ts",
+                           "lines":  517
+                       },
+                       {
+                           "file":  "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\lib\\services\\universal-asset-analysis-service.ts",
+                           "lines":  2450
+                       }
+                   ],
+    "namingViolations":  [
+                             "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\AssetSearchInput.tsx",
+                             "C:\\Users\\rubic\\OneDrive\\Masaüstü\\FINANSKODU\\Fincept\\FinceptTerminal\\FinCognis\\src\\components\\tools\\commission\\InsightsPanel.tsx"
+                         ]
+}

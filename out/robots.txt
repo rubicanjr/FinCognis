@@ -1,0 +1,5 @@
+User-Agent: *
+Allow: /
+
+Host: https://fincognis.onrender.com
+Sitemap: https://fincognis.onrender.com/sitemap.xml

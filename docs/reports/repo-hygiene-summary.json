@@ -1,0 +1,10 @@
+{
+  "scanned": 103,
+  "orphaned": 12,
+  "mislocated": 1,
+  "smelly": 0,
+  "violations": 7,
+  "naming": 4,
+  "redundantBarrels": 0,
+  "reportPath": "docs/reports/repo-hygiene-report.md"
+}

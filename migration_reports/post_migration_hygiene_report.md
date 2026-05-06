@@ -1,0 +1,184 @@
+# Repository Hygiene Report
+
+- Generated: 2026-05-06T20:14:02.289608Z
+- files_scanned: 329
+- dependency_edges: 430
+- orphaned_files: 141
+- mislocated_entities: 3
+- smelly_dependencies: 0
+- violations_gt_450: 18
+- redundant_barrels: 0
+
+## [ORPHANED_FILES]
+- `CommissionCalculator.tsx`
+- `bin/cli.mjs`
+- `calculateCommission.js`
+- `cli/__init__.py`
+- `hooks/src/__tests__/frontmatter.test.ts`
+- `hooks/src/__tests__/plugin-check.test.ts`
+- `hooks/src/__tests__/project-identity.test.ts`
+- `hooks/src/__tests__/session-id.test.ts`
+- `hooks/src/achievement-tracker.ts`
+- `hooks/src/agent-memory-loader.ts`
+- `hooks/src/agent-memory-saver.ts`
+- `hooks/src/agent-observer.ts`
+- `hooks/src/agent-tuner.ts`
+- `hooks/src/anti-rationalization.ts`
+- `hooks/src/arch-context-inject.ts`
+- `hooks/src/bash-audit-log.ts`
+- `hooks/src/canavar-cli.ts`
+- `hooks/src/canavar-cross-review.ts`
+- `hooks/src/canavar-error-broadcast.ts`
+- `hooks/src/canavar-skill-tracker.ts`
+- `hooks/src/canavar-subagent-tracker.ts`
+- `hooks/src/changelog-on-release.ts`
+- `hooks/src/compiler-in-the-loop-stop.ts`
+- `hooks/src/compiler-in-the-loop.ts`
+- `hooks/src/credential-deny.ts`
+- `hooks/src/dashboard-ws-emitter.ts`
+- `hooks/src/dream-consolidator.ts`
+- `hooks/src/edit-context-inject.ts`
+- `hooks/src/epistemic-reminder.ts`
+- `hooks/src/file-claims.ts`
+- `hooks/src/graph-indexer.ts`
+- `hooks/src/handoff-index.ts`
+- `hooks/src/impact-refactor.ts`
+- `hooks/src/import-error-detector.ts`
+- `hooks/src/import-validator.ts`
+- `hooks/src/instinct-cli.ts`
+- `hooks/src/instinct-consolidator.ts`
+- `hooks/src/instinct-loader.ts`
+- `hooks/src/intent-classifier.ts`
+- `hooks/src/magic-doc-tracker.ts`
+- `hooks/src/magic-doc-updater.ts`
+- `hooks/src/mcp-discovery.ts`
+- `hooks/src/memory-awareness.ts`
+- `hooks/src/memory-graph.ts`
+- `hooks/src/model-router.ts`
+- `hooks/src/palace-auto-save.ts`
+- `hooks/src/palace-recall.ts`
+- `hooks/src/passive-learner.ts`
+- `hooks/src/path-rules.ts`
+- `hooks/src/plan-tracker.ts`
+- `hooks/src/plugin-registry.ts`
+- `hooks/src/post-edit-diagnostics.ts`
+- `hooks/src/pre-compact-continuity.ts`
+- `hooks/src/pre-tool-use-broadcast.ts`
+- `hooks/src/prompt-improver.ts`
+- `hooks/src/sast-on-edit.ts`
+- `hooks/src/session-analytics.ts`
+- `hooks/src/session-compressor.ts`
+- `hooks/src/session-end-cleanup.ts`
+- `hooks/src/session-outcome.ts`
+- `hooks/src/session-register.ts`
+- `hooks/src/session-start-continuity.ts`
+- `hooks/src/session-start-dead-code.ts`
+- `hooks/src/session-start-recall.ts`
+- `hooks/src/session-start-tldr-cache.ts`
+- `hooks/src/shared/comms.ts`
+- `hooks/src/shared/index.ts`
+- `hooks/src/shared/learning-extractor.ts`
+- `hooks/src/shared/plugin-check.ts`
+- `hooks/src/shared/project-state.ts`
+- `hooks/src/shared/spec-context.ts`
+- `hooks/src/signature-helper.ts`
+- `hooks/src/skill-activation-prompt.ts`
+- `hooks/src/smart-memory-recall.ts`
+- `hooks/src/smart-search-router.ts`
+- `hooks/src/statusline-writer.ts`
+- `hooks/src/subagent-stop-learner.ts`
+- `hooks/src/tamagotchi-engine.ts`
+- `hooks/src/tldr-context-inject.ts`
+- `hooks/src/tldr-read-enforcer.ts`
+- `hooks/src/token-tracker.ts`
+- `hooks/src/typescript-preflight.ts`
+- `next-env.d.ts`
+- `screening_main.py`
+- `spy_otm_puts_analysis.py`
+- `src/app/api/analyze/route.ts`
+- `src/app/api/assets/route.ts`
+- `src/app/api/decision/route.ts`
+- `src/app/api/investing/news/route.ts`
+- `src/app/api/market/calendar/route.ts`
+- `src/app/api/market/most-active/route.ts`
+- `src/app/api/mirror/calendar/refresh/route.test.ts`
+- `src/app/api/mirror/calendar/refresh/route.ts`
+- `src/app/api/mirror/calendar/route.test.ts`
+- `src/app/api/mirror/calendar/route.ts`
+- `src/app/api/presence/route.ts`
+- `src/app/api/yahoo-symbol-search/route.ts`
+- `src/app/api/yahoo-symbol-verify/route.ts`
+- `src/app/ekip/page.tsx`
+- `src/app/ekonomik-takvim/page.tsx`
+- `src/app/finlab/[slug]/page.tsx`
+- `src/app/finlab/page.tsx`
+- `src/app/haberler/[articleId]/page.tsx`
+- `src/app/haberler/page.tsx`
+- `src/app/iletisim/page.tsx`
+- `src/app/layout.tsx`
+- `src/app/page.tsx`
+- `src/app/robots.ts`
+- `src/app/sitemap.ts`
+- `src/app/tools/error.tsx`
+- `src/app/tools/login/page.tsx`
+- `src/app/tools/page.tsx`
+- `src/app/yonetim-kurulu/page.tsx`
+- `src/components/Calendar/economic-calendar.test.tsx`
+- `src/components/landing/LandingUpdatesSection.tsx`
+- `src/components/landing/economic-calendar-panel.test.tsx`
+- `src/components/landing/economic-calendar-widget.test.tsx`
+- `src/components/landing/hero-typography.test.tsx`
+- `src/components/tools/CommissionCalculator.tsx`
+- `src/components/tools/StressTest.tsx`
+- `src/components/tools/correlation/Visuals.tsx`
+- `src/components/tools/correlation/universal-asset-comparison.test.ts`
+- `src/lib/api/calendar-client.test.ts`
+- `src/lib/auth/google-oauth.test.ts`
+- `src/lib/auth/tools-gateway.test.ts`
+- `src/lib/economic-calendar/mirror.ts`
+- `src/lib/repo-hygiene/rules.test.ts`
+- `src/lib/services/decision-engine-service.test.ts`
+- `src/lib/services/decision-input-parser.test.ts`
+- `src/lib/services/universal-asset-analysis-service.test.ts`
+- `src/lib/text/turkish-normalization.test.ts`
+- `src/lib/theme/theme-controller.test.ts`
+- `src/lib/theme/theme-storage.test.ts`
+- `src/test/setup.ts`
+- `test.py`
+- `tradingagents/__init__.py`
+- `tradingagents/dataflows/__init__.py`
+- `tradingagents/graph/__init__.py`
+- `tradingagents/llm_clients/anthropic_client.py`
+- `tradingagents/llm_clients/azure_client.py`
+- `tradingagents/screening/__init__.py`
+
+## [MISLOCATED_ENTITIES]
+- `src/components/theme/ThemeProvider.tsx` -> `src/hooks/theme/ThemeProvider.tsx` (Hook declaration inside components)
+- `src/components/tools/commission/useCommissionCalculator.ts` -> `src/hooks/tools/commission/useCommissionCalculator.ts` (Hook-like filename in components)
+- `src/components/tools/commission/useCommissionCalculator.ts` -> `src/hooks/tools/commission/useCommissionCalculator.ts` (Hook declaration inside components)
+
+## [SMELLY_DEPENDENCIES]
+- None detected by heuristics
+
+## [VIOLATIONS]
+- `src/lib/services/universal-asset-analysis-service.ts`: 2450 lines
+- `cli/main.py`: 1221 lines
+- `src/components/tools/correlation/UniversalAssetComparisonPanel.tsx`: 1127 lines
+- `hooks/src/daemon-client.ts`: 979 lines
+- `src/components/tools/commission/useCommissionCalculator.ts`: 879 lines
+- `hooks/src/shared/db-utils-pg.ts`: 785 lines
+- `tests/test_memory_log.py`: 773 lines
+- `hooks/src/smart-search-router.ts`: 628 lines
+- `src/components/tools/stress/engine.ts`: 626 lines
+- `hooks/src/session-start-continuity.ts`: 586 lines
+- `src/lib/economic-calendar/mirror.ts`: 572 lines
+- `hooks/src/skill-activation-prompt.ts`: 566 lines
+- `src/lib/gateways/market-data-gateway.ts`: 517 lines
+- `hooks/src/shared/erotetic-questions.ts`: 509 lines
+- `hooks/src/tldr-context-inject.ts`: 507 lines
+- `hooks/src/tldr-read-enforcer.ts`: 504 lines
+- `src/components/tools/commissionHelpers.ts`: 469 lines
+- `hooks/src/shared/memory-client.ts`: 455 lines
+
+## [REDUNDANT_BARREL_FILES]
+- None detected
