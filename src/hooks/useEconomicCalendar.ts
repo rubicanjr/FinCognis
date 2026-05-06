@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -61,7 +61,7 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
           isLoading: false,
           error: isUnavailable ? payload.message ?? SOURCE_UNAVAILABLE_MESSAGE : null,
           updatedAt: payload.updatedAt,
-          toast: isUnavailable ? payload.message ?? SOURCE_UNAVAILABLE_MESSAGE : null,
+          toast: payload.message,
         });
       } catch (error: unknown) {
         if (!active || controller.signal.aborted) return;

@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockFetchCalendarEvents = vi.fn();
 
-vi.mock("@/lib/economic-calendar/mirror", () => ({
+vi.mock("@/lib/api/calendar-client", () => ({
   fetchCalendarEvents: mockFetchCalendarEvents,
 }));
 
@@ -32,7 +32,7 @@ describe("/api/mirror/calendar route", () => {
         },
       ],
       message: null,
-      source: "stealth",
+      source: "rapidapi",
       reason: null,
     });
 
@@ -68,8 +68,8 @@ describe("/api/mirror/calendar route", () => {
     expect(response.headers.get("X-Calendar-Status")).toBe("SOURCE_UNAVAILABLE");
   });
 
-  it("falls back to SOURCE_UNAVAILABLE when mirror throws", async () => {
-    mockFetchCalendarEvents.mockRejectedValueOnce(new Error("mirror crash"));
+  it("falls back to SOURCE_UNAVAILABLE when client throws", async () => {
+    mockFetchCalendarEvents.mockRejectedValueOnce(new Error("client crash"));
 
     const { GET } = await import("@/app/api/mirror/calendar/route");
     const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=ipo&range=tomorrow"));

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { fetchCalendarEvents } from "@/lib/economic-calendar/mirror";
+﻿import { NextResponse } from "next/server";
+import { fetchCalendarEvents } from "@/lib/api/calendar-client";
 import { EconomicRangeSchema, EconomicTabSchema, type EconomicRange, type EconomicTab } from "@/lib/economic-calendar/schema";
 
 interface LegacyCalendarEntry {

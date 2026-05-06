@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { fetchCalendarEvents, type CalendarFetchResult } from "@/lib/economic-calendar/mirror";
+﻿import { NextResponse } from "next/server";
+import { fetchCalendarEvents, type CalendarFetchResult } from "@/lib/api/calendar-client";
 import {
   EconomicMirrorResponseSchema,
   EconomicRangeSchema,
