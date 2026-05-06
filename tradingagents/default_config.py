@@ -35,6 +35,10 @@ DEFAULT_CONFIG = {
     "max_debate_rounds": 1,
     "max_risk_discuss_rounds": 1,
     "max_recur_limit": 100,
+    # Screening defaults
+    "bist_universe": os.getenv("BIST_UNIVERSE", "bist30"),
+    "screening_output_dir": os.getenv("SCREENING_OUTPUT_DIR", "./screening_reports"),
+    "llm_provider_default": os.getenv("LLM_PROVIDER", "anthropic"),
     # Data vendor configuration
     # Category-level configuration (default for all tools in category)
     "data_vendors": {

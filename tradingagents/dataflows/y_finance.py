@@ -6,6 +6,16 @@ import yfinance as yf
 import os
 from .stockstats_utils import StockstatsUtils, _clean_dataframe, yf_retry, load_ohlcv, filter_financials_by_date
 
+
+def normalize_yfinance_symbol(symbol: str, market: str = "auto") -> str:
+    """
+    BIST sembollerini yfinance formatına çevirir.
+    """
+    normalized = symbol.upper().strip()
+    if market.lower() == "bist" and not normalized.endswith(".IS"):
+        return f"{normalized}.IS"
+    return normalized
+
 def get_YFin_data_online(
     symbol: Annotated[str, "ticker symbol of the company"],
     start_date: Annotated[str, "Start date in yyyy-mm-dd format"],

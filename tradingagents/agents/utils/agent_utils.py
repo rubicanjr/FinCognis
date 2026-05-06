@@ -19,6 +19,33 @@ from tradingagents.agents.utils.news_data_tools import (
     get_global_news
 )
 
+DATA_INTEGRITY_RULES = """
+CRITICAL DATA INTEGRITY RULES — READ BEFORE ANALYSIS:
+
+NEVER fabricate financial figures. If a number is not
+present in the tool output provided to you, write
+"Data not available" instead.
+If you cannot verify a specific number from the provided
+tool output, write 'Data unavailable' instead of estimating.
+Never fabricate financial figures, dates, or percentages.
+NEVER extrapolate or estimate missing data points.
+Missing data = report the gap, do not fill it.
+For BIST stocks: All analysis is in TRY (Turkish Lira)
+unless explicitly stated otherwise. Do not convert
+currencies without explicit instruction.
+Confidence levels: Always state your confidence as:
+HIGH (data directly from source)
+MEDIUM (derived/calculated from source data)
+LOW (inferred — flag clearly)
+NOT AVAILABLE (data missing)
+This system produces EDUCATIONAL analysis only.
+Never use: buy, sell, invest, recommend.
+Always use: analyze, observe, note, indicate.
+For Turkish macro context: High inflation (TUFE > 40%
+annual) suppresses real returns. Always distinguish
+nominal vs real returns in BIST analysis.
+"""
+
 
 def get_language_instruction() -> str:
     """Return a prompt instruction for the configured output language.
@@ -32,6 +59,10 @@ def get_language_instruction() -> str:
     if lang.strip().lower() == "english":
         return ""
     return f" Write your entire response in {lang}."
+
+
+def get_data_integrity_rules() -> str:
+    return DATA_INTEGRITY_RULES
 
 
 def build_instrument_context(ticker: str) -> str:

@@ -13,6 +13,7 @@ from __future__ import annotations
 from tradingagents.agents.schemas import PortfolioDecision, render_pm_decision
 from tradingagents.agents.utils.agent_utils import (
     build_instrument_context,
+    get_data_integrity_rules,
     get_language_instruction,
 )
 from tradingagents.agents.utils.structured import (
@@ -39,7 +40,8 @@ def create_portfolio_manager(llm):
             else ""
         )
 
-        prompt = f"""As the Portfolio Manager, synthesize the risk analysts' debate and deliver the final trading decision.
+        prompt = f"""{get_data_integrity_rules()}
+As the Portfolio Manager, synthesize the risk analysts' debate and deliver the final educational decision.
 
 {instrument_context}
 

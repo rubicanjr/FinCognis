@@ -7,7 +7,7 @@ import functools
 from langchain_core.messages import AIMessage
 
 from tradingagents.agents.schemas import TraderProposal, render_trader_proposal
-from tradingagents.agents.utils.agent_utils import build_instrument_context
+from tradingagents.agents.utils.agent_utils import build_instrument_context, get_data_integrity_rules
 from tradingagents.agents.utils.structured import (
     bind_structured,
     invoke_structured_or_freetext,
@@ -26,8 +26,9 @@ def create_trader(llm):
             {
                 "role": "system",
                 "content": (
-                    "You are a trading agent analyzing market data to make investment decisions. "
-                    "Based on your analysis, provide a specific recommendation to buy, sell, or hold. "
+                    get_data_integrity_rules()
+                    + " You are a trading agent analyzing market data to make educational decision outputs. "
+                    "Based on your analysis, provide a specific recommendation format from the schema. "
                     "Anchor your reasoning in the analysts' reports and the research plan."
                 ),
             },
