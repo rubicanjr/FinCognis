@@ -907,3 +907,52 @@ html.light .asset-search-icon-ring {
     linear-gradient(#ffffff, #ffffff) padding-box,
     conic-gradient(from 0deg, #22d3ee, #3b82f6, #a855f7, #f97316, #22d3ee) border-box;
 }
+
+/* Absolute light-mode readability lock: white surfaces + black typography everywhere */
+html[data-theme="light"] .landing-itu-link,
+html.light .landing-itu-link {
+  background: #ffffff !important;
+  border-color: #a1a1aa !important;
+}
+
+html[data-theme="light"] .presence-badge,
+html.light .presence-badge {
+  color: #111111 !important;
+}
+
+html[data-theme="light"] :is(.landing-shell, .tools-shell),
+html.light :is(.landing-shell, .tools-shell) {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+html[data-theme="light"] :is(.landing-shell, .tools-shell) :is(section, article, aside, div, header, footer, main, nav),
+html.light :is(.landing-shell, .tools-shell) :is(section, article, aside, div, header, footer, main, nav) {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+html[data-theme="light"] :is(.landing-shell, .tools-shell) :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, a, button, label, li, th, td, input, textarea, select),
+html.light :is(.landing-shell, .tools-shell) :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, a, button, label, li, th, td, input, textarea, select) {
+  color: #111111 !important;
+}
+
+html[data-theme="light"] :is(.landing-shell, .tools-shell) :is(input, textarea, select, button),
+html.light :is(.landing-shell, .tools-shell) :is(input, textarea, select, button) {
+  border-color: #d4d4d8 !important;
+}
+
+html[data-theme="light"] .landing-primary-btn,
+html.light .landing-primary-btn {
+  background: #111111 !important;
+  color: #ffffff !important;
+  border-color: #111111 !important;
+}
+
+html[data-theme="light"] .landing-shell :is(svg, path, circle, line),
+html.light .landing-shell :is(svg, path, circle, line),
+html[data-theme="light"] .tools-shell :is(svg, path, circle, line),
+html.light .tools-shell :is(svg, path, circle, line) {
+  color: #111111 !important;
+  stroke: #111111 !important;
+}
