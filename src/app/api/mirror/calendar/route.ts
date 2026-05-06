@@ -11,6 +11,10 @@ import {
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function buildSignature(): string {
+  return process.env.RENDER_GIT_COMMIT?.slice(0, 8) ?? process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ?? "local";
+}
+
 function parseTab(value: string | null): EconomicTab {
   const parsed = EconomicTabSchema.safeParse(value);
   return parsed.success ? parsed.data : "economic";
@@ -62,6 +66,8 @@ export async function GET(request: Request) {
       headers: {
         "X-Calendar-Status": result.status,
         "X-Calendar-Source": result.source,
+        "X-Calendar-Reason": result.reason ?? "none",
+        "X-Calendar-Build": buildSignature(),
       },
     });
   } catch (error) {
@@ -80,6 +86,8 @@ export async function GET(request: Request) {
       headers: {
         "X-Calendar-Status": "SOURCE_UNAVAILABLE",
         "X-Calendar-Source": "none",
+        "X-Calendar-Reason": "route_exception",
+        "X-Calendar-Build": buildSignature(),
         "X-Calendar-Error": message,
       },
     });
