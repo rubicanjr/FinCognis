@@ -76,19 +76,19 @@ export default function SecureTransactions() {
         })}
       </div>
 
-      <div className="relative mt-20 overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_50%_125%,rgba(34,211,238,0.35),rgba(3,10,24,0.92)_56%)] px-6 py-14 text-center sm:px-10">
+      <div className="proof-metrics-panel relative mt-20 overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_50%_125%,rgba(34,211,238,0.35),rgba(3,10,24,0.92)_56%)] px-6 py-14 text-center sm:px-10">
         <div className="pointer-events-none absolute -bottom-24 left-1/2 h-64 w-[130%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/25" />
         <div className="pointer-events-none absolute -bottom-28 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/15" />
 
-        <h3 className="font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
+        <h3 className="proof-metrics-title font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
           Sadece bizim sözümüze güvenmeyin.
         </h3>
 
         <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-3">
           {METRICS.map((metric) => (
             <div key={metric.label}>
-              <p className="font-data text-4xl font-semibold text-slate-50">{metric.value}</p>
-              <p className="mt-2 font-display text-sm text-slate-300">{metric.label}</p>
+              <p className="proof-metrics-value font-data text-4xl font-semibold text-slate-50">{metric.value}</p>
+              <p className="proof-metrics-label mt-2 font-display text-sm text-slate-300">{metric.label}</p>
             </div>
           ))}
         </div>

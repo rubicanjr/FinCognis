@@ -932,8 +932,13 @@ html.light :is(.landing-shell, .tools-shell) :is(section, article, aside, div, h
   background-image: none !important;
 }
 
-html[data-theme="light"] :is(.landing-shell, .tools-shell) :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, a, button, label, li, th, td, input, textarea, select),
-html.light :is(.landing-shell, .tools-shell) :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, a, button, label, li, th, td, input, textarea, select) {
+html[data-theme="light"] :is(.landing-shell, .tools-shell) :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, li, th, td),
+html.light :is(.landing-shell, .tools-shell) :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, em, label, li, th, td) {
+  color: #111111 !important;
+}
+
+html[data-theme="light"] :is(.landing-shell, .tools-shell) :is(a, input, textarea, select),
+html.light :is(.landing-shell, .tools-shell) :is(a, input, textarea, select) {
   color: #111111 !important;
 }
 
@@ -944,9 +949,14 @@ html.light :is(.landing-shell, .tools-shell) :is(input, textarea, select, button
 
 html[data-theme="light"] .landing-primary-btn,
 html.light .landing-primary-btn {
-  background: #111111 !important;
-  color: #ffffff !important;
-  border-color: #111111 !important;
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: #a1a1aa !important;
+}
+
+html[data-theme="light"] .landing-primary-btn:hover,
+html.light .landing-primary-btn:hover {
+  background: #f4f4f5 !important;
 }
 
 html[data-theme="light"] .landing-shell :is(svg, path, circle, line),
@@ -955,4 +965,19 @@ html[data-theme="light"] .tools-shell :is(svg, path, circle, line),
 html.light .tools-shell :is(svg, path, circle, line) {
   color: #111111 !important;
   stroke: #111111 !important;
+}
+
+html[data-theme="light"] .proof-metrics-panel,
+html.light .proof-metrics-panel {
+  background: #ffffff !important;
+  border-color: #d4d4d8 !important;
+}
+
+html[data-theme="light"] .proof-metrics-title,
+html[data-theme="light"] .proof-metrics-value,
+html[data-theme="light"] .proof-metrics-label,
+html.light .proof-metrics-title,
+html.light .proof-metrics-value,
+html.light .proof-metrics-label {
+  color: #111111 !important;
 }

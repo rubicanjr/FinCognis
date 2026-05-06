@@ -52,15 +52,15 @@ export default function Navbar() {
             href="https://itucekirdek.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="landing-itu-link hidden items-center justify-center rounded-lg border border-white/15 bg-slate-900/60 p-1.5 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:bg-slate-900/80 md:inline-flex"
+            className="landing-itu-link hidden items-center justify-center rounded-lg border border-white/25 bg-white px-2 py-1 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 md:inline-flex"
             aria-label="İTÜ Çekirdek sitesine git"
           >
             <Image
-              src="/partners/itucekirdek-badge.png"
+              src="/partners/itucekirdek-wordmark.png"
               alt="İTÜ Çekirdek"
-              width={44}
-              height={44}
-              className="h-8 w-8 rounded-md object-cover"
+              width={92}
+              height={29}
+              className="h-5 w-auto object-contain"
             />
           </a>
           <ThemeToggleButton />
