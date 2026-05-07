@@ -4,6 +4,7 @@ import {
   DecisionResponseSchema,
 } from "@/lib/contracts/universal-asset-schemas";
 import { decisionEngineService } from "@/lib/services/decision-engine-service";
+import { buildScreeningPrompt, isScreeningIntent } from "@/lib/services/screening-intent";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,12 @@ export async function POST(request: Request) {
       { error: "Karar isteği geçersiz.", details: parsed.error.flatten() },
       { status: 400 }
     );
+  }
+
+  if (isScreeningIntent(parsed.data.query)) {
+    return NextResponse.json(buildScreeningPrompt(parsed.data.query), {
+      status: 200,
+    });
   }
 
   const decision = await decisionEngineService.runDecisionQuery(
