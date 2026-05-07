@@ -124,17 +124,17 @@ export default function ToolsPageClient() {
 
             <div className="mt-4 flex flex-wrap items-end gap-3">
               <h1 className="font-display text-3xl font-semibold leading-tight tracking-[0.01em] text-slate-50 sm:text-4xl">
-                Premium Karar Deneyimi
+                Doğrulanmış Karar Çerçevesi
               </h1>
               <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/45 bg-cyan-400/12 px-3 py-1 font-data text-xs text-cyan-100">
                 <CircleGauge className="h-3.5 w-3.5" />
-                Canlı analiz katmanı
+                BIST + ABD analiz katmanı
               </span>
             </div>
 
             <p className="mt-3 max-w-4xl text-sm text-slate-300 sm:text-base">
-              Karşılaştırma, profil keşfi ve metrik içgörülerini tek bir profesyonel akışta birleştiren kullanıcı
-              paneli. Aynı premium görsel dil, aynı karar netliği.
+              Karşılaştırma, profil keşfi ve metrik içgörülerini tek akışta birleştiren; veri doğrulama ve
+              metodoloji şeffaflığını öne alan analiz paneli.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">

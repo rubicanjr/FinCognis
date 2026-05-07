@@ -8,7 +8,7 @@ export const revalidate = 0;
 
 const toolsTitle = `${SITE_NAME} Araçlar | Portföy Karar Motoru`;
 const toolsDescription =
-  "FinCognis araçlar sayfasında serbest metin yatırım sorularını, risk yoğunluğu ve korelasyon etkisi odağında anlaşılır bir karar çerçevesiyle değerlendirin.";
+  "FinCognis araçlar sayfasında BIST ve ABD varlıklarını doğrulanmış metriklerle karşılaştırın; veri boşluklarını açıkça görün ve eğitimsel karar çerçevesiyle değerlendirin.";
 
 export const metadata: Metadata = createPageMetadata({
   title: toolsTitle,
@@ -16,6 +16,8 @@ export const metadata: Metadata = createPageMetadata({
   path: "/tools",
   keywords: [
     "portföy karar motoru",
+    "bist analiz çerçevesi",
+    "abd hisse tarama kriterleri",
     "risk yoğunluğu analizi",
     "korelasyon etkisi",
     "yatırım sorusu analizi",
