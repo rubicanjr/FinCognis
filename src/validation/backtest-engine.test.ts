@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSystemSafetyCertificate,
+  calculateAlphaVsBenchmarkDetailed,
   calculateAlphaVsBenchmark,
   calculateHitRate,
   calculateMaxDrawdown,
   calculateSharpeRatio,
+  calculateTStat,
   createHourlyCandlesFromDaily,
   evaluatePaperTradingReadiness,
   generateWalkForwardWindows,
@@ -83,6 +85,7 @@ describe("backtest-engine", () => {
     expect(calculateSharpeRatio(returns, 252, 0.0)).toBeTypeOf("number");
     expect(calculateMaxDrawdown([100, 110, 90, 95, 87])).toBeCloseTo(0.209, 2);
     expect(calculateAlphaVsBenchmark(returns, benchmark)).toBeTypeOf("number");
+    expect(calculateTStat(returns)).toBeTypeOf("number");
   });
 
   it("builds system safety certificate with hard thresholds", () => {
@@ -91,17 +94,31 @@ describe("backtest-engine", () => {
       maxDrawdown: 0.24,
       hitRate: 0.52,
       alphaVsBenchmark: -0.04,
+      alphaReason: "OK",
+      returnsTStat: 1.2,
+      isStatisticallySignificant: false,
+      significanceThreshold: 1.96,
     });
     const approved = buildSystemSafetyCertificate({
       sharpeRatio: 1.4,
       maxDrawdown: 0.14,
       hitRate: 0.58,
       alphaVsBenchmark: 0.03,
+      alphaReason: "OK",
+      returnsTStat: 2.4,
+      isStatisticallySignificant: true,
+      significanceThreshold: 1.96,
     });
 
     expect(denied.approved).toBe(false);
     expect(denied.reasons.length).toBeGreaterThan(0);
     expect(approved.approved).toBe(true);
+  });
+
+  it("returns alpha reason when benchmark data is insufficient", () => {
+    const result = calculateAlphaVsBenchmarkDetailed([0.01, 0.02, -0.01], []);
+    expect(result.value).toBeNull();
+    expect(result.reason).toBe("BENCHMARK_DATA_INSUFFICIENT");
   });
 
   it("enforces minimum 3-month paper-trading requirement", () => {
@@ -138,7 +155,44 @@ describe("backtest-engine", () => {
 
     expect(result.windows.length).toBeGreaterThan(0);
     expect(result.metrics.sharpeRatio).not.toBeNull();
+    expect(result.metrics.significanceThreshold).toBe(1.96);
     expect(result.visualization.equityCurve.length).toBeGreaterThan(10);
     expect(result.visualization.drawdownSeries.length).toBe(result.visualization.equityCurve.length);
+  });
+
+  it("marks certificate as not significant when t-stat is below threshold", () => {
+    const result = buildSystemSafetyCertificate({
+      hitRate: 0.6,
+      sharpeRatio: 1.3,
+      maxDrawdown: 0.1,
+      alphaVsBenchmark: 0.02,
+      alphaReason: "OK",
+      returnsTStat: 1.4,
+      isStatisticallySignificant: false,
+      significanceThreshold: 1.96,
+    });
+
+    expect(result.approved).toBe(false);
+    expect(result.reasons.some((reason) => reason.includes("istatistiksel"))).toBe(true);
+  });
+
+  it("approves certificate when sharpe/mdd and t-stat conditions are all valid", () => {
+    const result = buildSystemSafetyCertificate({
+      hitRate: 0.6,
+      sharpeRatio: 1.3,
+      maxDrawdown: 0.1,
+      alphaVsBenchmark: 0.02,
+      alphaReason: "OK",
+      returnsTStat: 2.3,
+      isStatisticallySignificant: true,
+      significanceThreshold: 1.96,
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.reasons).toEqual([]);
+  });
+
+  it("returns null sharpe when annualization period is invalid", () => {
+    expect(calculateSharpeRatio([0.01, 0.02, -0.01], 0)).toBeNull();
   });
 });

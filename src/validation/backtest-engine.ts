@@ -51,11 +51,20 @@ export interface WalkForwardWindow {
   endTimestamp: number;
 }
 
+export interface AlphaComputationResult {
+  value: number | null;
+  reason: "OK" | "BENCHMARK_DATA_INSUFFICIENT" | "INVALID_ANNUALIZATION_PERIOD" | "INVALID_RETURNS";
+}
+
 export interface ValidationMetrics {
   hitRate: number | null;
   sharpeRatio: number | null;
   maxDrawdown: number | null;
   alphaVsBenchmark: number | null;
+  alphaReason: AlphaComputationResult["reason"];
+  returnsTStat: number | null;
+  isStatisticallySignificant: boolean;
+  significanceThreshold: number;
 }
 
 export interface BacktestWindowResult {
@@ -68,6 +77,8 @@ export interface SystemSafetyCertificate {
   approved: boolean;
   sharpeRatio: number | null;
   maxDrawdown: number | null;
+  returnsTStat: number | null;
+  statisticallySignificant: boolean;
   reasons: string[];
 }
 
@@ -115,8 +126,9 @@ export interface RunWalkForwardBacktestInput {
 const MIN_OBSERVATIONS = 2;
 const PAPER_TRADING_MIN_DAYS = 90;
 const DEFAULT_INITIAL_CAPITAL = 100_000;
+const T_STAT_THRESHOLD = 1.96;
 const DISCLAIMER =
-  "Bu analiz eðitim amaçlýdýr. Yatýrým tavsiyesi deðildir. SPK lisanslý bir danýþmana baþvurunuz.";
+  "Bu analiz eÄŸitim amaÃ§lÄ±dÄ±r. YatÄ±rÄ±m tavsiyesi deÄŸildir. SPK lisanslÄ± bir danÄ±ÅŸmana baÅŸvurunuz.";
 
 function mean(values: number[]): number | null {
   if (values.length === 0) return null;
@@ -143,6 +155,10 @@ function toDailyReturns(prices: number[]): number[] {
 
 function clampBps(value: number): number {
   return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function isValidAnnualizationPeriods(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
 }
 
 function alignSignals(candles: MarketCandle[], signals: TradeSignal[]): SignalDirection[] {
@@ -259,11 +275,13 @@ export function calculateSharpeRatio(
   riskFreeRate = 0
 ): number | null {
   if (tradeReturns.length < MIN_OBSERVATIONS) return null;
+  if (!isValidAnnualizationPeriods(annualizationPeriods)) return null;
   const rfPerPeriod = riskFreeRate / annualizationPeriods;
   const excessReturns = tradeReturns.map((value) => value - rfPerPeriod);
   const avg = mean(excessReturns);
   const sigma = stdDev(excessReturns);
   if (avg === null || sigma === null || sigma <= 0) return null;
+  if (!Number.isFinite(avg) || !Number.isFinite(sigma)) return null;
   return (avg / sigma) * Math.sqrt(annualizationPeriods);
 }
 
@@ -273,36 +291,71 @@ export function calculateMaxDrawdown(equityCurve: number[]): number | null {
   return drawdowns.length === 0 ? null : Math.max(...drawdowns);
 }
 
-export function calculateAlphaVsBenchmark(
+export function calculateAlphaVsBenchmarkDetailed(
   strategyReturns: number[],
   benchmarkReturns: number[],
   annualizationPeriods = 252
-): number | null {
+): AlphaComputationResult {
+  if (!isValidAnnualizationPeriods(annualizationPeriods)) {
+    return { value: null, reason: "INVALID_ANNUALIZATION_PERIOD" };
+  }
+
   const sampleSize = Math.min(strategyReturns.length, benchmarkReturns.length);
-  if (sampleSize < MIN_OBSERVATIONS) return null;
+  if (sampleSize < MIN_OBSERVATIONS) {
+    return { value: null, reason: "BENCHMARK_DATA_INSUFFICIENT" };
+  }
 
   const relativeReturns = strategyReturns
     .slice(0, sampleSize)
     .map((value, index) => value - benchmarkReturns[index]);
   const alphaPerPeriod = mean(relativeReturns);
-  if (alphaPerPeriod === null || !Number.isFinite(alphaPerPeriod)) return null;
-  return alphaPerPeriod * annualizationPeriods;
+  if (alphaPerPeriod === null || !Number.isFinite(alphaPerPeriod)) {
+    return { value: null, reason: "INVALID_RETURNS" };
+  }
+
+  return { value: alphaPerPeriod * annualizationPeriods, reason: "OK" };
+}
+
+export function calculateAlphaVsBenchmark(
+  strategyReturns: number[],
+  benchmarkReturns: number[],
+  annualizationPeriods = 252
+): number | null {
+  return calculateAlphaVsBenchmarkDetailed(strategyReturns, benchmarkReturns, annualizationPeriods).value;
+}
+
+export function calculateTStat(returns: number[]): number | null {
+  if (returns.length < MIN_OBSERVATIONS) return null;
+  const avg = mean(returns);
+  const sigma = stdDev(returns);
+  if (avg === null || sigma === null || sigma <= 0) return null;
+  if (!Number.isFinite(avg) || !Number.isFinite(sigma)) return null;
+  const standardError = sigma / Math.sqrt(returns.length);
+  if (!Number.isFinite(standardError) || standardError <= 0) return null;
+  return avg / standardError;
 }
 
 export function buildSystemSafetyCertificate(metrics: ValidationMetrics): SystemSafetyCertificate {
   const reasons: string[] = [];
 
   if (metrics.sharpeRatio === null || metrics.sharpeRatio < 1.0) {
-    reasons.push("Sharpe oraný 1.0 altýnda.");
+    reasons.push("Sharpe oranÄ± 1.0 altÄ±nda.");
   }
   if (metrics.maxDrawdown === null || metrics.maxDrawdown > 0.2) {
-    reasons.push("Maksimum drawdown %20 sýnýrýný aþýyor.");
+    reasons.push("Maksimum drawdown %20 sÄ±nÄ±rÄ±nÄ± aÅŸÄ±yor.");
+  }
+  if (!metrics.isStatisticallySignificant || metrics.returnsTStat === null) {
+    reasons.push(
+      `Getiri serisi istatistiksel olarak anlamlÄ± deÄŸil (|t| < ${metrics.significanceThreshold}).`
+    );
   }
 
   return {
     approved: reasons.length === 0,
     sharpeRatio: metrics.sharpeRatio,
     maxDrawdown: metrics.maxDrawdown,
+    returnsTStat: metrics.returnsTStat,
+    statisticallySignificant: metrics.isStatisticallySignificant,
     reasons,
   };
 }
@@ -356,6 +409,15 @@ function aggregateWindowMetrics(
   benchmarkReturns: number[],
   annualizationPeriods: number
 ): ValidationMetrics {
+  const alphaComputation = calculateAlphaVsBenchmarkDetailed(
+    strategyReturns,
+    benchmarkReturns,
+    annualizationPeriods
+  );
+  const returnsTStat = calculateTStat(strategyReturns);
+  const isStatisticallySignificant =
+    returnsTStat !== null && Number.isFinite(returnsTStat) && Math.abs(returnsTStat) >= T_STAT_THRESHOLD;
+
   const equityCurve = strategyReturns.reduce<number[]>(
     (curve, item) => [...curve, curve[curve.length - 1] * (1 + item)],
     [1]
@@ -365,7 +427,11 @@ function aggregateWindowMetrics(
     hitRate: calculateHitRate(strategyReturns),
     sharpeRatio: calculateSharpeRatio(strategyReturns, annualizationPeriods, 0),
     maxDrawdown: calculateMaxDrawdown(equityCurve),
-    alphaVsBenchmark: calculateAlphaVsBenchmark(strategyReturns, benchmarkReturns, annualizationPeriods),
+    alphaVsBenchmark: alphaComputation.value,
+    alphaReason: alphaComputation.reason,
+    returnsTStat,
+    isStatisticallySignificant,
+    significanceThreshold: T_STAT_THRESHOLD,
   };
 }
 
