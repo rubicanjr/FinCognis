@@ -47,11 +47,11 @@ const NEUTRAL_FALLBACK_TEXT =
 
 type PanelMode = "compare" | "discover";
 type MatrixMetricLabel =
-  | "En Kötü Düşüş"
-  | "Riske Göre Kazanç"
-  | "Enflasyon Sonrası Gerçek Kazanç"
-  | "Piyasayı Geçme Gücü"
-  | "Piyasa Sakinlik Durumu";
+  | "Karar Simülasyonu"
+  | "Risk Görselleştirme"
+  | "Davranışsal Hata Analizi"
+  | "Senaryo Tabanlı Analiz"
+  | "Karar Öncesi Check Mekanizması";
 
 interface ComparisonMatrix {
   assets: string[];
@@ -107,16 +107,16 @@ interface CompareCardData {
 type TimeHorizon = AnalyzeRequest["timeHorizon"];
 
 const METRIC_CONFIG: MetricConfig[] = [
-  { key: "risk", matrixLabel: "En Kötü Düşüş" },
-  { key: "return", matrixLabel: "Riske Göre Kazanç" },
-  { key: "liquidity", matrixLabel: "Enflasyon Sonrası Gerçek Kazanç" },
+  { key: "risk", matrixLabel: "Karar Simülasyonu" },
+  { key: "return", matrixLabel: "Risk Görselleştirme" },
+  { key: "liquidity", matrixLabel: "Davranışsal Hata Analizi" },
   {
     key: "diversification",
-    matrixLabel: "Piyasayı Geçme Gücü",
+    matrixLabel: "Senaryo Tabanlı Analiz",
   },
   {
     key: "calmness",
-    matrixLabel: "Piyasa Sakinlik Durumu",
+    matrixLabel: "Karar Öncesi Check Mekanizması",
   },
 ];
 
@@ -261,7 +261,7 @@ function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {
 }
 
 function heatCellTone(metricLabel: MatrixMetricLabel, score: number): string {
-  const decisionScore = metricLabel === "En Kötü Düşüş" ? 11 - score : score;
+  const decisionScore = metricLabel === "Karar Simülasyonu" ? 11 - score : score;
   const toneIndex = decisionScore >= 8 ? 0 : decisionScore >= 5 ? 1 : 2;
   return HEATMAP_TONES[toneIndex];
 }
@@ -275,8 +275,8 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
     return ["Karşılaştırma içgörüsü için en az iki varlık girin."];
   }
 
-  const riskMetric = matrix.metrics.find((metric) => metric.label === "En Kötü Düşüş");
-  const returnMetric = matrix.metrics.find((metric) => metric.label === "Riske Göre Kazanç");
+  const riskMetric = matrix.metrics.find((metric) => metric.label === "Karar Simülasyonu");
+  const returnMetric = matrix.metrics.find((metric) => metric.label === "Risk Görselleştirme");
 
   if (!riskMetric || !returnMetric) {
     return ["Karşılaştırma içgörüsü için metrik verisi eksik."];
@@ -545,20 +545,20 @@ export default function UniversalAssetComparisonPanel() {
       matrix.assets.map((assetSymbol) => {
         const sourceAsset = assets.find((asset) => asset.symbol === assetSymbol);
         const risk = clampScore(
-          matrix.metrics.find((metric) => metric.label === "En Kötü Düşüş")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Karar Simülasyonu")?.values[assetSymbol] ?? 0
         );
         const returnScore = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Riske Göre Kazanç")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Risk Görselleştirme")?.values[assetSymbol] ?? 0
         );
         const liquidity = clampNullableScore(
-          matrix.metrics.find((metric) => metric.label === "Enflasyon Sonrası Gerçek Kazanç")?.values[assetSymbol] ??
+          matrix.metrics.find((metric) => metric.label === "Davranışsal Hata Analizi")?.values[assetSymbol] ??
             null
         );
         const diversification = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Piyasayı Geçme Gücü")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Senaryo Tabanlı Analiz")?.values[assetSymbol] ?? 0
         );
         const calmness = clampNullableScore(
-          matrix.metrics.find((metric) => metric.label === "Piyasa Sakinlik Durumu")?.values[assetSymbol] ?? null
+          matrix.metrics.find((metric) => metric.label === "Karar Öncesi Check Mekanizması")?.values[assetSymbol] ?? null
         );
         const riskUnavailable = false;
         const returnUnavailable = false;
@@ -986,7 +986,7 @@ export default function UniversalAssetComparisonPanel() {
                           {card.riskUnavailable ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("En Kötü Düşüş", card.risk)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Karar Simülasyonu", card.risk)}`}>
                               {card.risk.toFixed(1)}
                             </span>
                           )}
@@ -996,7 +996,7 @@ export default function UniversalAssetComparisonPanel() {
                           {card.returnUnavailable ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Riske Göre Kazanç", card.return)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Risk Görselleştirme", card.return)}`}>
                               {card.return.toFixed(1)}
                             </span>
                           )}
@@ -1006,14 +1006,14 @@ export default function UniversalAssetComparisonPanel() {
                           {card.liquidityUnavailable || card.liquidity === null ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Enflasyon Sonrası Gerçek Kazanç", card.liquidity)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Davranışsal Hata Analizi", card.liquidity)}`}>
                               {card.liquidity.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
                           <span className="tools-card-metric-label">Piyasayı Geçme Gücü</span>
-                          <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Piyasayı Geçme Gücü", card.diversification)}`}>
+                          <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Senaryo Tabanlı Analiz", card.diversification)}`}>
                             {card.diversification.toFixed(1)}
                           </span>
                         </div>
@@ -1022,14 +1022,14 @@ export default function UniversalAssetComparisonPanel() {
                           {card.calmnessUnavailable || card.calmness === null ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Piyasa Sakinlik Durumu", card.calmness)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Karar Öncesi Check Mekanizması", card.calmness)}`}>
                               {card.calmness.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="mt-3 border-t border-white/10 pt-2">
                           <div className="flex items-center justify-between text-slate-100">
-                            <span className="tools-card-score-label">Skor</span>
+                            <span className="tools-card-score-label">Piyasa→Karar Çeviri</span>
                             <span className="tools-card-score-value">
                               {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
                             </span>
@@ -1125,3 +1125,4 @@ export default function UniversalAssetComparisonPanel() {
     </section>
   );
 }
+

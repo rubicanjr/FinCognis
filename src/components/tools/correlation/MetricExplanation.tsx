@@ -2,39 +2,39 @@
 
 interface MetricExplanationItem {
   title:
-    | "En Kötü Düşüş"
-    | "Riske Göre Kazanç"
-    | "Enflasyon Sonrası Gerçek Kazanç"
-    | "Piyasayı Geçme Gücü"
-    | "Piyasa Sakinlik Durumu";
+    | "Karar Simülasyonu"
+    | "Risk Görselleştirme"
+    | "Davranışsal Hata Analizi"
+    | "Senaryo Tabanlı Analiz"
+    | "Karar Öncesi Check Mekanizması";
   description: string;
 }
 
 const METRIC_EXPLANATIONS: MetricExplanationItem[] = [
   {
-    title: "En Kötü Düşüş",
+    title: "Karar Simülasyonu",
     description:
-      "Seçilen dönemde varlığın zirveden en dip noktaya kadar yaşadığı en büyük yüzdesel geri çekilmedir. Düşük değer, daha sınırlı kayıp profiline işaret eder.",
+      "Karar vermeden önce olası senaryoları ve risk kırılım noktalarını görünür hale getirir. Sistem, “ne olur?” sorusundan çok “hangi koşulda kırılır?” sorusuna odaklanır.",
   },
   {
-    title: "Riske Göre Kazanç",
+    title: "Risk Görselleştirme",
     description:
-      "Varlığın geçmiş performansının risk ayarlı gücüdür. Ortalama getiri, risksiz getiri ve oynaklık birlikte değerlendirilerek hesaplanır.",
+      "Karar sürecini tek bir metrik yerine olasılık dağılımı ile okur. Kazançtan önce downside tarafını netleştirerek risk profilini görünür kılar.",
   },
   {
-    title: "Enflasyon Sonrası Gerçek Kazanç",
+    title: "Davranışsal Hata Analizi",
     description:
-      "Varlığın nominal getirisinden enflasyon etkisi ayrıştırıldığında kalan reel performansı ifade eder. Farklı dönemlerde satın alma gücü etkisini görünür kılar.",
+      "Yatırımcıların tekrar eden karar hatalarını tespit etmeye odaklanır. Sadece sonucu değil, karar alma biçimini de analize dahil eder.",
   },
   {
-    title: "Piyasayı Geçme Gücü",
+    title: "Senaryo Tabanlı Analiz",
     description:
-      "Varlığın referans piyasa endeksine göre göreli performansını özetler. Pozitif farklar, seçilen dönemde piyasa ortalamasının üzerinde seyre işaret eder.",
+      "Piyasa verisini tek başına değil, faiz-likidite-sentiment gibi koşullar altında anlamlandırır. Böylece veriyi bağlama yerleştirerek daha tutarlı bir çerçeve üretir.",
   },
   {
-    title: "Piyasa Sakinlik Durumu",
+    title: "Karar Öncesi Check Mekanizması",
     description:
-      "Volatilitenin tarihsel rejim içindeki konumunu gösterir. EWMA ve çoklu pencere volatilite birlikte değerlendirilir; yüksek puan daha sakin ve stabil rejime yakınlığı ifade eder.",
+      "Kullanıcının karar vermeden önce geçmesi gereken bir kontrol katmanı sağlar. Amaç hızlı karar değil, doğru anda doğru kararı destekleyen disiplinli filtrelemedir.",
   },
 ];
 
@@ -56,3 +56,4 @@ export default function MetricExplanation() {
     </div>
   );
 }
+
