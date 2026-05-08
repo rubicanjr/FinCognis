@@ -47,11 +47,11 @@ const NEUTRAL_FALLBACK_TEXT =
 
 type PanelMode = "compare" | "discover";
 type MatrixMetricLabel =
-  | "En Kötü Düşüş"
-  | "Riske Göre Kazanç"
-  | "Enflasyon Sonrası Gerçek Kazanç"
-  | "Piyasayı Geçme Gücü"
-  | "Piyasa Sakinlik Durumu";
+  | "Karar Simülasyonu"
+  | "Risk Görselleştirme"
+  | "Davranışsal Hata Analizi"
+  | "Senaryo Tabanlı Analiz"
+  | "Karar Öncesi Check Mekanizması";
 
 interface ComparisonMatrix {
   assets: string[];
@@ -107,16 +107,16 @@ interface CompareCardData {
 type TimeHorizon = AnalyzeRequest["timeHorizon"];
 
 const METRIC_CONFIG: MetricConfig[] = [
-  { key: "risk", matrixLabel: "En Kötü Düşüş" },
-  { key: "return", matrixLabel: "Riske Göre Kazanç" },
-  { key: "liquidity", matrixLabel: "Enflasyon Sonrası Gerçek Kazanç" },
+  { key: "risk", matrixLabel: "Karar Simülasyonu" },
+  { key: "return", matrixLabel: "Risk Görselleştirme" },
+  { key: "liquidity", matrixLabel: "Davranışsal Hata Analizi" },
   {
     key: "diversification",
-    matrixLabel: "Piyasayı Geçme Gücü",
+    matrixLabel: "Senaryo Tabanlı Analiz",
   },
   {
     key: "calmness",
-    matrixLabel: "Piyasa Sakinlik Durumu",
+    matrixLabel: "Karar Öncesi Check Mekanizması",
   },
 ];
 
@@ -161,53 +161,6 @@ const GLASS_CHIP =
   "tools-chip border border-white/12 bg-slate-950/55 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(148,163,184,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(2,6,23,0.55)]";
 
 const HEATMAP_TONES = ["heat-tone-high", "heat-tone-mid", "heat-tone-low"] as const;
-
-const PROMPT_REVIEW_POINTS = [
-  {
-    title: "Prompt 1 - güçlü yön",
-    body: "Adım akışı net, disclaimer zorunlu ve zincir düşünce disiplini mevcut.",
-  },
-  {
-    title: "Prompt 1 - kritik açık",
-    body: "TradingView gibi bot kısıtlı kaynaklara bağımlı adımlar ve bağlamsız eşikler güvenilirliği düşürür.",
-  },
-  {
-    title: "Prompt 2 - güçlü yön",
-    body: "Makro bağlam, tekrarlanabilirlik (seed) ve iterasyon limiti veri disiplini için değerlidir.",
-  },
-  {
-    title: "Prompt 2 - kritik açık",
-    body: "Prompt içinde BERT/CNN/LSTM gibi tam ML pipeline gerektiren işleri gerçek zamanlı ve doğrulanabilir üretmek mümkün değildir.",
-  },
-] as const;
-
-const SCREENING_CRITERIA = {
-  shortTerm: [
-    "Teknik momentum: RSI 40-60 bandı, MACD + hacim teyidi, 50MA/200MA konumu, ATR tabanlı risk.",
-    "Kurumsal akış: takas eğilimi, short interest değişimi, büyük lot hareketleri.",
-    "Katalizör takvimi: bilanço tarihi, resmi bildirim akışı ve revizyon yönü.",
-  ],
-  longTerm: [
-    "Kazanç kalitesi: serbest nakit akışı, tahakkuk oranı ve çalışma sermayesi döngüsü.",
-    "Sermaye tahsisi: ROIC/WACC spread, borç/EBITDA ve faiz karşılama gücü.",
-    "Değerleme: sektör içi göreli çarpanlar, tarihsel bant konumu ve PEG disiplini.",
-    "BIST özel katman: döviz pozisyonu, reel getiri, free-float ve TCMB yön etkisi.",
-  ],
-} as const;
-
-const INTEGRATION_LAYERS = [
-  "Katman 1 - Veri toplama: yfinance (.IS), KAP/MKK doğrulaması, TCMB EVDS, açık JSON uçları.",
-  "Katman 2 - Analiz pipeline: Teknik, Finansal, Makro ve Haber ajanları ayrı çalışır.",
-  "Katman 3 - Debate: Bull/Bear araştırmacı çelişen sinyalleri şeffaf tartışır.",
-  "Katman 4 - Puanlama: normalize(0-1) + ufka göre ağırlık + anlamlılık filtresi.",
-  "Katman 5 - Risk kapısı: drawdown, volatilite rejimi, likidite ve sektör yoğunluğu sınırı.",
-  "Katman 6 - Backtest: walk-forward + kağıt işlem doğrulaması olmadan canlıya çıkılmaz.",
-] as const;
-
-const NON_NEGOTIABLE_REQUIREMENTS = [
-  "Veri doğrulama katmanı: her metrik için kaynak, tarih ve güven etiketi zorunlu.",
-  "Backtesting katmanı: hit rate, Sharpe, max drawdown ve benchmark alfa raporu zorunlu.",
-] as const;
 
 function parseErrorMessage(payload: unknown, fallbackMessage: string): string {
   if (typeof payload !== "object" || payload === null) return fallbackMessage;
@@ -308,7 +261,7 @@ function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {
 }
 
 function heatCellTone(metricLabel: MatrixMetricLabel, score: number): string {
-  const decisionScore = metricLabel === "En Kötü Düşüş" ? 11 - score : score;
+  const decisionScore = metricLabel === "Karar Simülasyonu" ? 11 - score : score;
   const toneIndex = decisionScore >= 8 ? 0 : decisionScore >= 5 ? 1 : 2;
   return HEATMAP_TONES[toneIndex];
 }
@@ -322,8 +275,8 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
     return ["Karşılaştırma içgörüsü için en az iki varlık girin."];
   }
 
-  const riskMetric = matrix.metrics.find((metric) => metric.label === "En Kötü Düşüş");
-  const returnMetric = matrix.metrics.find((metric) => metric.label === "Riske Göre Kazanç");
+  const riskMetric = matrix.metrics.find((metric) => metric.label === "Karar Simülasyonu");
+  const returnMetric = matrix.metrics.find((metric) => metric.label === "Risk Görselleştirme");
 
   if (!riskMetric || !returnMetric) {
     return ["Karşılaştırma içgörüsü için metrik verisi eksik."];
@@ -592,20 +545,20 @@ export default function UniversalAssetComparisonPanel() {
       matrix.assets.map((assetSymbol) => {
         const sourceAsset = assets.find((asset) => asset.symbol === assetSymbol);
         const risk = clampScore(
-          matrix.metrics.find((metric) => metric.label === "En Kötü Düşüş")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Karar Simülasyonu")?.values[assetSymbol] ?? 0
         );
         const returnScore = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Riske Göre Kazanç")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Risk Görselleştirme")?.values[assetSymbol] ?? 0
         );
         const liquidity = clampNullableScore(
-          matrix.metrics.find((metric) => metric.label === "Enflasyon Sonrası Gerçek Kazanç")?.values[assetSymbol] ??
+          matrix.metrics.find((metric) => metric.label === "Davranışsal Hata Analizi")?.values[assetSymbol] ??
             null
         );
         const diversification = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Piyasayı Geçme Gücü")?.values[assetSymbol] ?? 0
+          matrix.metrics.find((metric) => metric.label === "Senaryo Tabanlı Analiz")?.values[assetSymbol] ?? 0
         );
         const calmness = clampNullableScore(
-          matrix.metrics.find((metric) => metric.label === "Piyasa Sakinlik Durumu")?.values[assetSymbol] ?? null
+          matrix.metrics.find((metric) => metric.label === "Karar Öncesi Check Mekanizması")?.values[assetSymbol] ?? null
         );
         const riskUnavailable = false;
         const returnUnavailable = false;
@@ -740,10 +693,9 @@ export default function UniversalAssetComparisonPanel() {
     [discoveryRows]
   );
 
-  const title =
-    mode === "compare" ? "BIST ve ABD Varlıklarını Doğrulanmış Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Varlıkları Keşfedin";
+  const title = mode === "compare" ? "Varlıkları Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Varlıkları Keşfedin";
   const subtitle =
-    "Bu ekran eğitimsel analiz çerçevesi sunar; metrikler doğrulanamıyorsa tahmin yapılmaz, veri boşluğu açıkça raporlanır.";
+    "Yatırım tavsiyesi değil; En Kötü Düşüş, Riske Göre Kazanç, Enflasyon Sonrası Gerçek Kazanç, Piyasayı Geçme Gücü ve Piyasa Sakinlik Durumu metriklerine göre genel profil eşleştirmesi.";
 
   const dataError = catalogError ?? (mode === "compare" ? analysisError : discoveryError);
   const activeWarnings = mode === "compare" ? analysisData?.warnings ?? [] : discoveryData?.warnings ?? [];
@@ -1034,7 +986,7 @@ export default function UniversalAssetComparisonPanel() {
                           {card.riskUnavailable ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("En Kötü Düşüş", card.risk)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Karar Simülasyonu", card.risk)}`}>
                               {card.risk.toFixed(1)}
                             </span>
                           )}
@@ -1044,7 +996,7 @@ export default function UniversalAssetComparisonPanel() {
                           {card.returnUnavailable ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Riske Göre Kazanç", card.return)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Risk Görselleştirme", card.return)}`}>
                               {card.return.toFixed(1)}
                             </span>
                           )}
@@ -1054,14 +1006,14 @@ export default function UniversalAssetComparisonPanel() {
                           {card.liquidityUnavailable || card.liquidity === null ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Enflasyon Sonrası Gerçek Kazanç", card.liquidity)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Davranışsal Hata Analizi", card.liquidity)}`}>
                               {card.liquidity.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-slate-200">
                           <span className="tools-card-metric-label">Piyasayı Geçme Gücü</span>
-                          <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Piyasayı Geçme Gücü", card.diversification)}`}>
+                          <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Senaryo Tabanlı Analiz", card.diversification)}`}>
                             {card.diversification.toFixed(1)}
                           </span>
                         </div>
@@ -1070,14 +1022,14 @@ export default function UniversalAssetComparisonPanel() {
                           {card.calmnessUnavailable || card.calmness === null ? (
                             <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
                           ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Piyasa Sakinlik Durumu", card.calmness)}`}>
+                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Karar Öncesi Check Mekanizması", card.calmness)}`}>
                               {card.calmness.toFixed(1)}
                             </span>
                           )}
                         </div>
                         <div className="mt-3 border-t border-white/10 pt-2">
                           <div className="flex items-center justify-between text-slate-100">
-                            <span className="tools-card-score-label">Skor</span>
+                            <span className="tools-card-score-label">Piyasa→Karar Çeviri</span>
                             <span className="tools-card-score-value">
                               {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
                             </span>
@@ -1167,68 +1119,10 @@ export default function UniversalAssetComparisonPanel() {
             <p className="mt-2 text-sm text-slate-200">{COMPLIANCE_DISCLAIMER}</p>
           </div>
 
-          <div className={PANEL_CARD}>
-            <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Prompt Değerlendirmesi (Kritik)</p>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              {PROMPT_REVIEW_POINTS.map((point) => (
-                <article key={point.title} className={`${GLASS_CHIP} rounded-lg px-3 py-3`}>
-                  <p className="font-display text-sm font-semibold text-[#8ddfff]">{point.title}</p>
-                  <p className="mt-1 text-xs text-slate-200">{point.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className={PANEL_CARD}>
-            <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Doğru Kriter Seti</p>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <article className={`${GLASS_CHIP} rounded-lg px-3 py-3`}>
-                <p className="font-display text-sm font-semibold text-[#8ddfff]">Kısa Vade (1-4 hafta)</p>
-                <div className="mt-2 space-y-2">
-                  {SCREENING_CRITERIA.shortTerm.map((line) => (
-                    <p key={line} className="text-xs text-slate-200">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              </article>
-              <article className={`${GLASS_CHIP} rounded-lg px-3 py-3`}>
-                <p className="font-display text-sm font-semibold text-[#8ddfff]">Uzun Vade (3-12 ay)</p>
-                <div className="mt-2 space-y-2">
-                  {SCREENING_CRITERIA.longTerm.map((line) => (
-                    <p key={line} className="text-xs text-slate-200">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              </article>
-            </div>
-          </div>
-
-          <div className={PANEL_CARD}>
-            <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Entegrasyon Mimarisi</p>
-            <div className="mt-3 space-y-2">
-              {INTEGRATION_LAYERS.map((line) => (
-                <p key={line} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-xs text-slate-200`}>
-                  {line}
-                </p>
-              ))}
-            </div>
-            <div className="mt-3 rounded-lg border border-[#22b7ff]/30 bg-[#22b7ff]/10 px-3 py-2">
-              <p className="font-display text-xs font-semibold tracking-[0.06em] text-[#8ddfff]">Canlıya Geçiş Ön Koşulu</p>
-              <div className="mt-2 space-y-1">
-                {NON_NEGOTIABLE_REQUIREMENTS.map((line) => (
-                  <p key={line} className="text-xs text-slate-100">
-                    {line}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-
           <MetricExplanation />
         </div>
       </div>
     </section>
   );
 }
+
