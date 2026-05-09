@@ -223,7 +223,7 @@ export interface BistBacktestResponsePayload {
   errors: Array<{ ticker: string; error: string }>;
 }
 
-export async function buildBistBacktestResponse(sp: URLSearchParams): Promise<
+async function buildBistBacktestResponse(sp: URLSearchParams): Promise<
   | { status: 200; payload: BistBacktestResponsePayload }
   | { status: 400; payload: { error: string } }
 > {
