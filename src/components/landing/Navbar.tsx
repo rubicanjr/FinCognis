@@ -14,8 +14,7 @@ const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean; fin
   { label: "Metrikler", href: "/#metrik-rehberi" },
   { label: "Risk", href: "/#risk" },
   { label: "FinLab", href: "/finlab", finLab: true },
-  { label: "Ekip", href: "/ekip" },
-  { label: "Yönetim Kurulu", href: "/yonetim-kurulu" },
+  { label: "Core Team", href: "/ekip" },
   { label: "İletişim", href: "/iletisim", highlighted: true },
 ];
 

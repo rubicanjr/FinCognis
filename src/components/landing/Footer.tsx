@@ -32,10 +32,7 @@ export default function Footer() {
             FinLab
           </Link>
           <Link href="/ekip" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Ekip
-          </Link>
-          <Link href="/yonetim-kurulu" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
-            Yönetim Kurulu
+            Core Team
           </Link>
           <Link href="/iletisim" className="font-display text-slate-400 transition-all duration-200 hover:text-[#8ddfff] hover:underline">
             İletişim
