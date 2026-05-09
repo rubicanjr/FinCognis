@@ -210,9 +210,37 @@ function isUSAssetSymbol(symbol: string): boolean {
   if (symbol.includes("-USD")) return false;
   if (symbol.includes("=F")) return false;
   if (symbol.startsWith("^")) {
-    return symbol === "^GSPC" || symbol === "^NDX";
+    return symbol === "^GSPC" || symbol === "^NDX" || symbol === "^TNX";
   }
   return /^[A-Z]{1,5}$/.test(symbol);
+}
+
+/**
+ * Bir provider sembolünün izin verilen varlık sınıflarından birine ait olup olmadığını kontrol eder.
+ * - BIST hisseleri: .IS suffix'i
+ * - ABD hisseleri: düz sembol (1-5 harf)
+ * - Kripto: -USD suffix'i
+ * - FX: =X suffix'i
+ * - Emtia: =F suffix'i
+ * - İndeksler: ^ prefix'i (sadece bilinenler)
+ */
+function isAllowedProviderSymbol(providerSymbol: string): boolean {
+  if (!providerSymbol) return false;
+  // BIST hisseleri (.IS)
+  if (/^[A-Z]{1,6}\.IS$/.test(providerSymbol)) return true;
+  // ABD hisseleri (düz 1-5 harf)
+  if (/^[A-Z]{1,5}$/.test(providerSymbol)) return true;
+  // Kripto (-USD)
+  if (/^[A-Z]{2,10}-USD$/.test(providerSymbol)) return true;
+  // FX (=X)
+  if (/^[A-Z]{6}=X$/.test(providerSymbol)) return true;
+  // Emtia futures (=F)
+  if (/^[A-Z]{1,4}=F$/.test(providerSymbol) || /^[A-Z]{2,4}USD=X$/.test(providerSymbol)) return true;
+  // İndeksler (^)
+  if (providerSymbol === "^GSPC" || providerSymbol === "^NDX" || providerSymbol === "^TNX") return true;
+  // OVERRIDE tablosundaki bilinen semboller
+  if (Object.values(PROVIDER_SYMBOL_OVERRIDES).includes(providerSymbol)) return true;
+  return false;
 }
 
 function resolveDataSource(symbol: string, providerSymbol: string): MarketDataSource {
@@ -261,6 +289,9 @@ function parseQuotePayload(
   symbol: string,
   providerSymbol: string
 ): MarketQuote | null {
+  // Sadece izin verilen varlık sınıflarından gelen veriyi kabul et
+  if (!isAllowedProviderSymbol(providerSymbol)) return null;
+
   const quoteResponse = readRecord(payload, "quoteResponse");
   const results = readArray(quoteResponse, "result");
   const first = results.length > 0 ? results[0] : null;
@@ -294,6 +325,11 @@ function parseHistoryPayload(
   symbol: string,
   providerSymbol: string
 ): MarketHistory {
+  // Sadece izin verilen varlık sınıflarından gelen veriyi kabul et
+  if (!isAllowedProviderSymbol(providerSymbol)) {
+    return { symbol, providerSymbol, dataSource: "yahoo_finance", points: [], returns: [] };
+  }
+
   const dataSource = resolveDataSource(symbol, providerSymbol);
   logResolvedDataSource(symbol, providerSymbol, dataSource);
   const chart = readRecord(payload, "chart");
