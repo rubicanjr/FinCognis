@@ -17,11 +17,17 @@ import {
   type EconomicRange,
   type EconomicTab,
 } from "@/lib/economic-calendar/schema";
+import { fetchCalendarEvents as fetchLegacyCalendarEvents } from "@/lib/economic-calendar/mirror";
 import { z } from "zod";
 
 const RAPID_API_HOST = "ultimate-economic-calendar.p.rapidapi.com";
 const RAPID_API_ENDPOINT = `https://${RAPID_API_HOST}/economic-events/tradingview`;
 const ISTANBUL_TIME_ZONE = "Europe/Istanbul";
+
+const LIVE_TTL_MS = 15 * 60_000;
+const LKG_MAX_AGE_SECONDS = 24 * 60 * 60;
+const MAX_BACKOFF_MS = 30 * 60_000;
+const BASE_BACKOFF_MS = 60_000;
 
 type ImpactLevel = "High" | "Medium" | "Low";
 
@@ -43,6 +49,13 @@ export interface CalendarQueryParams {
   countries: string;
 }
 
+export interface CalendarPayloadMetadata {
+  stale_age_seconds: number;
+  next_sync_permitted_at: string;
+  reason_code?: string;
+  is_lkg?: boolean;
+}
+
 export interface CalendarFetchResult {
   status: EconomicMirrorStatus;
   tab: EconomicTab;
@@ -50,8 +63,9 @@ export interface CalendarFetchResult {
   updatedAt: string | null;
   events: EconomicEvent[];
   message: string | null;
-  source: "rapidapi" | "cache" | "none";
+  source: "rapid_api" | "legacy_adapter" | "cache";
   reason: string | null;
+  metadata: CalendarPayloadMetadata;
 }
 
 interface CalendarClientDependencies {
@@ -98,8 +112,7 @@ const TradingViewEventSchema = z
   .transform((raw): TradingViewEvent => {
     const eventText = raw.event?.trim() || raw.title?.trim() || raw.indicator?.trim() || "Unknown Event";
     const id = typeof raw.id === "number" ? String(raw.id) : raw.id;
-    const date =
-      raw.date instanceof Date ? raw.date.toISOString() : typeof raw.date === "number" ? new Date(raw.date).toISOString() : raw.date;
+    const date = raw.date instanceof Date ? raw.date.toISOString() : typeof raw.date === "number" ? new Date(raw.date).toISOString() : raw.date;
     const toNullable = (value: string | number | null | undefined): string | null => {
       if (value === null || value === undefined) return null;
       const normalized = String(value).trim();
@@ -205,15 +218,15 @@ function extractRapidEvents(payload: unknown): unknown[] {
 }
 
 function getCacheKey(tab: EconomicTab, range: EconomicRange): string {
-  return `${buildCalendarCacheKey(tab, range)}:tradingview`;
+  return `${buildCalendarCacheKey(tab, range)}:tradingview:v2`;
 }
 
-function toCachePayload(events: EconomicEvent[]): CachePayload {
+function toCachePayload(events: EconomicEvent[], status: CachePayload["workerStatus"]["status"] = "SUCCESS"): CachePayload {
   return {
     lastUpdated: Date.now(),
     data: events.map(apiEventToCacheEvent),
-    workerStatus: createWorkerState("SUCCESS"),
-    isFallbackData: false,
+    workerStatus: createWorkerState(status),
+    isFallbackData: status !== "SUCCESS",
   };
 }
 
@@ -222,19 +235,9 @@ function fromCacheEvents(cached: Awaited<ReturnType<CachePort["get"]>>): Economi
   return cached.data.map(cacheEventToApiEvent);
 }
 
-function messageForStatus(status: number): string {
-  if (status === 429) return "Takvim sağlayıcısı hız sınırına ulaştı. Son doğrulanan veri gösteriliyor.";
-  return "Takvim akışında geçici gecikme var. Son doğrulanan veri gösteriliyor.";
-}
-
 function buildApiUrl(params: CalendarQueryParams): string {
-  const entries: Record<string, string> = {
-    from: params.from,
-    to: params.to,
-  };
-  if (params.countries.trim().length > 0) {
-    entries.countries = params.countries;
-  }
+  const entries: Record<string, string> = { from: params.from, to: params.to };
+  if (params.countries.trim().length > 0) entries.countries = params.countries;
   const search = new URLSearchParams(entries);
   return `${RAPID_API_ENDPOINT}?${search.toString()}`;
 }
@@ -255,11 +258,42 @@ function readCachePort(deps: CalendarClientDependencies): CachePort | null {
   }
 }
 
+function calculateBackoff(attempt: number): number {
+  const exp = Math.pow(2, attempt) * BASE_BACKOFF_MS;
+  const capped = Math.min(exp, MAX_BACKOFF_MS);
+  return Math.floor(Math.random() * capped);
+}
+
+function parseRetryAfterSeconds(headerValue: string | null): number | null {
+  if (!headerValue) return null;
+  const parsed = Number.parseInt(headerValue, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function getNextSyncAt(retryAfterSeconds?: number | null, attempt = 0, now = Date.now()): string {
+  const delayMs = retryAfterSeconds && retryAfterSeconds > 0 ? retryAfterSeconds * 1000 : calculateBackoff(attempt);
+  return new Date(now + delayMs).toISOString();
+}
+
+function staleAgeSeconds(lastUpdated: number | null): number {
+  if (!lastUpdated) return -1;
+  return Math.max(0, Math.floor((Date.now() - lastUpdated) / 1000));
+}
+
+function makeMetadata(lastUpdated: number | null, retryAfterSeconds?: number | null, reasonCode?: string, isLkg?: boolean): CalendarPayloadMetadata {
+  return {
+    stale_age_seconds: staleAgeSeconds(lastUpdated),
+    next_sync_permitted_at: getNextSyncAt(retryAfterSeconds ?? null),
+    ...(reasonCode ? { reason_code: reasonCode } : {}),
+    ...(typeof isLkg === "boolean" ? { is_lkg: isLkg } : {}),
+  };
+}
+
 async function fetchRapidEvents(
   fetchImpl: typeof fetch,
   params: CalendarQueryParams,
   apiKey: string,
-): Promise<{ ok: true; updatedAt: string | null; events: TradingViewEvent[] } | { ok: false; status: number }> {
+): Promise<{ ok: true; updatedAt: string | null; events: TradingViewEvent[] } | { ok: false; status: number; retryAfterSeconds: number | null }> {
   const response = await fetchImpl(buildApiUrl(params), {
     method: "GET",
     headers: {
@@ -267,13 +301,15 @@ async function fetchRapidEvents(
       "X-RapidAPI-Host": RAPID_API_HOST,
       "Content-Type": "application/json",
       Accept: "application/json",
-      "User-Agent": "FinCognisCalendarBot/1.0 (+https://fincognis.com)",
+      "User-Agent": "FinCognisCalendarBot/2.0 (+https://fincognis.com)",
     },
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),
   });
 
-  if (!response.ok) return { ok: false, status: response.status };
+  if (!response.ok) {
+    return { ok: false, status: response.status, retryAfterSeconds: parseRetryAfterSeconds(response.headers.get("Retry-After")) };
+  }
 
   const payloadUnknown: unknown = await response.json().catch(() => []);
   const extracted = extractRapidEvents(payloadUnknown);
@@ -281,11 +317,7 @@ async function fetchRapidEvents(
   if (!parsed.success || parsed.data.length === 0) {
     return { ok: true, updatedAt: response.headers.get("date"), events: [] };
   }
-  return {
-    ok: true,
-    updatedAt: response.headers.get("date"),
-    events: parsed.data,
-  };
+  return { ok: true, updatedAt: response.headers.get("date"), events: parsed.data };
 }
 
 function mapToEconomicEvents(tab: EconomicTab, rapidEvents: TradingViewEvent[]): EconomicEvent[] {
@@ -307,6 +339,20 @@ function mapToEconomicEvents(tab: EconomicTab, rapidEvents: TradingViewEvent[]):
     });
 }
 
+function statusFromCache(cached: Awaited<ReturnType<CachePort["get"]>>): EconomicMirrorStatus {
+  if (!cached) return "COOLDOWN";
+  const ageSeconds = staleAgeSeconds(cached.lastUpdated);
+  if (cached.data.length > 0 && ageSeconds > Math.floor(LIVE_TTL_MS / 1000)) return "DEGRADED";
+  if (cached.data.length > 0) return "READY";
+  return "COOLDOWN";
+}
+
+async function tryLegacyAdapter(tab: EconomicTab, range: EconomicRange): Promise<EconomicEvent[]> {
+  const result = await fetchLegacyCalendarEvents(tab, range);
+  if (result.status !== "READY") return [];
+  return result.events;
+}
+
 export async function fetchCalendarEvents(
   tab: EconomicTab,
   range: EconomicRange,
@@ -317,113 +363,185 @@ export async function fetchCalendarEvents(
   const now = deps.now?.() ?? new Date();
   const key = getCacheKey(tab, range);
   const cached = cachePort ? await cachePort.get(key) : null;
+  const cachedEvents = fromCacheEvents(cached);
+  const cachedAgeSeconds = cached ? staleAgeSeconds(cached.lastUpdated) : -1;
 
-  if (cached && !shouldTreatAsStale(cached.lastUpdated) && cached.data.length > 0) {
+  if (cached && cached.data.length > 0 && cachedAgeSeconds <= Math.floor(LIVE_TTL_MS / 1000)) {
     return {
       status: "READY",
       tab,
       range,
       updatedAt: new Date(cached.lastUpdated).toISOString(),
-      events: fromCacheEvents(cached),
+      events: cachedEvents,
       message: null,
       source: "cache",
-      reason: null,
+      reason: "cache_hit",
+      metadata: makeMetadata(cached.lastUpdated),
     };
   }
 
   const apiKey = readRapidApiKey();
   if (!apiKey) {
-    if (cached && cached.data.length > 0) {
+    if (cached && cachedEvents.length > 0) {
       return {
-        status: "READY",
+        status: "DEGRADED",
         tab,
         range,
         updatedAt: new Date(cached.lastUpdated).toISOString(),
-        events: fromCacheEvents(cached),
+        events: cachedEvents,
         message: "Canlı anahtar bulunamadı. Son doğrulanan veri gösteriliyor.",
         source: "cache",
         reason: "missing_api_key",
+        metadata: makeMetadata(cached.lastUpdated, null, "ERROR_CODE_API_KEY_MISSING", true),
       };
     }
     return {
-      status: "SOURCE_UNAVAILABLE",
+      status: "COOLDOWN",
       tab,
       range,
       updatedAt: null,
       events: [],
       message: "Takvim verisi için API anahtarı tanımlı değil.",
-      source: "none",
+      source: "cache",
       reason: "missing_api_key",
+      metadata: makeMetadata(null, null, "ERROR_CODE_API_KEY_MISSING"),
     };
   }
 
   const query = buildRangeQuery(range, now);
   const rapidResult = await fetchRapidEvents(fetchImpl, query, apiKey);
 
-  if (!rapidResult.ok) {
-    if (cached && cached.data.length > 0) {
+  if (rapidResult.ok) {
+    const mapped = mapToEconomicEvents(tab, rapidResult.events);
+
+    if (mapped.length > 0) {
+      if (cachePort) {
+        await cachePort.set(key, toCachePayload(mapped), CALENDAR_TTL_SECONDS).catch(() => undefined);
+      }
+      const updatedAtSource = rapidResult.updatedAt ? new Date(rapidResult.updatedAt).toISOString() : new Date().toISOString();
       return {
         status: "READY",
         tab,
         range,
-        updatedAt: new Date(cached.lastUpdated).toISOString(),
-        events: fromCacheEvents(cached),
-        message: messageForStatus(rapidResult.status),
-        source: "cache",
-        reason: `http_${rapidResult.status}`,
+        updatedAt: updatedAtSource,
+        events: mapped,
+        message: null,
+        source: "rapid_api",
+        reason: null,
+        metadata: makeMetadata(Date.now()),
       };
     }
-    return {
-      status: "SOURCE_UNAVAILABLE",
-      tab,
-      range,
-      updatedAt: null,
-      events: [],
-      message: "Takvim sağlayıcısına şu anda erişilemiyor.",
-      source: "none",
-      reason: `http_${rapidResult.status}`,
-    };
-  }
 
-  const mapped = mapToEconomicEvents(tab, rapidResult.events);
-  if (mapped.length === 0) {
-    if (cached && cached.data.length > 0) {
+    const legacyEvents = await tryLegacyAdapter(tab, range).catch(() => []);
+    if (legacyEvents.length > 0) {
+      if (cachePort) {
+        await cachePort.set(key, toCachePayload(legacyEvents), CALENDAR_TTL_SECONDS).catch(() => undefined);
+      }
       return {
-        status: "READY",
+        status: "READY_FALLBACK",
+        tab,
+        range,
+        updatedAt: new Date().toISOString(),
+        events: legacyEvents,
+        message: "Yedek sağlayıcı üzerinden veri sunuluyor.",
+        source: "legacy_adapter",
+        reason: "empty_remote_payload",
+        metadata: makeMetadata(Date.now(), null, "ERROR_CODE_REMOTE_EMPTY"),
+      };
+    }
+
+    if (cached && cachedEvents.length > 0 && cachedAgeSeconds <= LKG_MAX_AGE_SECONDS) {
+      return {
+        status: "DEGRADED",
         tab,
         range,
         updatedAt: new Date(cached.lastUpdated).toISOString(),
-        events: fromCacheEvents(cached),
+        events: cachedEvents,
         message: "Bu filtre için canlı kaynakta veri bulunamadı, son doğrulanan set gösteriliyor.",
         source: "cache",
         reason: "empty_remote_payload",
+        metadata: makeMetadata(cached.lastUpdated, null, "ERROR_CODE_REMOTE_EMPTY", true),
       };
     }
+
     return {
-      status: "READY",
+      status: "COOLDOWN",
       tab,
       range,
       updatedAt: null,
       events: [],
-      message: null,
-      source: "rapidapi",
-      reason: null,
+      message: "Bu sekme için şu anda listelenecek veri bulunamadı.",
+      source: "cache",
+      reason: "empty_remote_payload",
+      metadata: makeMetadata(null, null, "ERROR_CODE_REMOTE_EMPTY"),
     };
   }
 
-  if (cachePort) {
-    await cachePort.set(key, toCachePayload(mapped), 5 * 60).catch(() => undefined);
+  const retryAfterSeconds = rapidResult.retryAfterSeconds ?? 300;
+  const legacyEvents = await tryLegacyAdapter(tab, range).catch(() => []);
+
+  if (legacyEvents.length > 0) {
+    if (cachePort) {
+      await cachePort.set(key, toCachePayload(legacyEvents), CALENDAR_TTL_SECONDS).catch(() => undefined);
+    }
+    return {
+      status: "READY_FALLBACK",
+      tab,
+      range,
+      updatedAt: new Date().toISOString(),
+      events: legacyEvents,
+      message: "Yedek sağlayıcı üzerinden veri sunuluyor.",
+      source: "legacy_adapter",
+      reason: `http_${rapidResult.status}`,
+      metadata: makeMetadata(Date.now(), retryAfterSeconds, rapidResult.status === 429 ? "ERROR_CODE_EVDS_429" : undefined),
+    };
   }
 
-  const updatedAtSource = rapidResult.updatedAt ? new Date(rapidResult.updatedAt).toISOString() : new Date().toISOString();
+  if (cached && cachedEvents.length > 0 && cachedAgeSeconds <= LKG_MAX_AGE_SECONDS) {
+    if (cachePort && rapidResult.status === 429) {
+      await cachePort.set(key, toCachePayload(cachedEvents, "RATE_LIMITED"), retryAfterSeconds).catch(() => undefined);
+    }
+    return {
+      status: "DEGRADED",
+      tab,
+      range,
+      updatedAt: new Date(cached.lastUpdated).toISOString(),
+      events: cachedEvents,
+      message: rapidResult.status === 429 ? "Takvim sağlayıcısı hız sınırına ulaştı. Son doğrulanan veri gösteriliyor." : "Takvim akışında geçici gecikme var. Son doğrulanan veri gösteriliyor.",
+      source: "cache",
+      reason: `http_${rapidResult.status}`,
+      metadata: makeMetadata(cached.lastUpdated, retryAfterSeconds, rapidResult.status === 429 ? "ERROR_CODE_EVDS_429" : undefined, true),
+    };
+  }
+
+  if (cachePort && rapidResult.status === 429) {
+    await cachePort
+      .set(
+        key,
+        {
+          lastUpdated: Date.now(),
+          data: [],
+          workerStatus: createWorkerState("RATE_LIMITED"),
+          isFallbackData: true,
+        },
+        retryAfterSeconds,
+      )
+      .catch(() => undefined);
+  }
+
+  const status = statusFromCache(cached);
   return {
-    status: "READY",
+    status,
     tab,
     range,
-    updatedAt: updatedAtSource,
-    events: mapped,
-    message: null,
-    source: "rapidapi",
-    reason: null,
+    updatedAt: cached?.lastUpdated ? new Date(cached.lastUpdated).toISOString() : null,
+    events: cachedEvents,
+    message:
+      rapidResult.status === 429
+        ? "Takvim sağlayıcısına şu anda erişilemiyor. Sağlayıcı hız sınırında."
+        : "Takvim sağlayıcısına şu anda erişilemiyor.",
+    source: "cache",
+    reason: `http_${rapidResult.status}`,
+    metadata: makeMetadata(cached?.lastUpdated ?? null, retryAfterSeconds, rapidResult.status === 429 ? "ERROR_CODE_EVDS_429" : undefined),
   };
 }

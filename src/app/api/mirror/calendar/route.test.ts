@@ -32,8 +32,12 @@ describe("/api/mirror/calendar route", () => {
         },
       ],
       message: null,
-      source: "rapidapi",
+      source: "rapid_api",
       reason: null,
+      metadata: {
+        stale_age_seconds: 0,
+        next_sync_permitted_at: "2026-05-05T10:05:00.000Z",
+      },
     });
 
     const { GET } = await import("@/app/api/mirror/calendar/route");
@@ -46,16 +50,21 @@ describe("/api/mirror/calendar route", () => {
     expect(response.headers.get("X-Calendar-Status")).toBe("READY");
   });
 
-  it("returns SOURCE_UNAVAILABLE response without 5xx", async () => {
+  it("returns COOLDOWN response without 5xx", async () => {
     mockFetchCalendarEvents.mockResolvedValueOnce({
-      status: "SOURCE_UNAVAILABLE",
+      status: "COOLDOWN",
       tab: "holidays",
       range: "today",
       updatedAt: null,
       events: [],
-      message: "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.",
-      source: "none",
-      reason: "empty_or_invalid_source",
+      message: "Takvim sağlayıcısı hız sınırında.",
+      source: "cache",
+      reason: "http_429",
+      metadata: {
+        stale_age_seconds: -1,
+        next_sync_permitted_at: "2026-05-05T10:05:00.000Z",
+        reason_code: "ERROR_CODE_EVDS_429",
+      },
     });
 
     const { GET } = await import("@/app/api/mirror/calendar/route");
@@ -63,12 +72,12 @@ describe("/api/mirror/calendar route", () => {
     const payload = (await response.json()) as { status: string; message: string | null };
 
     expect(response.status).toBe(200);
-    expect(payload.status).toBe("SOURCE_UNAVAILABLE");
-    expect(payload.message).toContain("geçici");
-    expect(response.headers.get("X-Calendar-Status")).toBe("SOURCE_UNAVAILABLE");
+    expect(payload.status).toBe("COOLDOWN");
+    expect(payload.message).toContain("hız sınır");
+    expect(response.headers.get("X-Calendar-Status")).toBe("COOLDOWN");
   });
 
-  it("falls back to SOURCE_UNAVAILABLE when client throws", async () => {
+  it("falls back to COOLDOWN when client throws", async () => {
     mockFetchCalendarEvents.mockRejectedValueOnce(new Error("client crash"));
 
     const { GET } = await import("@/app/api/mirror/calendar/route");
@@ -76,7 +85,34 @@ describe("/api/mirror/calendar route", () => {
     const payload = (await response.json()) as { status: string; events: unknown[] };
 
     expect(response.status).toBe(200);
-    expect(payload.status).toBe("SOURCE_UNAVAILABLE");
+    expect(payload.status).toBe("COOLDOWN");
     expect(payload.events).toEqual([]);
+  });
+
+  it("returns metadata fields in payload", async () => {
+    mockFetchCalendarEvents.mockResolvedValueOnce({
+      status: "DEGRADED",
+      tab: "economic",
+      range: "today",
+      updatedAt: "2026-05-05T10:00:00.000Z",
+      events: [],
+      message: "Son doğrulanan veri gösteriliyor.",
+      source: "cache",
+      reason: "http_429",
+      metadata: {
+        stale_age_seconds: 601,
+        next_sync_permitted_at: "2026-05-05T10:10:00.000Z",
+        reason_code: "ERROR_CODE_EVDS_429",
+        is_lkg: true,
+      },
+    });
+
+    const { GET } = await import("@/app/api/mirror/calendar/route");
+    const response = await GET(new Request("http://localhost/api/mirror/calendar?tab=economic&range=today"));
+    const payload = (await response.json()) as { metadata: { stale_age_seconds: number; reason_code?: string } };
+
+    expect(payload.metadata.stale_age_seconds).toBe(601);
+    expect(payload.metadata.reason_code).toBe("ERROR_CODE_EVDS_429");
+    expect(response.headers.get("X-Calendar-Reason")).toBe("http_429");
   });
 });

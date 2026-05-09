@@ -31,14 +31,19 @@ async function fetchWithTimeout(tab: EconomicTab, range: EconomicRange) {
     new Promise<CalendarFetchResult>((resolve) => {
       setTimeout(() => {
         resolve({
-          status: "SOURCE_UNAVAILABLE",
+          status: "COOLDOWN",
           tab,
           range,
           updatedAt: null,
           events: [],
           message: "Takvim kaynağı zaman aşımına uğradı. Lütfen kısa süre sonra tekrar deneyin.",
-          source: "none",
+          source: "cache",
           reason: "timeout",
+          metadata: {
+            stale_age_seconds: -1,
+            next_sync_permitted_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+            reason_code: "ERROR_CODE_TIMEOUT",
+          },
         });
       }, 15_000);
     }),
@@ -59,6 +64,9 @@ export async function GET(request: Request) {
       range: result.range,
       updatedAt: result.updatedAt,
       events: result.events,
+      source: result.source,
+      reason: result.reason,
+      metadata: result.metadata,
     });
 
     return NextResponse.json(payload, {
@@ -73,19 +81,26 @@ export async function GET(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Takvim verisi şu anda alınamıyor.";
     const payload = EconomicMirrorResponseSchema.parse({
-      status: "SOURCE_UNAVAILABLE",
+      status: "COOLDOWN",
       message: "Takvim verisinde geçici senkronizasyon gecikmesi var. Lütfen kısa süre sonra tekrar deneyin.",
       tab,
       range,
       updatedAt: null,
       events: [],
+      source: "cache",
+      reason: "route_exception",
+      metadata: {
+        stale_age_seconds: -1,
+        next_sync_permitted_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+        reason_code: "ERROR_CODE_ROUTE_EXCEPTION",
+      },
     });
 
     return NextResponse.json(payload, {
       status: 200,
       headers: {
-        "X-Calendar-Status": "SOURCE_UNAVAILABLE",
-        "X-Calendar-Source": "none",
+        "X-Calendar-Status": "COOLDOWN",
+        "X-Calendar-Source": "cache",
         "X-Calendar-Reason": "route_exception",
         "X-Calendar-Build": buildSignature(),
         "X-Calendar-Error": message,

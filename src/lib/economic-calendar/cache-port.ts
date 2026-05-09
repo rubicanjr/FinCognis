@@ -16,7 +16,7 @@ export interface EconomicEvent {
   previous: string | null;
 }
 
-export type WorkerStatus = "SUCCESS" | "WAF_BLOCKED" | "TIMEOUT" | "FATAL_ERROR";
+export type WorkerStatus = "SUCCESS" | "WAF_BLOCKED" | "TIMEOUT" | "FATAL_ERROR" | "RATE_LIMITED";
 
 export interface WorkerState {
   status: WorkerStatus;
@@ -88,7 +88,7 @@ function isWorkerState(value: unknown): value is WorkerState {
   if (!isObjectRecord(value)) return false;
   const status = value.status;
   return (
-    (status === "SUCCESS" || status === "WAF_BLOCKED" || status === "TIMEOUT" || status === "FATAL_ERROR") &&
+    (status === "SUCCESS" || status === "WAF_BLOCKED" || status === "TIMEOUT" || status === "FATAL_ERROR" || status === "RATE_LIMITED") &&
     typeof value.timestamp === "number" &&
     Number.isFinite(value.timestamp)
   );

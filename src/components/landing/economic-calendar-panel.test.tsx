@@ -23,12 +23,19 @@ describe("EconomicCalendarPanel", () => {
     global.fetch = vi.fn(async () =>
       new Response(
         JSON.stringify({
-          status: "SOURCE_UNAVAILABLE",
+          status: "COOLDOWN",
           tab: "economic",
           range: "today",
           updatedAt: null,
           events: [],
           message: "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.",
+          source: "cache",
+          reason: "http_429",
+          metadata: {
+            stale_age_seconds: -1,
+            next_sync_permitted_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+            reason_code: "ERROR_CODE_EVDS_429",
+          },
         }),
         {
           status: 200,
@@ -66,6 +73,12 @@ describe("EconomicCalendarPanel", () => {
             },
           ],
           message: null,
+          source: "rapid_api",
+          reason: null,
+          metadata: {
+            stale_age_seconds: 0,
+            next_sync_permitted_at: new Date(Date.now() + 60_000).toISOString(),
+          },
         }),
         {
           status: 200,
@@ -91,6 +104,12 @@ describe("EconomicCalendarPanel", () => {
           updatedAt: new Date().toISOString(),
           events: [],
           message: null,
+          source: "rapid_api",
+          reason: null,
+          metadata: {
+            stale_age_seconds: 0,
+            next_sync_permitted_at: new Date(Date.now() + 60_000).toISOString(),
+          },
         }),
         {
           status: 200,

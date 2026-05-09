@@ -15,7 +15,7 @@ export const EconomicEventSchema = z.object({
   impactLevel: z.enum(["High", "Medium", "Low"]),
 });
 
-export const EconomicMirrorStatusSchema = z.enum(["READY", "LOADING", "SOURCE_UNAVAILABLE"]);
+export const EconomicMirrorStatusSchema = z.enum(["READY", "READY_FALLBACK", "DEGRADED", "COOLDOWN", "LOADING"]);
 
 export const EconomicMirrorResponseSchema = z.object({
   status: EconomicMirrorStatusSchema,
@@ -24,6 +24,14 @@ export const EconomicMirrorResponseSchema = z.object({
   range: EconomicRangeSchema,
   updatedAt: z.string().nullable(),
   events: z.array(EconomicEventSchema),
+  source: z.enum(["rapid_api", "legacy_adapter", "cache"]).default("cache"),
+  reason: z.string().nullable().default(null),
+  metadata: z.object({
+    stale_age_seconds: z.number().int(),
+    next_sync_permitted_at: z.string(),
+    reason_code: z.string().optional(),
+    is_lkg: z.boolean().optional(),
+  }),
 });
 
 export type EconomicTab = z.infer<typeof EconomicTabSchema>;
