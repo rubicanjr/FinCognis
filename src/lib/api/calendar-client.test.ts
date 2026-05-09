@@ -116,4 +116,16 @@ describe("calendar-client", () => {
     expect(result.status).toBe("READY");
     expect(fetchImpl).not.toHaveBeenCalled();
   });
+
+  it("returns missing_fmp_api_key when dividends requested without FMP key", async () => {
+    delete process.env.FMP_API_KEY;
+    const result = await fetchCalendarEvents("dividends", "today", {
+      fetchImpl: vi.fn<typeof fetch>(),
+      cachePort: new FakeCachePort(null),
+    });
+
+    expect(result.status).toBe("COOLDOWN");
+    expect(result.reason).toBe("missing_fmp_api_key");
+    expect(result.metadata.reason_code).toBe("FMP_MISSING_API_KEY");
+  });
 });

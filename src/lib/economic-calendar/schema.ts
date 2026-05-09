@@ -24,7 +24,7 @@ export const EconomicMirrorResponseSchema = z.object({
   range: EconomicRangeSchema,
   updatedAt: z.string().nullable(),
   events: z.array(EconomicEventSchema),
-  source: z.enum(["finnhub", "legacy_adapter", "cache"]).default("cache"),
+  source: z.enum(["finnhub", "fmp", "holiday_api", "legacy_adapter", "cache"]).default("cache"),
   reason: z.string().nullable().default(null),
   metadata: z.object({
     stale_age_seconds: z.number().int(),

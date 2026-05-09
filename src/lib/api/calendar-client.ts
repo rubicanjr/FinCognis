@@ -20,11 +20,15 @@ import { fetchCalendarEvents as fetchLegacyCalendarEvents } from "@/lib/economic
 import { FinnhubError, logFinnhubError, mapHttpToFinnhubError } from "@/lib/api/finnhub-errors";
 
 const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
+const FMP_BASE_URL = "https://financialmodelingprep.com/api/v3";
+const HOLIDAY_BASE_URL = "https://date.nager.at/api/v3";
 const ISTANBUL_TZ = "Europe/Istanbul";
 const LIVE_TTL_SECONDS = 15 * 60;
 const LKG_TTL_SECONDS = 24 * 60 * 60;
 
-type CalendarSource = "finnhub" | "legacy_adapter" | "cache";
+type CalendarSource = "finnhub" | "fmp" | "holiday_api" | "legacy_adapter" | "cache";
+
+type PrimaryProvider = "finnhub" | "fmp" | "holiday_api";
 
 export interface CalendarPayloadMetadata {
   stale_age_seconds: number;
@@ -97,6 +101,11 @@ function readFinnhubApiKey(): string | null {
   return key && key.length > 0 ? key : null;
 }
 
+function readFmpApiKey(): string | null {
+  const key = process.env.FMP_API_KEY?.trim();
+  return key && key.length > 0 ? key : null;
+}
+
 function readCachePort(deps: CalendarClientDependencies): CachePort | null {
   if (deps.cachePort !== undefined) return deps.cachePort;
   try {
@@ -158,6 +167,12 @@ function apiUrl(path: string, params: Record<string, string>): string {
     url.searchParams.set(key, value);
   }
   return url.toString();
+}
+
+function resolvePrimaryProvider(tab: EconomicTab): PrimaryProvider {
+  if (tab === "dividends" || tab === "splits") return "fmp";
+  if (tab === "holidays") return "holiday_api";
+  return "finnhub";
 }
 
 async function fetchJson(fetchImpl: typeof fetch, url: string): Promise<unknown> {
@@ -268,6 +283,74 @@ function mapSplitRows(rows: unknown[]): EconomicEvent[] {
     .filter((x): x is EconomicEvent => x !== null);
 }
 
+function mapFmpDividendRows(rows: unknown[]): EconomicEvent[] {
+  return rows
+    .map((row, index) => {
+      const item = row as Record<string, unknown>;
+      const symbol = String(item.symbol ?? item.ticker ?? "").trim();
+      if (!symbol) return null;
+      const exDate = String(item.date ?? item.exDate ?? item.paymentDate ?? new Date().toISOString());
+      const amount = item.adjDividend ?? item.dividend ?? item.amount ?? null;
+      return EconomicEventSchema.parse({
+        id: createId(["fmp-dividend", symbol, exDate, String(index)]),
+        time: new Date(exDate).toISOString(),
+        currency: symbol,
+        importance: 2,
+        eventTitle: `${symbol} Temettü`,
+        actual: amount == null ? null : String(amount),
+        forecast: null,
+        previous: null,
+        impactLevel: "Medium",
+      });
+    })
+    .filter((x): x is EconomicEvent => x !== null);
+}
+
+function mapFmpSplitRows(rows: unknown[]): EconomicEvent[] {
+  return rows
+    .map((row, index) => {
+      const item = row as Record<string, unknown>;
+      const symbol = String(item.symbol ?? item.ticker ?? "").trim();
+      if (!symbol) return null;
+      const date = String(item.date ?? item.executionDate ?? new Date().toISOString());
+      const ratio = item.numerator && item.denominator ? `${item.numerator}:${item.denominator}` : String(item.splitRatio ?? item.ratio ?? "-");
+      return EconomicEventSchema.parse({
+        id: createId(["fmp-split", symbol, date, String(index)]),
+        time: new Date(date).toISOString(),
+        currency: symbol,
+        importance: 2,
+        eventTitle: `${symbol} Bölünme`,
+        actual: ratio,
+        forecast: null,
+        previous: null,
+        impactLevel: "Medium",
+      });
+    })
+    .filter((x): x is EconomicEvent => x !== null);
+}
+
+function mapHolidayRows(rows: unknown[]): EconomicEvent[] {
+  return rows
+    .map((row, index) => {
+      const item = row as Record<string, unknown>;
+      const date = String(item.date ?? "").trim();
+      const name = String(item.localName ?? item.name ?? "").trim();
+      if (!date || !name) return null;
+      return EconomicEventSchema.parse({
+        id: createId(["holiday", name, date, String(index)]),
+        time: new Date(date).toISOString(),
+        currency: String(item.countryCode ?? "US"),
+        importance: 1,
+        eventTitle: name,
+        actual: null,
+        forecast: null,
+        previous: null,
+        impactLevel: "Low",
+      });
+    })
+    .filter((x): x is EconomicEvent => x !== null);
+}
+
 async function fetchFinnhubTab(args: {
   fetchImpl: typeof fetch;
   apiKey: string;
@@ -319,10 +402,54 @@ async function fetchFinnhubTab(args: {
   return mapSplitRows(rows);
 }
 
+async function fetchFmpTab(args: {
+  fetchImpl: typeof fetch;
+  apiKey: string;
+  tab: EconomicTab;
+  range: DateRange;
+}): Promise<EconomicEvent[]> {
+  const { fetchImpl, apiKey, tab, range } = args;
+
+  if (tab === "dividends") {
+    const url = `${FMP_BASE_URL}/stock_dividend_calendar?from=${range.from}&to=${range.to}&apikey=${apiKey}`;
+    const payload = await fetchJson(fetchImpl, url);
+    const rows = Array.isArray(payload) ? payload : [];
+    return mapFmpDividendRows(rows);
+  }
+
+  if (tab === "splits") {
+    const url = `${FMP_BASE_URL}/stock_split_calendar?from=${range.from}&to=${range.to}&apikey=${apiKey}`;
+    const payload = await fetchJson(fetchImpl, url);
+    const rows = Array.isArray(payload) ? payload : [];
+    return mapFmpSplitRows(rows);
+  }
+
+  return [];
+}
+
+async function fetchHolidayTab(args: {
+  fetchImpl: typeof fetch;
+  range: DateRange;
+}): Promise<EconomicEvent[]> {
+  const { fetchImpl, range } = args;
+  const country = process.env.HOLIDAY_COUNTRY_CODE?.trim() || "US";
+  const year = Number.parseInt(range.from.slice(0, 4), 10);
+  const url = `${HOLIDAY_BASE_URL}/PublicHolidays/${year}/${country}`;
+  const payload = await fetchJson(fetchImpl, url);
+  const rows = Array.isArray(payload) ? payload : [];
+  const filtered = rows.filter((row) => {
+    const date = String((row as Record<string, unknown>).date ?? "");
+    return date >= range.from && date <= range.to;
+  });
+  return mapHolidayRows(filtered);
+}
+
 export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange, deps: CalendarClientDependencies = {}): Promise<CalendarFetchResult> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const now = deps.now?.() ?? new Date();
   const apiKey = readFinnhubApiKey();
+  const fmpApiKey = readFmpApiKey();
+  const primaryProvider = resolvePrimaryProvider(tab);
   const cachePort = readCachePort(deps);
   const cacheKey = `${buildCalendarCacheKey(tab, range)}:finnhub:v1`;
   const cached = cachePort ? await cachePort.get(cacheKey) : null;
@@ -343,7 +470,7 @@ export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange
     };
   }
 
-  if (!apiKey) {
+  if (primaryProvider === "finnhub" && !apiKey) {
     const error = new FinnhubError({
       code: "FINNHUB_MISSING_API_KEY",
       message: "FINNHUB_API_KEY is not configured.",
@@ -378,10 +505,45 @@ export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange
     };
   }
 
+  if (primaryProvider === "fmp" && !fmpApiKey) {
+    if (cached && cachedEvents.length > 0) {
+      return {
+        status: "DEGRADED",
+        tab,
+        range,
+        updatedAt: new Date(cached.lastUpdated).toISOString(),
+        events: cachedEvents,
+        message: "FMP anahtarı bulunamadı. Son doğrulanan veri gösteriliyor.",
+        source: "cache",
+        reason: "missing_fmp_api_key",
+        metadata: metadata(cached.lastUpdated, "FMP_MISSING_API_KEY", true),
+      };
+    }
+
+    return {
+      status: "COOLDOWN",
+      tab,
+      range,
+      updatedAt: null,
+      events: [],
+      message: "Temettü/Bölünme verisi için FMP API anahtarı tanımlı değil.",
+      source: "cache",
+      reason: "missing_fmp_api_key",
+      metadata: metadata(null, "FMP_MISSING_API_KEY"),
+    };
+  }
+
   try {
     const dateRange = resolveRange(range, now);
     const symbol = deps.symbol ?? process.env.FINNHUB_DEFAULT_SYMBOL ?? null;
-    const events = await fetchFinnhubTab({ fetchImpl, apiKey, tab, range: dateRange, symbol });
+    const fetchResult =
+      primaryProvider === "fmp"
+        ? { events: await fetchFmpTab({ fetchImpl, apiKey: fmpApiKey!, tab, range: dateRange }), source: "fmp" as CalendarSource }
+        : primaryProvider === "holiday_api"
+          ? { events: await fetchHolidayTab({ fetchImpl, range: dateRange }), source: "holiday_api" as CalendarSource }
+          : { events: await fetchFinnhubTab({ fetchImpl, apiKey: apiKey!, tab, range: dateRange, symbol }), source: "finnhub" as CalendarSource };
+
+    const events = fetchResult.events;
 
     if (events.length > 0) {
       if (cachePort) {
@@ -394,7 +556,7 @@ export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange
         updatedAt: new Date().toISOString(),
         events,
         message: null,
-        source: "finnhub",
+        source: fetchResult.source,
         reason: null,
         metadata: metadata(Date.now()),
       };
@@ -409,8 +571,8 @@ export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange
         events: cachedEvents,
         message: "Canlı kaynaktan sonuç yok, son doğrulanan veri gösteriliyor.",
         source: "cache",
-        reason: "empty_finnhub_payload",
-        metadata: metadata(cached.lastUpdated, "FINNHUB_EMPTY_PAYLOAD", true),
+        reason: `empty_${fetchResult.source}_payload`,
+        metadata: metadata(cached.lastUpdated, `${fetchResult.source.toUpperCase()}_EMPTY_PAYLOAD`, true),
       };
     }
 
@@ -422,8 +584,8 @@ export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange
       events: [],
       message: "Canlı kaynaktan listelenecek veri alınamadı.",
       source: "cache",
-      reason: "empty_finnhub_payload",
-      metadata: metadata(null, "FINNHUB_EMPTY_PAYLOAD"),
+      reason: `empty_${fetchResult.source}_payload`,
+      metadata: metadata(null, `${fetchResult.source.toUpperCase()}_EMPTY_PAYLOAD`),
     };
   } catch (error) {
     logFinnhubError(error, { tab, range });
@@ -432,8 +594,8 @@ export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange
       await cachePort.set(cacheKey, toCachePayload([], "RATE_LIMITED"), 300).catch(() => undefined);
     }
 
-    // fallback to legacy adapter only for economic/holidays/ipo paths
-    if (tab === "economic" || tab === "holidays" || tab === "ipo") {
+    // fallback to legacy adapter for all tabs in hybrid mode
+    {
       const legacy = await fetchLegacyCalendarEvents(tab, range).catch(() => null);
       if (legacy && legacy.status === "READY" && legacy.events.length > 0) {
         if (cachePort) {
