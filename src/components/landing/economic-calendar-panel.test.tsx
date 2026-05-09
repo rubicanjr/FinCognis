@@ -73,7 +73,7 @@ describe("EconomicCalendarPanel", () => {
             },
           ],
           message: null,
-          source: "rapid_api",
+          source: "finnhub",
           reason: null,
           metadata: {
             stale_age_seconds: 0,
@@ -104,7 +104,7 @@ describe("EconomicCalendarPanel", () => {
           updatedAt: new Date().toISOString(),
           events: [],
           message: null,
-          source: "rapid_api",
+          source: "finnhub",
           reason: null,
           metadata: {
             stale_age_seconds: 0,

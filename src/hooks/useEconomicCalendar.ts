@@ -16,7 +16,7 @@ interface UseEconomicCalendarState {
   error: string | null;
   updatedAt: string | null;
   toast: string | null;
-  source: "rapid_api" | "legacy_adapter" | "cache";
+  source: "finnhub" | "legacy_adapter" | "cache";
   reason: string | null;
   metadata: {
     stale_age_seconds: number;

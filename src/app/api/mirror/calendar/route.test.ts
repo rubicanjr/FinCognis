@@ -32,7 +32,7 @@ describe("/api/mirror/calendar route", () => {
         },
       ],
       message: null,
-      source: "rapid_api",
+      source: "finnhub",
       reason: null,
       metadata: {
         stale_age_seconds: 0,

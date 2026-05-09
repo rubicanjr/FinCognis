@@ -35,10 +35,10 @@ class FakeCachePort implements CachePort {
 
 describe("calendar-client", () => {
   beforeEach(() => {
-    process.env.RAPIDAPI_KEY = "test-key";
+    process.env.FINNHUB_API_KEY = "test-key";
   });
 
-  it("returns Last Known Good data when RapidAPI responds 429", async () => {
+  it("returns Last Known Good data when Finnhub responds 429", async () => {
     const cache = new FakeCachePort({
       lastUpdated: Date.now() - 20 * 60_000,
       data: [
@@ -65,9 +65,9 @@ describe("calendar-client", () => {
 
     expect(result.status).toBe("DEGRADED");
     expect(result.source).toBe("cache");
-    expect(result.reason).toBe("http_429");
+    expect(result.reason).toBe("FINNHUB_RATE_LIMIT");
     expect(result.metadata.is_lkg).toBe(true);
-    expect(result.metadata.reason_code).toBe("ERROR_CODE_EVDS_429");
+    expect(result.metadata.reason_code).toBe("FINNHUB_RATE_LIMIT");
     expect(result.events).toHaveLength(1);
     expect(result.events[0]?.eventTitle).toBe("ISM Services PMI");
   });
@@ -83,8 +83,8 @@ describe("calendar-client", () => {
     const result = await fetchCalendarEvents("economic", "today", { fetchImpl, cachePort: cache });
 
     expect(result.status).toBe("COOLDOWN");
-    expect(result.reason).toBe("http_429");
-    expect(result.metadata.reason_code).toBe("ERROR_CODE_EVDS_429");
+    expect(result.reason).toBe("FINNHUB_RATE_LIMIT");
+    expect(result.metadata.reason_code).toBe("FINNHUB_RATE_LIMIT");
     expect(cache.value?.workerStatus.status).toBe("RATE_LIMITED");
   });
 

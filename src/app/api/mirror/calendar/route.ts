@@ -25,9 +25,9 @@ function parseRange(value: string | null): EconomicRange {
   return parsed.success ? parsed.data : "today";
 }
 
-async function fetchWithTimeout(tab: EconomicTab, range: EconomicRange) {
+async function fetchWithTimeout(tab: EconomicTab, range: EconomicRange, work: Promise<CalendarFetchResult>) {
   return Promise.race([
-    fetchCalendarEvents(tab, range),
+    work,
     new Promise<CalendarFetchResult>((resolve) => {
       setTimeout(() => {
         resolve({
@@ -54,9 +54,10 @@ export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const tab = parseTab(searchParams.get("tab"));
   const range = parseRange(searchParams.get("range"));
+  const symbol = searchParams.get("symbol");
 
   try {
-    const result = await fetchWithTimeout(tab, range);
+    const result = await fetchWithTimeout(tab, range, fetchCalendarEvents(tab, range, { symbol }));
     const payload = EconomicMirrorResponseSchema.parse({
       status: result.status,
       message: result.message,

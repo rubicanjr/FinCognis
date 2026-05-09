@@ -42,7 +42,7 @@ describe("/api/mirror/calendar/refresh route", () => {
       updatedAt: "2026-05-09T10:00:00.000Z",
       events: [],
       message: null,
-      source: "rapid_api",
+      source: "finnhub",
       reason: null,
       metadata: {
         stale_age_seconds: 0,
