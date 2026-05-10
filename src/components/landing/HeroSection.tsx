@@ -62,49 +62,56 @@ const SPONSORS = [
 
 export default function HeroSection() {
   return (
-    <header id="karsilastir" className="landing-section relative flex min-h-[730px] flex-col items-center justify-center overflow-hidden px-4 pb-20 pt-28 sm:px-6">
+    <header
+      id="karsilastir"
+      className="landing-section relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4 pb-12 pt-24 sm:px-6 sm:pb-16 sm:pt-28"
+    >
+      {/* ── Borsa Uzayı Background Layers ── */}
+      <div className="hero-candlestick-bg" aria-hidden="true" />
+      <div className="hero-depth-gradient" aria-hidden="true" />
       <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 82%, rgb(34 211 238 / 0.26) 0%, transparent 44%), radial-gradient(circle at 12% 4%, rgb(34 183 255 / 0.18) 0%, transparent 34%), radial-gradient(circle at 88% 6%, rgb(79 70 229 / 0.16) 0%, transparent 34%), linear-gradient(180deg, rgba(2,9,21,0.98) 0%, rgba(1,7,18,0.98) 100%)",
-        }}
+        className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(to_right,rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.07)_1px,transparent_1px)] [background-size:28px_28px]"
+        aria-hidden="true"
       />
-      <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl rounded-[2.4rem] border border-white/10 bg-[radial-gradient(circle_at_50%_110%,rgba(34,211,238,0.24),rgba(3,10,24,0.94)_58%)] px-4 py-16 text-center shadow-[0_36px_120px_-64px_rgba(34,211,238,0.4)] sm:px-8">
-        <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5">
+      {/* ── Hero Content (vertically centered) ── */}
+      <div className="relative z-10 mx-auto w-full max-w-5xl text-center">
+        <div className="animate-fade-in-up mb-6 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/40 bg-[#22b7ff]/10 px-4 py-1.5 backdrop-blur-sm">
           <BadgeCheck className="h-4 w-4 text-[#9ce7ff]" strokeWidth={1.5} />
-          <span className="kicker-label font-display text-[11px] font-semibold text-[#dff4ff]">
+          <span className="kicker-label font-display text-[11px] font-semibold tracking-[0.1em] text-[#dff4ff]">
             FinCognis Karşılaştırma ve Profil Keşif Katmanı
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-4xl font-semibold leading-[1.08] tracking-[-0.022em] text-white sm:text-5xl md:text-6xl lg:text-7xl">
-          Yatırım kararlarını <span className="text-white">sistemle al</span>
+        <h1 className="animate-fade-in-up-delay-1 mb-5 font-tight text-[2.5rem] font-black leading-[1.05] tracking-[-0.04em] text-white sm:text-5xl md:text-6xl lg:text-[4.25rem]">
+          Yatırım kararlarını{" "}
+          <span className="bg-gradient-to-r from-[#22d3ee] via-[#22b7ff] to-[#6366f1] bg-clip-text text-transparent">
+            sistemle al
+          </span>
         </h1>
 
-        <p className="animate-fade-in-up-delay-2 mx-auto mb-9 text-base leading-relaxed text-slate-200 sm:text-lg md:max-w-none md:whitespace-nowrap md:text-xl">
+        <p className="animate-fade-in-up-delay-2 mx-auto mb-10 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl">
           FinCognis ile karar vermeden önce riski görün, yatırım gücünüzü artırın.
         </p>
 
         <div className="animate-fade-in-up-delay-3 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href="/tools"
-            className="landing-primary-btn w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-display text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
+            className="landing-primary-btn w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-tight text-lg font-bold tracking-[-0.02em] text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
           >
             Karşılaştırmayı Aç
           </Link>
           <Link
             href="/#profil-kesif"
-            className="landing-secondary-btn w-full rounded-xl border border-white/12 bg-slate-900/55 px-8 py-4 text-center font-display text-lg font-semibold text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] active:scale-95 sm:w-auto"
+            className="landing-secondary-btn w-full rounded-xl border border-white/12 bg-slate-900/55 px-8 py-4 text-center font-tight text-lg font-bold tracking-[-0.02em] text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] active:scale-95 sm:w-auto"
           >
             Profil Keşfi İncele
           </Link>
         </div>
       </div>
 
-      <div className="animate-fade-in-up-delay-3 relative mx-auto mt-10 w-full max-w-6xl">
+      {/* ── Dashboard Preview (below fold) ── */}
+      <div className="animate-fade-in-up-delay-3 relative z-10 mx-auto mt-12 w-full max-w-6xl sm:mt-16">
         <div className="landing-card overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:p-4">
           <div className="w-full select-none overflow-hidden rounded-xl border border-white/12 bg-slate-950/70" aria-label="FinCognis Dashboard Önizleme">
             <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
@@ -114,7 +121,7 @@ export default function HeroSection() {
               <span className="ml-4 font-data text-[11px] tracking-[0.04em] text-slate-400">app.fincognis.com/dashboard</span>
             </div>
 
-            <div className="flex min-h-[340px] sm:min-h-[420px]">
+            <div className="flex min-h-[280px] sm:min-h-[360px]">
               <div className="hidden w-48 shrink-0 flex-col gap-1 border-r border-white/10 bg-slate-900/55 p-3 sm:flex">
                 <div className="mb-4 flex items-center gap-2 px-2">
                   <Diamond className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
@@ -212,50 +219,10 @@ export default function HeroSection() {
                     <span className="mb-3 font-display text-[10px] tracking-[0.08em] text-slate-400">Dağılım</span>
                     <PieChart className="mb-2 h-6 w-6 text-[#8ddfff]" strokeWidth={1.5} />
                     <svg viewBox="0 0 80 80" className="h-20 w-20">
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="rgba(148,163,184,0.3)"
-                        strokeWidth="8"
-                        strokeOpacity="0.5"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="#22b7ff"
-                        strokeWidth="8"
-                        strokeDasharray="94 94"
-                        strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="#60a5fa"
-                        strokeWidth="8"
-                        strokeDasharray="38 150"
-                        strokeDashoffset="-94"
-                        strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="#a855f7"
-                        strokeWidth="8"
-                        strokeDasharray="28 160"
-                        strokeDashoffset="-132"
-                        strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
-                      />
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(148,163,184,0.3)" strokeWidth="8" strokeOpacity="0.5" />
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="#22b7ff" strokeWidth="8" strokeDasharray="94 94" strokeLinecap="round" transform="rotate(-90 40 40)" />
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="#60a5fa" strokeWidth="8" strokeDasharray="38 150" strokeDashoffset="-94" strokeLinecap="round" transform="rotate(-90 40 40)" />
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="#a855f7" strokeWidth="8" strokeDasharray="28 160" strokeDashoffset="-132" strokeLinecap="round" transform="rotate(-90 40 40)" />
                       <text x="40" y="42" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="JetBrains Mono" fontWeight="700">
                         64%
                       </text>
@@ -295,4 +262,3 @@ export default function HeroSection() {
     </header>
   );
 }
-

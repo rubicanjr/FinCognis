@@ -67,6 +67,7 @@ export default {
         full: "0.75rem",
       },
       fontFamily: {
+        tight: ["var(--font-tight)", "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
         display: ["var(--font-ui)", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
         headline: ["var(--font-ui)", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
         body: ["var(--font-ui)", "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
