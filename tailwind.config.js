@@ -68,8 +68,8 @@ export default {
       },
       fontFamily: {
         tight: ["var(--font-tight)", "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
-        display: ["var(--font-ui)", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
-        headline: ["var(--font-ui)", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
+        display: ["var(--font-tight)", "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
+        headline: ["var(--font-tight)", "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
         body: ["var(--font-ui)", "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
         label: ["var(--font-ui)", "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
         data: ["var(--font-data)", "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],

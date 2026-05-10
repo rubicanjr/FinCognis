@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="landing-footer border-t border-[#22b7ff]/20 bg-[#030915]/55 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-8 px-6 py-12 md:flex-row">
         <div className="flex flex-col gap-4 text-center md:text-left">
-          <Link href="/" className="font-display text-lg font-semibold tracking-[0.02em] text-[#eaf6ff]">
+          <Link href="/" className="font-display text-lg font-bold tracking-[-0.01em] text-[#eaf6ff]">
             FinCognis
           </Link>
           <p className="text-sm tracking-wide text-slate-400">© 2026 FinCognis. Güvenli Finansal Zekâ.</p>

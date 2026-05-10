@@ -30,7 +30,7 @@ export default function Navbar() {
               key={item.label}
               href={item.href}
               className={`landing-nav-link font-display transition-colors duration-300 ${
-                item.highlighted ? "font-semibold tracking-[0.02em] text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"
+                item.highlighted ? "font-bold tracking-[0.02em] text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"
               }`}
             >
               {item.finLab ? (
@@ -70,13 +70,13 @@ export default function Navbar() {
           <ThemeToggleButton />
           <Link
             href="/tools"
-            className="landing-secondary-btn hidden items-center rounded-xl border border-white/12 bg-slate-900/55 px-4 py-2.5 font-display text-sm font-semibold text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] sm:inline-flex"
+            className="landing-secondary-btn hidden items-center rounded-xl border border-white/12 bg-slate-900/55 px-4 py-2.5 font-display text-sm font-bold tracking-[-0.01em] text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] sm:inline-flex"
           >
             Araçlar
           </Link>
           <Link
             href="/tools"
-            className="landing-primary-btn rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-5 py-2.5 font-display text-sm font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95"
+            className="landing-primary-btn rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-5 py-2.5 font-display text-sm font-bold tracking-[-0.01em] text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95"
           >
             Başla
           </Link>

@@ -97,14 +97,14 @@ function MemberName({ member }: { member: TeamMember }) {
         href={member.linkedinUrl}
         target="_blank"
         rel="noreferrer"
-        className="font-display text-xl font-semibold tracking-[0.01em] text-slate-100 transition-colors hover:text-[#8ddfff] md:text-2xl"
+        className="font-display text-xl font-bold tracking-[-0.01em] text-slate-100 transition-colors hover:text-[#8ddfff] md:text-2xl"
       >
         {member.name}
       </Link>
     );
   }
 
-  return <h3 className="font-display text-xl font-semibold tracking-[0.01em] text-slate-100 md:text-2xl">{member.name}</h3>;
+  return <h3 className="font-display text-xl font-bold tracking-[-0.01em] text-slate-100 md:text-2xl">{member.name}</h3>;
 }
 
 function MemberAvatar({ src, alt }: { src: string; alt: string }) {
@@ -130,7 +130,7 @@ export default function CoreTeamSection() {
   return (
     <section id="core-team" className="landing-section mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <div className="mb-12 text-center">
-        <h2 className="font-display text-4xl font-semibold tracking-[0.01em] md:text-5xl">
+        <h2 className="font-display text-4xl font-bold tracking-[-0.02em] md:text-5xl">
           <span className="text-slate-50">Core</span>
           <span className="exclusive-gradient-text">Team</span>
         </h2>
@@ -140,7 +140,7 @@ export default function CoreTeamSection() {
         {TEAM_SECTIONS.map((section) => (
           <section key={section.title} aria-labelledby={section.title}>
             <div className="mb-8 text-center">
-              <h3 id={section.title} className="font-display text-3xl font-semibold tracking-[0.01em] text-slate-100 md:text-4xl">
+              <h3 id={section.title} className="font-display text-3xl font-bold tracking-[-0.02em] text-slate-100 md:text-4xl">
                 {section.title}
               </h3>
               <p className="mx-auto mt-4 max-w-3xl text-slate-300">{section.description}</p>

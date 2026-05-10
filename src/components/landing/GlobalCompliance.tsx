@@ -35,7 +35,7 @@ export default function GlobalCompliance() {
       </span>
 
       <div className="mb-14 text-center">
-        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
+        <h2 className="mt-5 font-display text-4xl font-bold tracking-[-0.02em] text-slate-50 md:text-5xl">
           FinCognis Ekibinin Duygu ve Düşünceleri
         </h2>
       </div>
@@ -51,7 +51,7 @@ export default function GlobalCompliance() {
             </div>
             <p className="text-sm leading-relaxed text-slate-200">“{item.quote}”</p>
             <div className="mt-6 border-t border-white/10 pt-4">
-              <p className="font-display text-base font-semibold text-slate-100">{item.person}</p>
+              <p className="font-display text-base font-bold tracking-[-0.01em] text-slate-100">{item.person}</p>
               <p className="text-xs text-slate-400">{item.role}</p>
             </div>
           </article>

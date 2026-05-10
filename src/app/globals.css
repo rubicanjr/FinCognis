@@ -127,11 +127,12 @@ body {
 }
 
 .font-headline {
-  font-family: var(--font-ui), "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  font-family: var(--font-tight), "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  letter-spacing: -0.03em;
 }
 
 .font-display {
-  font-family: var(--font-ui), "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  font-family: var(--font-tight), "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
   letter-spacing: 0.005em;
 }
 
