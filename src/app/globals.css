@@ -992,3 +992,87 @@ html.light .proof-metrics-value,
 html.light .proof-metrics-label {
   color: #111111 !important;
 }
+
+/* ─── Exclusive CoreTeam Animations ─── */
+
+@keyframes exclusive-text-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.exclusive-gradient-text {
+  background: linear-gradient(
+    135deg,
+    #D4AF37 0%,
+    #E5E4E2 25%,
+    #002366 50%,
+    #046307 75%,
+    #D4AF37 100%
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: exclusive-text-gradient 6s ease infinite;
+  will-change: background-position;
+}
+
+@keyframes exclusive-ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.exclusive-avatar-ring {
+  position: relative;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(
+    from 0deg,
+    #D4AF37,
+    #E5E4E2,
+    #002366,
+    #046307,
+    #D4AF37
+  );
+  animation: exclusive-ring-spin 4s linear infinite;
+  will-change: transform;
+}
+
+.exclusive-avatar-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    rgba(212, 175, 55, 0.35),
+    rgba(229, 228, 226, 0.2),
+    rgba(0, 35, 102, 0.35),
+    rgba(4, 99, 7, 0.2),
+    rgba(212, 175, 55, 0.35)
+  );
+  filter: blur(8px);
+  z-index: -1;
+  animation: exclusive-ring-spin 4s linear infinite reverse;
+}
+
+.exclusive-avatar-inner {
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.95));
+}
+
+/* Light mode: tone down the glow */
+html[data-theme="light"] .exclusive-avatar-ring::before,
+html.light .exclusive-avatar-ring::before {
+  filter: blur(4px);
+  opacity: 0.5;
+}
+
+html[data-theme="light"] .exclusive-gradient-text,
+html.light .exclusive-gradient-text {
+  -webkit-text-fill-color: #0f172a;
+  background: none;
+  animation: none;
+}

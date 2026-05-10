@@ -110,15 +110,17 @@ function MemberName({ member }: { member: TeamMember }) {
 function MemberAvatar({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="flex-shrink-0">
-      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.95))] shadow-[0_4px_16px_rgba(0,0,0,0.4)] md:h-20 md:w-20">
-        <Image
-          src={src}
-          alt={alt}
-          width={80}
-          height={80}
-          className="h-full w-full object-cover"
-          data-testid="member-avatar"
-        />
+      <div className="exclusive-avatar-ring">
+        <div className="exclusive-avatar-inner h-16 w-16 md:h-20 md:w-20">
+          <Image
+            src={src}
+            alt={alt}
+            width={80}
+            height={80}
+            className="h-full w-full object-cover"
+            data-testid="member-avatar"
+          />
+        </div>
       </div>
     </div>
   );
@@ -128,7 +130,10 @@ export default function CoreTeamSection() {
   return (
     <section id="core-team" className="landing-section mx-auto max-w-6xl px-4 py-20 sm:px-6">
       <div className="mb-12 text-center">
-        <h2 className="font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">CoreTeam</h2>
+        <h2 className="font-display text-4xl font-semibold tracking-[0.01em] md:text-5xl">
+          <span className="text-slate-50">Core</span>
+          <span className="exclusive-gradient-text">Team</span>
+        </h2>
       </div>
 
       <div className="space-y-16">
@@ -148,7 +153,7 @@ export default function CoreTeamSection() {
                   data-testid="core-team-member-card"
                   className="landing-card flex flex-col items-center gap-5 rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(15,23,42,0.62),rgba(2,6,23,0.82))] p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/60 md:flex-row md:items-start md:justify-between"
                 >
-                  {/* Avatar — centered on mobile, right-aligned on md+ */}
+                  {/* Avatar — centered on mobile */}
                   <div className="md:hidden">
                     <MemberAvatar src={member.imageUrl} alt={member.name} />
                   </div>

@@ -7,14 +7,14 @@ import { Menu, X } from "lucide-react";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 import OnlineUsersBadge from "@/components/landing/OnlineUsersBadge";
 
-const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean; finLab?: boolean }> = [
+const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean; finLab?: boolean; coreTeam?: boolean }> = [
   { label: "Ana Sayfa", href: "/" },
   { label: "Haberler", href: "/haberler" },
   { label: "Ekonomik Takvim", href: "/ekonomik-takvim" },
   { label: "Metrikler", href: "/#metrik-rehberi" },
   { label: "Risk", href: "/#risk" },
   { label: "FinLab", href: "/finlab", finLab: true },
-  { label: "Core Team", href: "/ekip" },
+  { label: "CoreTeam", href: "/ekip", coreTeam: true },
   { label: "İletişim", href: "/iletisim", highlighted: true },
 ];
 
@@ -37,6 +37,11 @@ export default function Navbar() {
                 <span className="inline-flex items-center">
                   <span>Fin</span>
                   <span className="landing-finlab-tag">Lab</span>
+                </span>
+              ) : item.coreTeam ? (
+                <span className="inline-flex items-center">
+                  <span>Core</span>
+                  <span className="exclusive-gradient-text">Team</span>
                 </span>
               ) : (
                 item.label
@@ -98,6 +103,11 @@ export default function Navbar() {
                 <span className="inline-flex items-center">
                   <span>Fin</span>
                   <span className="landing-finlab-tag">Lab</span>
+                </span>
+              ) : item.coreTeam ? (
+                <span className="inline-flex items-center">
+                  <span>Core</span>
+                  <span className="exclusive-gradient-text">Team</span>
                 </span>
               ) : (
                 item.label
