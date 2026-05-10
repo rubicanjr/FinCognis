@@ -1,13 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   --color-accent-blue: #0a84ff;
-  --type-heading-tracking: -0.02em;
-  --type-kicker-tracking: 0.12em;
-  --type-body-tracking: 0.005em;
+  --type-heading-tracking: 0.08em;
+  --type-kicker-tracking: 0.3em;
+  --type-body-tracking: 0.015em;
   --type-text-primary: rgb(241 245 249 / 0.9);
+  --font-kusanagi-heading: "Orbitron", "Exo 2", "Rajdhani", "Eurostile", "Segoe UI", sans-serif;
+  --font-kusanagi-sans: "Exo 2", "Orbitron", "Rajdhani", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  --font-kusanagi-mono: "Orbitron", "Exo 2", "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
+  --font-ui: var(--font-kusanagi-sans);
+  --font-tight: var(--font-kusanagi-heading);
+  --font-data: var(--font-kusanagi-mono);
+  --kusanagi-weight-heading: 800;
+  --kusanagi-weight-ui: 700;
+  --kusanagi-weight-body: 500;
+  --kusanagi-weight-mono: 700;
   --surface: 248 250 252;
   --surface-bright: 255 255 255;
   --surface-container: 241 245 249;
@@ -102,16 +114,18 @@ html.light {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-body {
-  font-family: var(--font-ui), "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
-  background-color: rgb(var(--surface));
-  color: rgb(var(--on-surface));
-  letter-spacing: var(--type-body-tracking);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-kusanagi-sans);
+  font-weight: var(--kusanagi-weight-body);
+  background-color: rgb(var(--surface));
+  color: rgb(var(--on-surface));
+  letter-spacing: var(--type-body-tracking);
+  line-height: 1.65;
 }
 
 html,
@@ -127,26 +141,70 @@ body {
 }
 
 .font-headline {
-  font-family: var(--font-tight), "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
-  letter-spacing: -0.03em;
+  font-family: var(--font-kusanagi-heading);
+  letter-spacing: var(--type-heading-tracking);
+  font-weight: var(--kusanagi-weight-heading);
+  text-transform: uppercase;
 }
 
 .font-display {
-  font-family: var(--font-tight), "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
-  letter-spacing: 0.005em;
+  font-family: var(--font-kusanagi-heading);
+  letter-spacing: 0.1em;
+  font-weight: var(--kusanagi-weight-ui);
+  text-transform: uppercase;
 }
 
 .font-data {
-  font-family: var(--font-data), "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
-  letter-spacing: 0.01em;
+  font-family: var(--font-kusanagi-mono);
+  letter-spacing: 0.08em;
+  font-weight: var(--kusanagi-weight-mono);
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
+  text-transform: uppercase;
 }
 
 h1,
 h2,
+h3,
+h4,
+h5,
+h6,
 .heading-tight {
+  font-family: var(--font-kusanagi-heading);
+  font-weight: var(--kusanagi-weight-heading);
   letter-spacing: var(--type-heading-tracking);
+  text-transform: uppercase;
+  line-height: 1.15;
+}
+
+p,
+li,
+small,
+span,
+blockquote,
+figcaption,
+td,
+th,
+dd,
+dt {
+  font-family: var(--font-kusanagi-sans);
+  font-weight: var(--kusanagi-weight-body);
+  letter-spacing: var(--type-body-tracking);
+}
+
+a,
+button,
+input,
+textarea,
+select,
+label,
+nav,
+footer,
+legend {
+  font-family: var(--font-kusanagi-heading);
+  font-weight: var(--kusanagi-weight-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .kicker-label {
@@ -289,48 +347,52 @@ svg.lucide {
 }
 
 .tools-card-asset-symbol {
-  font-family: var(--font-ui), "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  font-family: var(--font-kusanagi-heading);
   font-size: 1.66rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: var(--kusanagi-weight-heading);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #e2e8f0;
 }
 
 .tools-card-metric-label {
-  font-family: var(--font-ui), "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  font-family: var(--font-kusanagi-heading);
   font-size: 1.03rem;
-  font-weight: 520;
-  letter-spacing: 0.005em;
+  font-weight: var(--kusanagi-weight-ui);
+  letter-spacing: 0.08em;
   color: #e2e8f0;
+  text-transform: uppercase;
 }
 
 .tools-card-metric-value {
-  font-family: var(--font-data), "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
+  font-family: var(--font-kusanagi-mono);
   font-size: 1.04rem;
-  font-weight: 640;
-  letter-spacing: 0.014em;
+  font-weight: var(--kusanagi-weight-mono);
+  letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
+  text-transform: uppercase;
 }
 
 .tools-card-score-label {
-  font-family: var(--font-ui), "Inter", "SF Pro Text", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+  font-family: var(--font-kusanagi-heading);
   font-size: 0.92rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-weight: var(--kusanagi-weight-ui);
+  letter-spacing: 0.08em;
   color: #cbd5e1;
+  text-transform: uppercase;
 }
 
 .tools-card-score-value {
-  font-family: var(--font-data), "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
+  font-family: var(--font-kusanagi-mono);
   font-size: 2rem;
   line-height: 1;
-  font-weight: 750;
-  letter-spacing: 0.014em;
+  font-weight: var(--kusanagi-weight-heading);
+  letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
   color: #e2e8f0;
+  text-transform: uppercase;
 }
 
 html[data-theme="light"] .landing-shell,
@@ -1090,8 +1152,10 @@ html.light .hero-depth-gradient {
 /* ─── Hero Typography ─── */
 
 .font-tight {
-  font-family: var(--font-tight), "Inter Tight", "Inter", "SF Pro Display", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
-  letter-spacing: -0.04em;
+  font-family: var(--font-kusanagi-heading);
+  letter-spacing: 0.12em;
+  font-weight: var(--kusanagi-weight-heading);
+  text-transform: uppercase;
 }
 
 /* ─── Exclusive CoreTeam Animations ─── */

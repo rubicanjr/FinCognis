@@ -223,7 +223,7 @@ export default function HeroSection() {
                       <circle cx="40" cy="40" r="30" fill="none" stroke="#22b7ff" strokeWidth="8" strokeDasharray="94 94" strokeLinecap="round" transform="rotate(-90 40 40)" />
                       <circle cx="40" cy="40" r="30" fill="none" stroke="#60a5fa" strokeWidth="8" strokeDasharray="38 150" strokeDashoffset="-94" strokeLinecap="round" transform="rotate(-90 40 40)" />
                       <circle cx="40" cy="40" r="30" fill="none" stroke="#a855f7" strokeWidth="8" strokeDasharray="28 160" strokeDashoffset="-132" strokeLinecap="round" transform="rotate(-90 40 40)" />
-                      <text x="40" y="42" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="JetBrains Mono" fontWeight="700">
+                      <text x="40" y="42" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="Orbitron, Exo 2, sans-serif" fontWeight="700">
                         64%
                       </text>
                     </svg>
