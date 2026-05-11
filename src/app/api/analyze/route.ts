@@ -125,27 +125,43 @@ export async function POST(request: Request) {
     );
   }
 
-  const analyzed = await analyzeUniversalAssets(parsed.data.assets, marketDataGateway, {
-    timeHorizon: parsed.data.timeHorizon,
-    analysisMode: parsed.data.analysisMode,
-  });
-  const classSet = new Set(analyzed.map((asset) => asset.class));
-  const contextWarnings = buildReturnContextWarnings(classSet);
+  try {
+    const analyzed = await analyzeUniversalAssets(parsed.data.assets, marketDataGateway, {
+      timeHorizon: parsed.data.timeHorizon,
+      analysisMode: parsed.data.analysisMode,
+    });
+    const classSet = new Set(analyzed.map((asset) => asset.class));
+    const contextWarnings = buildReturnContextWarnings(classSet);
 
-  const responsePayload = AnalyzeResponseSchema.parse({
-    assets: analyzed,
-    warnings: [
-      ...contextWarnings,
-    ],
-    meta: {
-      mode: "realtime_gateway",
-      provider: "Yahoo Finance MarketDataGateway",
-      fetchedAtIso: new Date().toISOString(),
-      note:
-        `Skorlar canlı piyasa akışından üretilir. Model: analysis_engine_v2_quant. Mod: ${parsed.data.analysisMode}. Zaman ufku: ${parsed.data.timeHorizon}. Veri yetersizliğinde fallback metadata alanını kontrol edin.`,
-    },
-  });
+    const responsePayload = AnalyzeResponseSchema.parse({
+      assets: analyzed,
+      warnings: [
+        ...contextWarnings,
+      ],
+      meta: {
+        mode: "realtime_gateway",
+        provider: "Yahoo Finance MarketDataGateway",
+        fetchedAtIso: new Date().toISOString(),
+        note:
+          `Skorlar canlı piyasa akışından üretilir. Model: analysis_engine_v2_quant. Mod: ${parsed.data.analysisMode}. Zaman ufku: ${parsed.data.timeHorizon}. Veri yetersizliğinde fallback metadata alanını kontrol edin.`,
+      },
+    });
 
-  return NextResponse.json(responsePayload, { status: 200 });
+    return NextResponse.json(responsePayload, { status: 200 });
+  } catch (error: unknown) {
+    console.error("[api/analyze] internal error", {
+      message: error instanceof Error ? error.message : String(error),
+      analysisMode: parsed.data.analysisMode,
+      timeHorizon: parsed.data.timeHorizon,
+      assetCount: parsed.data.assets.length,
+    });
+    return NextResponse.json(
+      {
+        error: "Varlık analizi geçici olarak alınamadı.",
+        code: "ANALYZE_INTERNAL_ERROR",
+      },
+      { status: 500 }
+    );
+  }
 }
 

@@ -35,6 +35,7 @@ import {
   type StockMarketType,
 } from "@/lib/analysis/analysis-criteria";
 import { resolveCriterionDisplayScore } from "@/lib/analysis/criteria-display-score";
+import { parseJsonResponseSafely } from "@/lib/http/safe-json-response";
 
 const ACCENT_BLUE = "#22b7ff";
 
@@ -411,9 +412,16 @@ export default function UniversalAssetComparisonPanel() {
 
     fetch("/api/assets", { signal: getRequestSignal(controller) })
       .then(async (response) => {
-        const payload: unknown = await response.json();
+        const { payload, parseError } = await parseJsonResponseSafely(response);
         if (!response.ok) {
           throw new Error(parseErrorMessage(payload, "Varlık kataloğu yüklenemedi."));
+        }
+        if (payload === null) {
+          throw new Error(
+            parseError
+              ? `Varlık kataloğu yanıtı çözümlenemedi: ${parseError}`
+              : "Varlık kataloğu yanıtı boş geldi."
+          );
         }
         return AssetsApiResponseSchema.parse(payload);
       })
@@ -468,9 +476,14 @@ export default function UniversalAssetComparisonPanel() {
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {
-        const payload: unknown = await response.json();
+        const { payload, parseError } = await parseJsonResponseSafely(response);
         if (!response.ok) {
           throw new Error(parseErrorMessage(payload, "Varlık analizi alınamadı."));
+        }
+        if (payload === null) {
+          throw new Error(
+            parseError ? `Varlık analizi yanıtı çözümlenemedi: ${parseError}` : "Varlık analizi yanıtı boş geldi."
+          );
         }
         return AnalyzeResponseSchema.parse(payload);
       })
@@ -521,9 +534,16 @@ export default function UniversalAssetComparisonPanel() {
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {
-        const payload: unknown = await response.json();
+        const { payload, parseError } = await parseJsonResponseSafely(response);
         if (!response.ok) {
           throw new Error(parseErrorMessage(payload, "Profil keşif verisi alınamadı."));
+        }
+        if (payload === null) {
+          throw new Error(
+            parseError
+              ? `Profil keşif yanıtı çözümlenemedi: ${parseError}`
+              : "Profil keşif yanıtı boş geldi."
+          );
         }
         return AnalyzeResponseSchema.parse(payload);
       })
