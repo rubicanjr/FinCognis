@@ -35,6 +35,7 @@ import {
   type StockMarketType,
 } from "@/lib/analysis/analysis-criteria";
 import { resolveCriterionDisplayScore } from "@/lib/analysis/criteria-display-score";
+import { computeCriteriaTotal } from "@/lib/analysis/criteria-total";
 import { parseJsonResponseSafely } from "@/lib/http/safe-json-response";
 
 const ACCENT_BLUE = "#22b7ff";
@@ -565,19 +566,6 @@ export default function UniversalAssetComparisonPanel() {
 
   const assets = useMemo(() => analysisData?.assets ?? [], [analysisData?.assets]);
   const matrix = useMemo(() => createComparisonMatrix(assets), [assets]);
-  const totalByAsset = useMemo(
-    () =>
-      matrix.assets.reduce<Record<string, number | null>>((acc, assetSymbol) => {
-        const metricValues = matrix.metrics.map((metric) => metric.values[assetSymbol]);
-        if (!metricValues.every((value): value is number => typeof value === "number")) {
-          acc[assetSymbol] = null;
-          return acc;
-        }
-        acc[assetSymbol] = metricValues.reduce((sum, value) => sum + value, 0);
-        return acc;
-      }, {}),
-    [matrix]
-  );
   const insightLines = useMemo(() => generateCompareInsightLines(matrix), [matrix]);
   const compareCards = useMemo<CompareCardData[]>(
     () =>
@@ -598,7 +586,7 @@ export default function UniversalAssetComparisonPanel() {
           hasCriticalDataGap || comparableMetrics.length === 0
             ? Number.NEGATIVE_INFINITY
             : comparableMetrics.reduce((sum, item) => sum + item, 0) / comparableMetrics.length;
-        const totalScore = hasCriticalDataGap ? null : totalByAsset[assetSymbol] ?? 0;
+        const totalScore = hasCriticalDataGap ? null : computeCriteriaTotal(criteriaValues.map((entry) => entry.value));
 
         return {
           symbol: assetSymbol,
@@ -611,7 +599,7 @@ export default function UniversalAssetComparisonPanel() {
           fallbackReasons: sourceAsset?.computation?.fallbackReasons ?? [],
         };
       }),
-    [assets, matrix.assets, selectedCompareAssets, timeHorizon, totalByAsset]
+    [assets, matrix.assets, selectedCompareAssets, timeHorizon]
   );
   const bestBalancedAsset = useMemo(() => {
     const eligible = compareCards.filter((card) => Number.isFinite(card.balanceScore));
@@ -1000,6 +988,14 @@ export default function UniversalAssetComparisonPanel() {
                           </span>
                         ) : null}
                       </div>
+                      <div className="mt-3 rounded-md border border-white/10 bg-slate-950/40 px-3 py-2">
+                        <div className="flex items-center justify-between text-slate-100">
+                          <span className="tools-card-score-label">FINCOGNIS PUAN</span>
+                          <span className="tools-card-score-value">
+                            {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
                       <div className="mt-3 space-y-2 text-sm">
                         {card.criteriaValues.map(({ criterion, value }) => {
                           const toneLabel: MatrixMetricLabel =
@@ -1026,14 +1022,6 @@ export default function UniversalAssetComparisonPanel() {
                             </div>
                           );
                         })}
-                        <div className="mt-3 border-t border-white/10 pt-2">
-                          <div className="flex items-center justify-between text-slate-100">
-                            <span className="tools-card-score-label">Piyasa→Karar Çeviri</span>
-                            <span className="tools-card-score-value">
-                              {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
-                            </span>
-                          </div>
-                        </div>
                       </div>
                     </article>
                   ))}
