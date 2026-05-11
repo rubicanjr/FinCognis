@@ -39,4 +39,14 @@ describe("resolveAnalysisCriteria", () => {
       "Değerleme",
     ]);
   });
+
+  it("shows BIST-specific metric on fallback long horizon for BIST", () => {
+    const criteria = resolveAnalysisCriteria({ timeHorizon: "5y", marketType: "BIST" });
+    expect(criteria.map((item) => item.label)).toEqual([
+      "Kazanç Kalitesi",
+      "Sermaye Tahsisi",
+      "Değerleme",
+      "BIST Özgü",
+    ]);
+  });
 });

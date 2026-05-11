@@ -13,6 +13,28 @@ export const UniversalMetricsSchema = z.object({
   calmness: z.number().min(1).max(10).nullable(),
 });
 
+export const AnalysisCriterionScoreIdSchema = z.enum([
+  "teknik_momentum",
+  "kurumsal_akis",
+  "katalizor_takvimi",
+  "kazanc_kalitesi",
+  "sermaye_tahsisi",
+  "degerleme",
+  "bist_ozgu",
+]);
+
+export const AnalysisCriterionScorePayloadSchema = z.object({
+  id: AnalysisCriterionScoreIdSchema,
+  score: z.number().min(1).max(10).nullable(),
+  rawScore: z.number().nullable(),
+  available: z.boolean(),
+  source: z.enum(["market_history", "proxy", "unavailable"]),
+  maxPossible: z.number().nonnegative(),
+  achievedMax: z.number().nonnegative(),
+  missing: z.array(z.string().min(1)),
+  note: z.string().min(1).optional(),
+});
+
 export const AssetComputationMetaSchema = z.object({
   isFallback: z.boolean(),
   fallbackReasons: z.array(z.string().min(1)),
@@ -25,6 +47,7 @@ export const NormalizedAssetSchema = z.object({
   originalInput: z.string().min(1),
   class: AssetClassSchema,
   metrics: UniversalMetricsSchema,
+  criteriaScores: z.record(AnalysisCriterionScoreIdSchema, AnalysisCriterionScorePayloadSchema).optional(),
   computation: AssetComputationMetaSchema.optional(),
 });
 

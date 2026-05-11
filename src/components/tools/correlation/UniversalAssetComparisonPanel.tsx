@@ -34,6 +34,7 @@ import {
   type AnalysisCriterion,
   type StockMarketType,
 } from "@/lib/analysis/analysis-criteria";
+import { resolveCriterionDisplayScore } from "@/lib/analysis/criteria-display-score";
 
 const ACCENT_BLUE = "#22b7ff";
 
@@ -239,9 +240,8 @@ function marketTypeFromSelection(asset: AssetSelectionPayload | undefined, symbo
   return symbol.toUpperCase().endsWith(".IS") ? "BIST" : "US";
 }
 
-function criterionScore(metrics: UniversalMetrics, criterion: AnalysisCriterion): number | null {
-  const raw = metrics[criterion.sourceMetric];
-  return typeof raw === "number" && Number.isFinite(raw) ? clampScore(raw) : null;
+function criterionScore(asset: NormalizedAsset | undefined, criterion: AnalysisCriterion): number | null {
+  return asset ? resolveCriterionDisplayScore(asset, criterion) : null;
 }
 
 function toCatalogAnalyzeAssets(assetsApi: AssetsApiResponse): AnalyzeRequest["assets"] {
@@ -568,7 +568,7 @@ export default function UniversalAssetComparisonPanel() {
         const activeCriteria = resolveAnalysisCriteria({ timeHorizon, marketType });
         const criteriaValues = activeCriteria.map((criterion) => ({
           criterion,
-          value: sourceAsset ? criterionScore(sourceAsset.metrics, criterion) : null,
+          value: criterionScore(sourceAsset, criterion),
         }));
         const hasCriticalDataGap = hasCriticalMetricGap(sourceAsset);
         const comparableMetrics: number[] = criteriaValues

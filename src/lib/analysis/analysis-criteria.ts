@@ -38,5 +38,6 @@ function baseCriteriaByHorizon(timeHorizon: AnalyzeRequest["timeHorizon"]): read
 
 export function resolveAnalysisCriteria(input: ResolveAnalysisCriteriaInput): AnalysisCriterion[] {
   const base = [...baseCriteriaByHorizon(input.timeHorizon)];
-  return input.marketType === "BIST" ? [...base, BIST_EXTRA_CRITERION] : base;
+  const shouldShowBistCriterion = input.marketType === "BIST";
+  return shouldShowBistCriterion ? [...base, BIST_EXTRA_CRITERION] : base;
 }

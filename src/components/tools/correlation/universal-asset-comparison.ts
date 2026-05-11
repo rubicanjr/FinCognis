@@ -20,6 +20,29 @@ export interface UniversalMetrics {
   calmness: number | null;
 }
 
+export type AnalysisCriterionScoreId =
+  | "teknik_momentum"
+  | "kurumsal_akis"
+  | "katalizor_takvimi"
+  | "kazanc_kalitesi"
+  | "sermaye_tahsisi"
+  | "degerleme"
+  | "bist_ozgu";
+
+export interface AnalysisCriterionScorePayload {
+  id: AnalysisCriterionScoreId;
+  score: number | null;
+  rawScore: number | null;
+  available: boolean;
+  source: "market_history" | "proxy" | "unavailable";
+  maxPossible: number;
+  achievedMax: number;
+  missing: string[];
+  note?: string;
+}
+
+export type AnalysisCriteriaScores = Partial<Record<AnalysisCriterionScoreId, AnalysisCriterionScorePayload>>;
+
 export type AnalyzeTimeHorizon = "1mo" | "1y" | "5y";
 
 export interface AssetComputationMeta {
@@ -34,6 +57,7 @@ export interface NormalizedAsset {
   originalInput: string;
   class: AssetClass;
   metrics: UniversalMetrics;
+  criteriaScores?: AnalysisCriteriaScores;
   computation?: AssetComputationMeta;
 }
 

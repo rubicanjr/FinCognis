@@ -7,6 +7,7 @@ import {
   type NormalizedAsset,
   type UniversalMetrics,
 } from "@/components/tools/correlation/universal-asset-comparison";
+import { buildEquityCriteriaScores } from "@/lib/analysis/equity-criteria-scores";
 import {
   marketDataGateway,
   type MarketDataGatewayPort,
@@ -2439,6 +2440,15 @@ export async function analyzeUniversalAssets(
         diversification: guaranteedDiversification,
         calmness: guaranteedCalmness,
       },
+      criteriaScores:
+        row.resolvedClass === AssetClass.Equity
+          ? buildEquityCriteriaScores({
+              symbol: row.symbol,
+              providerSymbol: row.providerSymbol,
+              timeHorizon: horizonKey,
+              history: row.history,
+            })
+          : undefined,
       computation: {
         isFallback: fallbackReasons.length > 0,
         fallbackReasons,

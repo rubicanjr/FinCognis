@@ -51,6 +51,10 @@ function buildHistoryFromReturns(symbol: string, providerSymbol: string, returns
   };
 }
 
+function providerSymbolFor(symbol: string): string {
+  return symbol === "TUPRS" ? "TUPRS.IS" : symbol;
+}
+
 class MockGateway implements MarketDataGatewayPort {
   public readonly historyCalls: Array<{ symbol: string; options: MarketHistoryOptions | undefined }> = [];
 
@@ -61,7 +65,7 @@ class MockGateway implements MarketDataGatewayPort {
   async getQuote(symbol: string): Promise<MarketQuote | null> {
     return {
       symbol,
-      providerSymbol: "TUPRS.IS",
+      providerSymbol: providerSymbolFor(symbol),
       price: 100,
       changePercent: 0,
       volume: 1_000_000,
@@ -77,13 +81,13 @@ class MockGateway implements MarketDataGatewayPort {
     const symbolSeed = (stableHash(symbol) % 7) + 1;
     const baseAmplitude = symbol === "TUPRS" ? (range === "1mo" ? 0.009 : 0.033) : symbolSeed * 0.0045;
     const returns = buildReturns(totalDays, baseAmplitude);
-    return buildHistoryFromReturns(symbol, "TUPRS.IS", returns);
+    return buildHistoryFromReturns(symbol, providerSymbolFor(symbol), returns);
   }
 
   async getLiquidity(symbol: string, _options?: MarketLiquidityOptions): Promise<MarketLiquidity> {
     return {
       symbol,
-      providerSymbol: "TUPRS.IS",
+      providerSymbol: providerSymbolFor(symbol),
       avgDailyVolume: 1_000_000,
       volumeBand: "medium",
       profile: {
@@ -188,5 +192,85 @@ describe("analyzeUniversalAssets", () => {
       expect(asset.metrics.diversification).toBeTypeOf("number");
       expect(asset.metrics.calmness).not.toBeNull();
     });
+  });
+
+  it("adds null-safe short-term technical momentum criteria score without fabricating sparse data", async () => {
+    const sparseGateway = new SparseDataGateway();
+    const sparse = await analyzeUniversalAssets(
+      [{ symbol: "TUPRS", originalInput: "TUPRS", class: AssetClass.Equity }],
+      sparseGateway,
+      { timeHorizon: "1mo", analysisMode: "compare" }
+    );
+
+    expect(sparse[0].criteriaScores?.teknik_momentum).toMatchObject({
+      id: "teknik_momentum",
+      score: null,
+      rawScore: null,
+      available: false,
+      source: "market_history",
+      missing: ["rsi", "macd", "sma", "atr", "earnings", "kap"],
+    });
+
+    const gateway = new MockGateway();
+    const analyzed = await analyzeUniversalAssets(
+      [{ symbol: "TUPRS", originalInput: "TUPRS", class: AssetClass.Equity }],
+      gateway,
+      { timeHorizon: "1mo", analysisMode: "compare" }
+    );
+
+    expect(analyzed[0].criteriaScores?.teknik_momentum?.score).toBeTypeOf("number");
+    expect(analyzed[0].criteriaScores?.teknik_momentum?.available).toBe(true);
+    expect(analyzed[0].metrics.return).toBeTypeOf("number");
+  });
+
+  it("adds null-safe long-term criteria scores and only shows BIST-specific criterion for BIST equities", async () => {
+    const sparseGateway = new SparseDataGateway();
+    const sparse = await analyzeUniversalAssets(
+      [{ symbol: "TUPRS", originalInput: "TUPRS", class: AssetClass.Equity }],
+      sparseGateway,
+      { timeHorizon: "1y", analysisMode: "compare" }
+    );
+
+    expect(sparse[0].criteriaScores?.kazanc_kalitesi).toMatchObject({
+      id: "kazanc_kalitesi",
+      score: null,
+      available: false,
+    });
+    expect(sparse[0].criteriaScores?.sermaye_tahsisi).toMatchObject({
+      id: "sermaye_tahsisi",
+      score: null,
+      available: false,
+    });
+    expect(sparse[0].criteriaScores?.degerleme).toMatchObject({
+      id: "degerleme",
+      score: null,
+      available: false,
+    });
+    expect(sparse[0].criteriaScores?.bist_ozgu).toMatchObject({
+      id: "bist_ozgu",
+      available: true,
+      source: "proxy",
+    });
+
+    const gateway = new MockGateway();
+    const analyzedBist = await analyzeUniversalAssets(
+      [{ symbol: "TUPRS", originalInput: "TUPRS", class: AssetClass.Equity }],
+      gateway,
+      { timeHorizon: "1y", analysisMode: "compare" }
+    );
+    expect(analyzedBist[0].criteriaScores?.kazanc_kalitesi?.score).toBeNull();
+    expect(analyzedBist[0].criteriaScores?.sermaye_tahsisi?.score).toBeNull();
+    expect(analyzedBist[0].criteriaScores?.degerleme?.score).toBeTypeOf("number");
+    expect(analyzedBist[0].criteriaScores?.bist_ozgu).toBeDefined();
+
+    const analyzedUs = await analyzeUniversalAssets(
+      [{ symbol: "AAPL", originalInput: "AAPL", class: AssetClass.Equity }],
+      gateway,
+      { timeHorizon: "1y", analysisMode: "compare" }
+    );
+    expect(analyzedUs[0].criteriaScores?.kazanc_kalitesi?.score).toBeNull();
+    expect(analyzedUs[0].criteriaScores?.sermaye_tahsisi?.score).toBeNull();
+    expect(analyzedUs[0].criteriaScores?.degerleme?.score).toBeTypeOf("number");
+    expect(analyzedUs[0].criteriaScores?.bist_ozgu).toBeUndefined();
   });
 });
