@@ -33,6 +33,7 @@ export interface AssetSearchInputProps {
   placeholder?: string;
   disabled?: boolean;
   label?: string;
+  onUnsupportedAsset?: () => void;
 }
 
 function toPayload(option: AssetSearchOption): AssetSelectionPayload {
@@ -55,10 +56,11 @@ export default function AssetSearchInput({
   onSelectionChange,
   onChange,
   onAssetSelect,
+  onUnsupportedAsset,
   maxSelection = DEFAULT_MAX_SELECTION,
-  placeholder = "Varlık ara (örn: tuprs, altın, bitcoin, spy)",
+  placeholder = "hisse ara (örn: thyao, tuprs, aapl, tsla)",
   disabled = false,
-  label = "Karşılaştırma Girdisi",
+  label = "Hisse Karşılaştırma",
 }: AssetSearchInputProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -122,10 +124,11 @@ export default function AssetSearchInput({
 
   const rejectInput = useCallback((input: string) => {
     setQuery("");
-    setMessage(`'${input}' tanınan bir yatırım varlığı değil. Listeden seçim yapınız.`);
+    setMessage("Bu araç yalnızca BIST ve ABD hisselerini destekler");
     setIsOpen(false);
     setHighlightedIndex(-1);
-  }, []);
+    onUnsupportedAsset?.();
+  }, [onUnsupportedAsset]);
 
   const commitManualInput = useCallback(async (): Promise<boolean> => {
     const rawValue = query.trim();
@@ -316,7 +319,7 @@ export default function AssetSearchInput({
               aria-expanded={shouldShowDropdown}
               aria-controls={listboxId}
               aria-autocomplete="list"
-              aria-label="Karşılaştırma varlık girişi"
+              aria-label="Hisse karşılaştırma girişi"
               disabled={disabled}
             />
             {isLoading || verifying ? <LoaderCircle className="h-4 w-4 animate-spin text-[#8ddfff]" /> : null}
@@ -359,7 +362,7 @@ export default function AssetSearchInput({
         ) : null}
       </div>
 
-      <p className="mt-2 px-1 text-xs text-slate-300">Karar vermeden önce farklarını gör.</p>
+      <p className="mt-2 px-1 text-xs text-slate-300">Karar vermeden önce hisseler arasındaki farkları gör.</p>
       {message ? <p className="mt-2 rounded-lg border border-warning/35 bg-warning-container/20 px-2 py-1 text-xs text-warning">{message}</p> : null}
     </div>
   );
