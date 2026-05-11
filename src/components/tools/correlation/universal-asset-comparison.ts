@@ -34,7 +34,7 @@ export interface AnalysisCriterionScorePayload {
   score: number | null;
   rawScore: number | null;
   available: boolean;
-  source: "market_history" | "proxy" | "unavailable";
+  source: "market_history" | "proxy" | "unavailable" | "price-volume-proxy" | "estimate";
   maxPossible: number;
   achievedMax: number;
   missing: string[];

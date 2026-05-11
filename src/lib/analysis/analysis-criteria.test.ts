@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 import { resolveAnalysisCriteria } from "@/lib/analysis/analysis-criteria";
 
 describe("resolveAnalysisCriteria", () => {
-  it("returns short-term criteria for BIST with BIST-specific metric", () => {
+  it("returns short-term criteria for BIST without BIST-specific metric", () => {
     const criteria = resolveAnalysisCriteria({ timeHorizon: "1mo", marketType: "BIST" });
     expect(criteria.map((item) => item.label)).toEqual([
       "Teknik Momentum",
       "Kurumsal Akış",
       "Katalizör Takvimi",
-      "BIST Özgü",
     ]);
   });
 
@@ -40,13 +39,12 @@ describe("resolveAnalysisCriteria", () => {
     ]);
   });
 
-  it("shows BIST-specific metric on fallback long horizon for BIST", () => {
+  it("does not show BIST-specific metric on non-long horizons", () => {
     const criteria = resolveAnalysisCriteria({ timeHorizon: "5y", marketType: "BIST" });
     expect(criteria.map((item) => item.label)).toEqual([
       "Kazanç Kalitesi",
       "Sermaye Tahsisi",
       "Değerleme",
-      "BIST Özgü",
     ]);
   });
 });

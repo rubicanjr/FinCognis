@@ -28,7 +28,7 @@ export const AnalysisCriterionScorePayloadSchema = z.object({
   score: z.number().min(1).max(10).nullable(),
   rawScore: z.number().nullable(),
   available: z.boolean(),
-  source: z.enum(["market_history", "proxy", "unavailable"]),
+  source: z.enum(["market_history", "proxy", "unavailable", "price-volume-proxy", "estimate"]),
   maxPossible: z.number().nonnegative(),
   achievedMax: z.number().nonnegative(),
   missing: z.array(z.string().min(1)),

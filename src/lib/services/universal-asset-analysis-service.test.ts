@@ -210,6 +210,10 @@ describe("analyzeUniversalAssets", () => {
       source: "market_history",
       missing: ["rsi", "macd", "sma", "atr", "earnings", "kap"],
     });
+    expect(sparse[0].criteriaScores?.kurumsal_akis?.score).toBeTypeOf("number");
+    expect(sparse[0].criteriaScores?.kurumsal_akis?.source).toBe("price-volume-proxy");
+    expect(sparse[0].criteriaScores?.katalizor_takvimi?.score).toBeTypeOf("number");
+    expect(sparse[0].criteriaScores?.katalizor_takvimi?.source).toBe("estimate");
 
     const gateway = new MockGateway();
     const analyzed = await analyzeUniversalAssets(
@@ -233,18 +237,18 @@ describe("analyzeUniversalAssets", () => {
 
     expect(sparse[0].criteriaScores?.kazanc_kalitesi).toMatchObject({
       id: "kazanc_kalitesi",
-      score: null,
-      available: false,
+      available: true,
+      source: "estimate",
     });
     expect(sparse[0].criteriaScores?.sermaye_tahsisi).toMatchObject({
       id: "sermaye_tahsisi",
-      score: null,
-      available: false,
+      available: true,
+      source: "estimate",
     });
     expect(sparse[0].criteriaScores?.degerleme).toMatchObject({
       id: "degerleme",
-      score: null,
-      available: false,
+      available: true,
+      source: "estimate",
     });
     expect(sparse[0].criteriaScores?.bist_ozgu).toMatchObject({
       id: "bist_ozgu",
@@ -258,8 +262,8 @@ describe("analyzeUniversalAssets", () => {
       gateway,
       { timeHorizon: "1y", analysisMode: "compare" }
     );
-    expect(analyzedBist[0].criteriaScores?.kazanc_kalitesi?.score).toBeNull();
-    expect(analyzedBist[0].criteriaScores?.sermaye_tahsisi?.score).toBeNull();
+    expect(analyzedBist[0].criteriaScores?.kazanc_kalitesi?.score).toBeTypeOf("number");
+    expect(analyzedBist[0].criteriaScores?.sermaye_tahsisi?.score).toBeTypeOf("number");
     expect(analyzedBist[0].criteriaScores?.degerleme?.score).toBeTypeOf("number");
     expect(analyzedBist[0].criteriaScores?.bist_ozgu).toBeDefined();
 
@@ -268,8 +272,8 @@ describe("analyzeUniversalAssets", () => {
       gateway,
       { timeHorizon: "1y", analysisMode: "compare" }
     );
-    expect(analyzedUs[0].criteriaScores?.kazanc_kalitesi?.score).toBeNull();
-    expect(analyzedUs[0].criteriaScores?.sermaye_tahsisi?.score).toBeNull();
+    expect(analyzedUs[0].criteriaScores?.kazanc_kalitesi?.score).toBeTypeOf("number");
+    expect(analyzedUs[0].criteriaScores?.sermaye_tahsisi?.score).toBeTypeOf("number");
     expect(analyzedUs[0].criteriaScores?.degerleme?.score).toBeTypeOf("number");
     expect(analyzedUs[0].criteriaScores?.bist_ozgu).toBeUndefined();
   });
