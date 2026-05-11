@@ -31,7 +31,7 @@ describe("CoreTeamSection", () => {
     expect(strategicOperatorsSection).not.toBeNull();
 
     const cards = within(strategicOperatorsSection as HTMLElement).getAllByTestId("core-team-member-card");
-    expect(cards).toHaveLength(6);
+    expect(cards).toHaveLength(7);
   });
 
   it("every member card renders avatar images with valid imageUrl paths", () => {
@@ -46,12 +46,12 @@ describe("CoreTeamSection", () => {
       "/assets/team/yigit.png",
       "/assets/team/alara.png",
       "/assets/team/buse.png",
+      "/assets/team/oliversmertuz.png",
       "/assets/team/victor.png",
     ];
 
-    // Verify each expected image path appears in at least one avatar element
     const allAvatars = screen.getAllByTestId("member-avatar");
-    expect(allAvatars.length).toBeGreaterThanOrEqual(9);
+    expect(allAvatars.length).toBeGreaterThanOrEqual(10);
 
     for (const path of expectedPaths) {
       const matching = allAvatars.filter((img) => {
@@ -66,7 +66,7 @@ describe("CoreTeamSection", () => {
     render(<CoreTeamSection />);
 
     const rubiCard = screen.getAllByTestId("core-team-member-card").find((card) => {
-      return card.textContent?.includes("Rubi Can İçliyürek");
+      return card.textContent?.includes("RUBI CAN ICLIYUREK");
     });
 
     expect(rubiCard).not.toBeUndefined();
@@ -76,9 +76,16 @@ describe("CoreTeamSection", () => {
     expect(src).toContain(encodeURIComponent("/assets/team/rubi.png"));
   });
 
-  it("does not contain Olivers Mert Uz", () => {
+  it("renders Olivers Mert Uz with LinkedIn link", () => {
     render(<CoreTeamSection />);
 
-    expect(screen.queryByText(/Olivers Mert Uz/)).not.toBeInTheDocument();
+    const oliversCard = screen.getAllByTestId("core-team-member-card").find((card) => {
+      return card.textContent?.includes("OLIVERS MERT UZ");
+    });
+
+    expect(oliversCard).not.toBeUndefined();
+
+    const link = within(oliversCard as HTMLElement).getByRole("link", { name: /OLIVERS MERT UZ/ });
+    expect(link.getAttribute("href")).toBe("https://www.linkedin.com/in/olivers-mert-uz-2684a8187/");
   });
 });
