@@ -18,7 +18,7 @@ interface TeamSection {
 
 const TEAM_SECTIONS: TeamSection[] = [
   {
-    title: "Decision Architects",
+    title: "DECISION ARCHITECTS",
     description: "FinCognis'in karar sistemleri, ürün mimarisi ve finansal zeka altyapısını tasarlayan çekirdek ekip.",
     members: [
       {
@@ -42,7 +42,7 @@ const TEAM_SECTIONS: TeamSection[] = [
     ],
   },
   {
-    title: "Strategic Operators",
+    title: "STRATEGIC OPERATORS",
     description: "Büyüme, dağıtım, topluluk, AI operasyonları ve stratejik genişleme süreçlerini yöneten ekip.",
     members: [
       {
@@ -81,7 +81,7 @@ const TEAM_SECTIONS: TeamSection[] = [
         linkedinUrl: "https://www.linkedin.com/in/busemagden/",
       },
       {
-        name: "Victor Raye",
+        name: "VICTOR RAYE",
         role: "Attorney at Law",
         affiliation: "LinkedIn profili paylaşılmadı.",
         imageUrl: "/assets/team/victor.png",

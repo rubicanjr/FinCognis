@@ -15,15 +15,14 @@ export default function ThemeToggleButton() {
     <button
       type="button"
       onClick={toggleMode}
-      aria-label="Tema değiştir"
-      className={`theme-toggle-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 font-display text-xs font-semibold backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${modeAwareClass}`}
+      aria-label={config.mode === "dark" ? "Aydınlık moda geç" : "Karanlık moda geç"}
+      className={`theme-toggle-btn inline-flex items-center justify-center rounded-xl p-2.5 font-display text-xs font-semibold backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 ${modeAwareClass}`}
     >
       {config.mode === "dark" ? (
         <SunMedium className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
       ) : (
         <MoonStar className="h-4 w-4 text-sky-600" strokeWidth={1.5} />
       )}
-      {config.mode === "dark" ? "Aydınlık Mod" : "Karanlık Mod"}
     </button>
   );
 }

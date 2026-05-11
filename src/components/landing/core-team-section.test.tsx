@@ -10,10 +10,10 @@ describe("CoreTeamSection", () => {
     expect(screen.getByRole("heading", { name: "CoreTeam" })).toBeInTheDocument();
   });
 
-  it("renders exactly three cards under Decision Architects", () => {
+  it("renders exactly three cards under DECISION ARCHITECTS", () => {
     render(<CoreTeamSection />);
 
-    const decisionArchitectsHeading = screen.getAllByText("Decision Architects")[0];
+    const decisionArchitectsHeading = screen.getAllByText("DECISION ARCHITECTS")[0];
     const decisionArchitectsSection = decisionArchitectsHeading.closest("section");
 
     expect(decisionArchitectsSection).not.toBeNull();
@@ -22,10 +22,10 @@ describe("CoreTeamSection", () => {
     expect(cards).toHaveLength(3);
   });
 
-  it("renders exactly six cards under Strategic Operators", () => {
+  it("renders exactly six cards under STRATEGIC OPERATORS", () => {
     render(<CoreTeamSection />);
 
-    const strategicOperatorsHeading = screen.getAllByText("Strategic Operators")[0];
+    const strategicOperatorsHeading = screen.getAllByText("STRATEGIC OPERATORS")[0];
     const strategicOperatorsSection = strategicOperatorsHeading.closest("section");
 
     expect(strategicOperatorsSection).not.toBeNull();
