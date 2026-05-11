@@ -19,7 +19,7 @@ interface TeamSection {
 const TEAM_SECTIONS: TeamSection[] = [
   {
     title: "DECISION ARCHITECTS",
-    description: "FinCognis'in karar sistemleri, urun mimarisi ve finansal zeka altyapisini tasarlayan cekirdek ekip.",
+    description: "FinCognis'in karar sistemleri, ürün mimarisi ve finansal zeka altyapısını tasarlayan çekirdek ekip.",
     members: [
       {
         name: "RUBI CAN ICLIYUREK",
@@ -43,7 +43,7 @@ const TEAM_SECTIONS: TeamSection[] = [
   },
   {
     title: "STRATEGIC OPERATORS",
-    description: "Buyume, dagitim, topluluk, AI operasyonlari ve stratejik genisleme sureclerini yoneten ekip.",
+    description: "Büyüme, dağıtım, topluluk, AI operasyonları ve stratejik genişleme süreçlerini yöneten ekip.",
     members: [
       {
         name: "SAHINCAN YOZBAKAR",
