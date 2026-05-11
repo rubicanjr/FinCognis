@@ -47,7 +47,7 @@ export const NormalizedAssetSchema = z.object({
   originalInput: z.string().min(1),
   class: AssetClassSchema,
   metrics: UniversalMetricsSchema,
-  criteriaScores: z.record(AnalysisCriterionScoreIdSchema, AnalysisCriterionScorePayloadSchema).optional(),
+  criteriaScores: z.partialRecord(AnalysisCriterionScoreIdSchema, AnalysisCriterionScorePayloadSchema).optional(),
   computation: AssetComputationMetaSchema.optional(),
 });
 
