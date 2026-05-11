@@ -254,20 +254,6 @@ export default function BistScreener() {
 
   return (
     <div className="overflow-hidden rounded-3xl border border-white/15 bg-slate-950/60 shadow-[0_28px_80px_-40px_rgba(2,132,199,0.3)] backdrop-blur-xl">
-      {/* Header */}
-      <div className="border-b border-white/10 px-5 py-4">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-cyan-300" />
-          <h2 className="font-display text-lg font-bold text-slate-100">BIST Hisse Tarama</h2>
-          <span className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-2 py-0.5 font-data text-[10px] text-cyan-200">
-            2 UFUK
-          </span>
-        </div>
-        <p className="mt-1 text-xs text-slate-400">
-          Kisa vadeli teknik momentum + uzun vadeli BIST ozgu metrikler. Puanlama 0-100 arasi.
-        </p>
-      </div>
-
       {/* Input */}
       <div className="border-b border-white/5 px-5 py-3">
         <div className="flex gap-2">

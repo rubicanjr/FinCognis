@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { LoaderCircle, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
+import { LoaderCircle, SlidersHorizontal, Sparkles } from "lucide-react";
 import {
   AnalyzeResponseSchema,
   AssetsApiResponseSchema,
@@ -213,18 +213,6 @@ function hasFallbackReason(asset: NormalizedAsset | undefined, reason: string): 
 function hasCriticalMetricGap(asset: NormalizedAsset | undefined): boolean {
   void asset;
   return false;
-}
-
-function formatLiveDataTimestamp(iso: string): string {
-  const date = new Date(iso);
-  if (!Number.isFinite(date.getTime())) return "anlık";
-  return new Intl.DateTimeFormat("tr-TR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
 }
 
 function mapCatalogClassToAssetClass(assetClass: CatalogAssetClass): AssetClass {
@@ -699,13 +687,6 @@ export default function UniversalAssetComparisonPanel() {
     "Yatırım tavsiyesi değil; farklı metriklere göre yatırımcı profilinize uygun analiz çerçevesi.";
 
   const dataError = unsupportedAssetMessage ?? catalogError ?? (mode === "compare" ? analysisError : discoveryError);
-  const activeWarnings = mode === "compare" ? analysisData?.warnings ?? [] : discoveryData?.warnings ?? [];
-  const liveMeta = (mode === "compare" ? analysisData?.meta : discoveryData?.meta) ?? catalogData?.meta ?? null;
-  const liveDataNote = liveMeta
-    ? `Canlı ve dinamik piyasa verisi kullanılıyor (${liveMeta.provider}). Son doğrulama: ${formatLiveDataTimestamp(
-        liveMeta.fetchedAtIso
-      )}. ${liveMeta.note}`
-    : "Canlı ve dinamik piyasa verisi kullanılıyor. Sentetik/sabit veri akışı kullanılmıyor.";
 
   const isLoading = mode === "compare" ? analysisLoading : discoveryLoading;
   const shouldRenderCompareOutputs = mode !== "compare" || !unsupportedAssetMessage;
@@ -916,11 +897,6 @@ export default function UniversalAssetComparisonPanel() {
               <p className="mt-3 text-xs text-slate-300">{selectedPreset.summary}</p>
             </div>
           )}
-
-          <div className="mt-2 flex items-start gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/10 px-3 py-2 text-left text-xs text-[#dff4ff]">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#8ddfff]" />
-            <p>{liveDataNote}</p>
-          </div>
         </div>
 
         {isLoading ? (
@@ -933,19 +909,6 @@ export default function UniversalAssetComparisonPanel() {
         {dataError ? (
           <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-warning/40 bg-warning-container/25 px-3 py-2 text-xs text-warning">
             {dataError}
-          </div>
-        ) : null}
-
-        {activeWarnings.length > 0 ? (
-          <div className="mx-auto mt-4 flex max-w-3xl flex-col gap-2">
-            {activeWarnings.map((warning, index) => (
-              <div
-                key={`analysis-warning:${index}`}
-                className="rounded-xl border border-white/15 bg-slate-900/65 px-3 py-2 text-xs text-slate-200"
-              >
-                {warning.message}
-              </div>
-            ))}
           </div>
         ) : null}
 
