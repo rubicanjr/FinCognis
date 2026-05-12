@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { LoaderCircle, ShieldCheck, SlidersHorizontal, Sparkles } from "lucide-react";
+import { LoaderCircle, SlidersHorizontal, Sparkles } from "lucide-react";
 import {
   AnalyzeResponseSchema,
   AssetsApiResponseSchema,
@@ -29,14 +29,22 @@ import {
 import AssetSearchInput from "@/components/AssetSearchInput";
 import type { CatalogAssetClass } from "@/data/asset-catalog";
 import type { AssetSelectionPayload } from "@/hooks/useAssetSearch";
+import {
+  resolveAnalysisCriteria,
+  type AnalysisCriterion,
+  type StockMarketType,
+} from "@/lib/analysis/analysis-criteria";
+import { resolveCriterionDisplayScore } from "@/lib/analysis/criteria-display-score";
+import { computeCriteriaTotal } from "@/lib/analysis/criteria-total";
+import { parseJsonResponseSafely } from "@/lib/http/safe-json-response";
 
 const ACCENT_BLUE = "#22b7ff";
 
 const QUICK_PICK_ASSETS: AssetSelectionPayload[] = [
   { ticker: "TUPRS", yahooSymbol: "TUPRS.IS", assetClass: "equity_bist", exchange: "BIST", currency: "TRY" },
-  { ticker: "BTC", yahooSymbol: "BTC-USD", assetClass: "crypto", exchange: "CRYPTO", currency: "USD" },
-  { ticker: "XAU", yahooSymbol: "GC=F", assetClass: "commodity", exchange: "COMMODITY", currency: "USD" },
-  { ticker: "SPY", yahooSymbol: "SPY", assetClass: "etf_us", exchange: "NYSE/NASDAQ", currency: "USD" },
+  { ticker: "THYAO", yahooSymbol: "THYAO.IS", assetClass: "equity_bist", exchange: "BIST", currency: "TRY" },
+  { ticker: "AAPL", yahooSymbol: "AAPL", assetClass: "equity_us", exchange: "NASDAQ/NYSE", currency: "USD" },
+  { ticker: "TSLA", yahooSymbol: "TSLA", assetClass: "equity_us", exchange: "NASDAQ/NYSE", currency: "USD" },
 ];
 
 const COMPLIANCE_DISCLAIMER =
@@ -88,18 +96,14 @@ interface DiscoveryRow {
 
 interface CompareCardData {
   symbol: string;
-  risk: number;
-  return: number;
-  liquidity: number | null;
-  diversification: number;
-  calmness: number | null;
+  marketType: StockMarketType;
+  criteriaValues: Array<{
+    criterion: AnalysisCriterion;
+    value: number | null;
+  }>;
   totalScore: number | null;
   balanceScore: number;
   isFallback: boolean;
-  riskUnavailable: boolean;
-  returnUnavailable: boolean;
-  liquidityUnavailable: boolean;
-  calmnessUnavailable: boolean;
   hasCriticalDataGap: boolean;
   fallbackReasons: string[];
 }
@@ -132,9 +136,8 @@ const PREFERENCE_LEVEL_OPTIONS: Array<{ value: PreferenceLevel; label: string }>
 ];
 
 const TIME_HORIZON_OPTIONS: Array<{ value: TimeHorizon; label: string }> = [
-  { value: "1mo", label: "1 Ay" },
-  { value: "1y", label: "1 Yıl" },
-  { value: "5y", label: "5 Yıl" },
+  { value: "1mo", label: "Kısa Vade (1-4 hafta)" },
+  { value: "1y", label: "Uzun Vade (3-12 ay)" },
 ];
 
 const PREFERENCE_TARGET_SCORE: Record<PreferenceLevel, number> = {
@@ -212,18 +215,6 @@ function hasCriticalMetricGap(asset: NormalizedAsset | undefined): boolean {
   return false;
 }
 
-function formatLiveDataTimestamp(iso: string): string {
-  const date = new Date(iso);
-  if (!Number.isFinite(date.getTime())) return "anlık";
-  return new Intl.DateTimeFormat("tr-TR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
 function mapCatalogClassToAssetClass(assetClass: CatalogAssetClass): AssetClass {
   if (assetClass === "equity_bist" || assetClass === "equity_us") return AssetClass.Equity;
   if (assetClass === "crypto") return AssetClass.Crypto;
@@ -231,6 +222,16 @@ function mapCatalogClassToAssetClass(assetClass: CatalogAssetClass): AssetClass 
   if (assetClass === "fx") return AssetClass.FX;
   if (assetClass === "etf_us") return AssetClass.Fund;
   return AssetClass.Unknown;
+}
+
+function marketTypeFromSelection(asset: AssetSelectionPayload | undefined, symbol: string): StockMarketType {
+  if (asset?.assetClass === "equity_bist") return "BIST";
+  if (asset?.assetClass === "equity_us") return "US";
+  return symbol.toUpperCase().endsWith(".IS") ? "BIST" : "US";
+}
+
+function criterionScore(asset: NormalizedAsset | undefined, criterion: AnalysisCriterion): number | null {
+  return asset ? resolveCriterionDisplayScore(asset, criterion) : null;
 }
 
 function toCatalogAnalyzeAssets(assetsApi: AssetsApiResponse): AnalyzeRequest["assets"] {
@@ -358,11 +359,19 @@ function profileDescription(row: Omit<DiscoveryRow, "shortExplanation">): string
 export default function UniversalAssetComparisonPanel() {
   const [mode, setMode] = useState<PanelMode>("compare");
   const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("1y");
+  const [unsupportedAssetMessage, setUnsupportedAssetMessage] = useState<string | null>(null);
 
   const [selectedCompareAssets, setSelectedCompareAssets] = useState<AssetSelectionPayload[]>([
     QUICK_PICK_ASSETS[0],
     QUICK_PICK_ASSETS[1],
   ]);
+
+  const handleCompareSelectionChange = (assets: AssetSelectionPayload[]) => {
+    setSelectedCompareAssets(assets);
+    if (assets.length > 0) {
+      setUnsupportedAssetMessage(null);
+    }
+  };
 
   const [catalogData, setCatalogData] = useState<AssetsApiResponse | null>(null);
   const [catalogError, setCatalogError] = useState<string | null>(null);
@@ -392,9 +401,16 @@ export default function UniversalAssetComparisonPanel() {
 
     fetch("/api/assets", { signal: getRequestSignal(controller) })
       .then(async (response) => {
-        const payload: unknown = await response.json();
+        const { payload, parseError } = await parseJsonResponseSafely(response);
         if (!response.ok) {
           throw new Error(parseErrorMessage(payload, "Varlık kataloğu yüklenemedi."));
+        }
+        if (payload === null) {
+          throw new Error(
+            parseError
+              ? `Varlık kataloğu yanıtı çözümlenemedi: ${parseError}`
+              : "Varlık kataloğu yanıtı boş geldi."
+          );
         }
         return AssetsApiResponseSchema.parse(payload);
       })
@@ -449,9 +465,14 @@ export default function UniversalAssetComparisonPanel() {
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {
-        const payload: unknown = await response.json();
+        const { payload, parseError } = await parseJsonResponseSafely(response);
         if (!response.ok) {
           throw new Error(parseErrorMessage(payload, "Varlık analizi alınamadı."));
+        }
+        if (payload === null) {
+          throw new Error(
+            parseError ? `Varlık analizi yanıtı çözümlenemedi: ${parseError}` : "Varlık analizi yanıtı boş geldi."
+          );
         }
         return AnalyzeResponseSchema.parse(payload);
       })
@@ -502,9 +523,16 @@ export default function UniversalAssetComparisonPanel() {
       signal: getRequestSignal(controller),
     })
       .then(async (response) => {
-        const payload: unknown = await response.json();
+        const { payload, parseError } = await parseJsonResponseSafely(response);
         if (!response.ok) {
           throw new Error(parseErrorMessage(payload, "Profil keşif verisi alınamadı."));
+        }
+        if (payload === null) {
+          throw new Error(
+            parseError
+              ? `Profil keşif yanıtı çözümlenemedi: ${parseError}`
+              : "Profil keşif yanıtı boş geldi."
+          );
         }
         return AnalyzeResponseSchema.parse(payload);
       })
@@ -526,75 +554,40 @@ export default function UniversalAssetComparisonPanel() {
 
   const assets = useMemo(() => analysisData?.assets ?? [], [analysisData?.assets]);
   const matrix = useMemo(() => createComparisonMatrix(assets), [assets]);
-  const totalByAsset = useMemo(
-    () =>
-      matrix.assets.reduce<Record<string, number | null>>((acc, assetSymbol) => {
-        const metricValues = matrix.metrics.map((metric) => metric.values[assetSymbol]);
-        if (!metricValues.every((value): value is number => typeof value === "number")) {
-          acc[assetSymbol] = null;
-          return acc;
-        }
-        acc[assetSymbol] = metricValues.reduce((sum, value) => sum + value, 0);
-        return acc;
-      }, {}),
-    [matrix]
-  );
   const insightLines = useMemo(() => generateCompareInsightLines(matrix), [matrix]);
   const compareCards = useMemo<CompareCardData[]>(
     () =>
       matrix.assets.map((assetSymbol) => {
         const sourceAsset = assets.find((asset) => asset.symbol === assetSymbol);
-        const risk = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Karar Simülasyonu")?.values[assetSymbol] ?? 0
-        );
-        const returnScore = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Risk Görselleştirme")?.values[assetSymbol] ?? 0
-        );
-        const liquidity = clampNullableScore(
-          matrix.metrics.find((metric) => metric.label === "Davranışsal Hata Analizi")?.values[assetSymbol] ??
-            null
-        );
-        const diversification = clampScore(
-          matrix.metrics.find((metric) => metric.label === "Senaryo Tabanlı Analiz")?.values[assetSymbol] ?? 0
-        );
-        const calmness = clampNullableScore(
-          matrix.metrics.find((metric) => metric.label === "Karar Öncesi Check Mekanizması")?.values[assetSymbol] ?? null
-        );
-        const riskUnavailable = false;
-        const returnUnavailable = false;
-        const liquidityUnavailable = liquidity === null;
-        const calmnessUnavailable = calmness === null;
+        const selection = selectedCompareAssets.find((asset) => asset.ticker.toUpperCase() === assetSymbol.toUpperCase());
+        const marketType = marketTypeFromSelection(selection, assetSymbol);
+        const activeCriteria = resolveAnalysisCriteria({ timeHorizon, marketType });
+        const criteriaValues = activeCriteria.map((criterion) => ({
+          criterion,
+          value: criterionScore(sourceAsset, criterion),
+        }));
         const hasCriticalDataGap = hasCriticalMetricGap(sourceAsset);
-        const comparableMetrics: number[] = [diversification];
-        if (liquidity !== null) comparableMetrics.push(liquidity);
-        if (calmness !== null) comparableMetrics.push(calmness);
-        if (!riskUnavailable) comparableMetrics.push(riskQuality(risk));
-        if (!returnUnavailable) comparableMetrics.push(returnScore);
+        const comparableMetrics: number[] = criteriaValues
+          .map((entry) => entry.value)
+          .filter((value): value is number => typeof value === "number");
         const balanceScore =
           hasCriticalDataGap || comparableMetrics.length === 0
             ? Number.NEGATIVE_INFINITY
             : comparableMetrics.reduce((sum, item) => sum + item, 0) / comparableMetrics.length;
-        const totalScore = hasCriticalDataGap ? null : totalByAsset[assetSymbol] ?? 0;
+        const totalScore = hasCriticalDataGap ? null : computeCriteriaTotal(criteriaValues.map((entry) => entry.value));
 
         return {
           symbol: assetSymbol,
-          risk,
-          return: returnScore,
-          liquidity,
-          diversification,
-          calmness,
+          marketType,
+          criteriaValues,
           totalScore,
           balanceScore,
           isFallback: Boolean(sourceAsset?.computation?.isFallback),
-          riskUnavailable,
-          returnUnavailable,
-          liquidityUnavailable,
-          calmnessUnavailable,
           hasCriticalDataGap,
           fallbackReasons: sourceAsset?.computation?.fallbackReasons ?? [],
         };
       }),
-    [assets, matrix.assets, matrix.metrics, totalByAsset]
+    [assets, matrix.assets, selectedCompareAssets, timeHorizon]
   );
   const bestBalancedAsset = useMemo(() => {
     const eligible = compareCards.filter((card) => Number.isFinite(card.balanceScore));
@@ -604,13 +597,9 @@ export default function UniversalAssetComparisonPanel() {
   }, [compareCards]);
   const bestBalancedReason = useMemo(() => {
     if (!bestBalancedAsset) return "";
-    const factors = [
-      { label: "düşük en kötü düşüş", score: riskQuality(bestBalancedAsset.risk) },
-      { label: "yüksek riske göre kazanç", score: bestBalancedAsset.return },
-      { label: "yüksek enflasyon sonrası gerçek kazanç", score: bestBalancedAsset.liquidity },
-      { label: "yüksek piyasayı geçme gücü", score: bestBalancedAsset.diversification },
-      { label: "sakin piyasa rejimine yakınlık", score: bestBalancedAsset.calmness },
-    ].filter((item): item is { label: string; score: number } => typeof item.score === "number")
+    const factors = bestBalancedAsset.criteriaValues
+      .map((entry) => ({ label: entry.criterion.label.toLocaleLowerCase("tr-TR"), score: entry.value }))
+      .filter((item): item is { label: string; score: number } => typeof item.score === "number")
       .sort((left, right) => right.score - left.score)
       .slice(0, 2)
       .map((item) => item.label);
@@ -693,20 +682,14 @@ export default function UniversalAssetComparisonPanel() {
     [discoveryRows]
   );
 
-  const title = mode === "compare" ? "Varlıkları Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Varlıkları Keşfedin";
+  const title = mode === "compare" ? "Hisseleri Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Hisseleri Keşfedin";
   const subtitle =
-    "Yatırım tavsiyesi değil; En Kötü Düşüş, Riske Göre Kazanç, Enflasyon Sonrası Gerçek Kazanç, Piyasayı Geçme Gücü ve Piyasa Sakinlik Durumu metriklerine göre genel profil eşleştirmesi.";
+    "Yatırım tavsiyesi değil; farklı metriklere göre yatırımcı profilinize uygun analiz çerçevesi.";
 
-  const dataError = catalogError ?? (mode === "compare" ? analysisError : discoveryError);
-  const activeWarnings = mode === "compare" ? analysisData?.warnings ?? [] : discoveryData?.warnings ?? [];
-  const liveMeta = (mode === "compare" ? analysisData?.meta : discoveryData?.meta) ?? catalogData?.meta ?? null;
-  const liveDataNote = liveMeta
-    ? `Canlı ve dinamik piyasa verisi kullanılıyor (${liveMeta.provider}). Son doğrulama: ${formatLiveDataTimestamp(
-        liveMeta.fetchedAtIso
-      )}. ${liveMeta.note}`
-    : "Canlı ve dinamik piyasa verisi kullanılıyor. Sentetik/sabit veri akışı kullanılmıyor.";
+  const dataError = unsupportedAssetMessage ?? catalogError ?? (mode === "compare" ? analysisError : discoveryError);
 
   const isLoading = mode === "compare" ? analysisLoading : discoveryLoading;
+  const shouldRenderCompareOutputs = mode !== "compare" || !unsupportedAssetMessage;
 
   function handlePresetChange(nextValue: string): void {
     if (!isProfilePresetKey(nextValue)) return;
@@ -783,11 +766,16 @@ export default function UniversalAssetComparisonPanel() {
             </label>
           </div>
 
-          {mode === "compare" ? (
+          {mode === "compare" && shouldRenderCompareOutputs ? (
             <div className="relative z-[90]">
               <AssetSearchInput
                 selectedAssets={selectedCompareAssets}
-                onSelectionChange={setSelectedCompareAssets}
+                onSelectionChange={handleCompareSelectionChange}
+                onUnsupportedAsset={() => {
+                  setUnsupportedAssetMessage("Bu araç yalnızca BIST ve ABD hisselerini destekler");
+                  setSelectedCompareAssets([]);
+                  setAnalysisData(null);
+                }}
                 maxSelection={5}
               />
               <div className="relative z-10 mt-3 flex flex-wrap gap-2">
@@ -798,6 +786,7 @@ export default function UniversalAssetComparisonPanel() {
                     onClick={() => {
                       setSelectedCompareAssets((prev) => {
                         if (prev.some((item) => item.ticker === asset.ticker) || prev.length >= 5) return prev;
+                        setUnsupportedAssetMessage(null);
                         return [...prev, asset];
                       });
                     }}
@@ -909,10 +898,6 @@ export default function UniversalAssetComparisonPanel() {
             </div>
           )}
 
-          <div className="mt-2 flex items-start gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/10 px-3 py-2 text-left text-xs text-[#dff4ff]">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#8ddfff]" />
-            <p>{liveDataNote}</p>
-          </div>
         </div>
 
         {isLoading ? (
@@ -925,19 +910,6 @@ export default function UniversalAssetComparisonPanel() {
         {dataError ? (
           <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-warning/40 bg-warning-container/25 px-3 py-2 text-xs text-warning">
             {dataError}
-          </div>
-        ) : null}
-
-        {activeWarnings.length > 0 ? (
-          <div className="mx-auto mt-4 flex max-w-3xl flex-col gap-2">
-            {activeWarnings.map((warning, index) => (
-              <div
-                key={`analysis-warning:${index}`}
-                className="rounded-xl border border-white/15 bg-slate-900/65 px-3 py-2 text-xs text-slate-200"
-              >
-                {warning.message}
-              </div>
-            ))}
           </div>
         ) : null}
 
@@ -980,61 +952,40 @@ export default function UniversalAssetComparisonPanel() {
                           </span>
                         ) : null}
                       </div>
-                      <div className="mt-3 space-y-2 text-sm">
-                        <div className="flex items-center justify-between text-slate-200">
-                          <span className="tools-card-metric-label">En Kötü Düşüş</span>
-                          {card.riskUnavailable ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
-                          ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Karar Simülasyonu", card.risk)}`}>
-                              {card.risk.toFixed(1)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between text-slate-200">
-                          <span className="tools-card-metric-label">Riske Göre Kazanç</span>
-                          {card.returnUnavailable ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
-                          ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Risk Görselleştirme", card.return)}`}>
-                              {card.return.toFixed(1)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between text-slate-200">
-                          <span className="tools-card-metric-label">Enflasyon Sonrası Gerçek Kazanç</span>
-                          {card.liquidityUnavailable || card.liquidity === null ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
-                          ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Davranışsal Hata Analizi", card.liquidity)}`}>
-                              {card.liquidity.toFixed(1)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between text-slate-200">
-                          <span className="tools-card-metric-label">Piyasayı Geçme Gücü</span>
-                          <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Senaryo Tabanlı Analiz", card.diversification)}`}>
-                            {card.diversification.toFixed(1)}
+                      <div className="mt-3 rounded-md border border-white/10 bg-slate-950/40 px-3 py-2">
+                        <div className="flex items-center justify-between text-slate-100">
+                          <span className="tools-card-score-label">FINCOGNIS PUAN</span>
+                          <span className="tools-card-score-value">
+                            {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-slate-200">
-                          <span className="tools-card-metric-label">Piyasa Sakinlik Durumu</span>
-                          {card.calmnessUnavailable || card.calmness === null ? (
-                            <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
-                          ) : (
-                            <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone("Karar Öncesi Check Mekanizması", card.calmness)}`}>
-                              {card.calmness.toFixed(1)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-3 border-t border-white/10 pt-2">
-                          <div className="flex items-center justify-between text-slate-100">
-                            <span className="tools-card-score-label">Piyasa→Karar Çeviri</span>
-                            <span className="tools-card-score-value">
-                              {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
-                            </span>
-                          </div>
-                        </div>
+                      </div>
+                      <div className="mt-3 space-y-2 text-sm">
+                        {card.criteriaValues.map(({ criterion, value }) => {
+                          const toneLabel: MatrixMetricLabel =
+                            criterion.sourceMetric === "return"
+                              ? "Risk Görselleştirme"
+                              : criterion.sourceMetric === "liquidity"
+                                ? "Davranışsal Hata Analizi"
+                                : criterion.sourceMetric === "diversification"
+                                  ? "Senaryo Tabanlı Analiz"
+                                  : criterion.sourceMetric === "calmness"
+                                    ? "Karar Öncesi Check Mekanizması"
+                                    : "Karar Simülasyonu";
+
+                          return (
+                            <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between text-slate-200">
+                              <span className="tools-card-metric-label">{criterion.label}</span>
+                              {value === null ? (
+                                <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
+                              ) : (
+                                <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone(toneLabel, value)}`}>
+                                  {value.toFixed(1)}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </article>
                   ))}

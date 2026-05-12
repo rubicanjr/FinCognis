@@ -9,11 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ThemeConfig } from "@/lib/contracts/core-schemas";
-import {
-  readThemeConfigFromStorage,
-  saveThemeConfigToStorage,
-  toggleThemeMode,
-} from "@/lib/theme/theme-storage";
+import { saveThemeConfigToStorage } from "@/lib/theme/theme-storage";
 
 interface ThemeContextValue {
   config: ThemeConfig;
@@ -22,30 +18,10 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function getSystemPreference(): "dark" | "light" {
-  // 1) Guard against non-browser contexts.
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-  // 2) Fallback safely when matchMedia is unavailable in restricted webviews.
-  if (typeof window.matchMedia !== "function") {
-    return "dark";
-  }
-  // 3) Resolve browser preference with deterministic fallback guards.
-  try {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    if (typeof mediaQuery?.matches !== "boolean") return "dark";
-    return mediaQuery.matches ? "dark" : "light";
-  } catch {
-    return "dark";
-  }
-}
-
 function getDefaultThemeConfig(): ThemeConfig {
-  // 1) Return deterministic SSR/CSR initial theme to prevent hydration mismatch.
   return {
     mode: "dark",
-    isSystemPreferred: true,
+    isSystemPreferred: false,
     updatedAt: "1970-01-01T00:00:00.000Z",
   };
 }
@@ -55,15 +31,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<ThemeConfig>(getDefaultThemeConfig);
 
   useEffect(() => {
-    // 1) Resolve persisted config from storage with client-side system preference fallback.
-    const clientDefault: ThemeConfig = {
-      mode: getSystemPreference(),
-      isSystemPreferred: true,
+    setConfig({
+      mode: "dark",
+      isSystemPreferred: false,
       updatedAt: new Date().toISOString(),
-    };
-    const persisted = readThemeConfigFromStorage(clientDefault);
-    // 2) Keep state synchronized with persisted config.
-    setConfig(persisted);
+    });
   }, []);
 
   useEffect(() => {
@@ -86,12 +58,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ThemeContextValue>(
     () => ({
       config,
-      toggleMode: () => {
-        // 1) Compute next theme using pure helper.
-        const next = toggleThemeMode(config);
-        // 2) Update local state immutably.
-        setConfig(next);
-      },
+      toggleMode: () => undefined,
     }),
     [config]
   );

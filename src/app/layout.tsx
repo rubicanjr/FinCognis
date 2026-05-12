@@ -1,6 +1,6 @@
 ﻿import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter, JetBrains_Mono } from "next/font/google";
+import { Cormorant_Garamond, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SITE_NAME, SITE_URL, OG_IMAGE_PATH, buildAbsoluteUrl, createPageMetadata } from "@/lib/seo";
@@ -25,12 +25,6 @@ export const metadata: Metadata = createPageMetadata({
 
 const organizationId = `${SITE_URL}#organization`;
 const websiteId = `${SITE_URL}#website`;
-
-const inter = Inter({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-ui",
-  display: "swap",
-});
 
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin", "latin-ext"],
@@ -84,9 +78,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="tr"
       suppressHydrationWarning
-      className={`${inter.variable} ${cormorantGaramond.variable} ${jetBrainsMono.variable} h-full min-h-full bg-surface text-on-surface`}
+      className={`${cormorantGaramond.variable} ${jetBrainsMono.variable} h-full min-h-full bg-surface text-on-surface`}
       style={{ backgroundColor: "rgb(var(--surface))", color: "rgb(var(--on-surface))" }}
-      >
+    >
       <head>
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="shortcut icon" href="/favicon.png" />

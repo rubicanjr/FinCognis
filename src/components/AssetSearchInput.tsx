@@ -33,6 +33,7 @@ export interface AssetSearchInputProps {
   placeholder?: string;
   disabled?: boolean;
   label?: string;
+  onUnsupportedAsset?: () => void;
 }
 
 function toPayload(option: AssetSearchOption): AssetSelectionPayload {
@@ -55,6 +56,7 @@ export default function AssetSearchInput({
   onSelectionChange,
   onChange,
   onAssetSelect,
+  onUnsupportedAsset,
   maxSelection = DEFAULT_MAX_SELECTION,
   placeholder = "Varlık ara (örn: tuprs, altın, bitcoin, spy)",
   disabled = false,
@@ -122,10 +124,11 @@ export default function AssetSearchInput({
 
   const rejectInput = useCallback((input: string) => {
     setQuery("");
-    setMessage(`'${input}' tanınan bir yatırım varlığı değil. Listeden seçim yapınız.`);
+    setMessage("Bu araç yalnızca BIST ve ABD hisselerini destekler");
     setIsOpen(false);
     setHighlightedIndex(-1);
-  }, []);
+    onUnsupportedAsset?.();
+  }, [onUnsupportedAsset]);
 
   const commitManualInput = useCallback(async (): Promise<boolean> => {
     const rawValue = query.trim();

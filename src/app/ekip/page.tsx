@@ -1,12 +1,12 @@
 ﻿import type { Metadata } from "next";
 import Navbar from "@/components/landing/Navbar";
-import TeamSection from "@/components/landing/TeamSection";
+import CoreTeamSection from "@/components/landing/CoreTeamSection";
 import Footer from "@/components/landing/Footer";
 import { SITE_NAME, createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: `${SITE_NAME} | Ekip`,
-  description: "FinCognis kurucu ekibi ve karar sistemleri uzmanlık alanları.",
+  title: `${SITE_NAME} | Core Team`,
+  description: "FinCognis core team: Decision Architects ve Strategic Operators.",
   path: "/ekip",
 });
 
@@ -18,7 +18,7 @@ export default function TeamPage() {
       <div className="relative z-10">
         <Navbar />
         <main className="pt-24">
-          <TeamSection />
+          <CoreTeamSection />
         </main>
         <Footer />
       </div>
