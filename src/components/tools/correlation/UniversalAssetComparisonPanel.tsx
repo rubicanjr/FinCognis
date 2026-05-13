@@ -16,8 +16,9 @@ import {
 } from "@/components/tools/correlation/universal-asset-comparison";
 import MetricExplanation from "@/components/tools/correlation/MetricExplanation";
 import {
-  DEFAULT_PROFILE_PRESET_KEY,
-  PROFILE_DISCOVERY_PRESET_ORDER,
+  getDefaultProfilePresetKeyByHorizon,
+  getProfileFieldConfigByHorizon,
+  getProfilePresetOrderByHorizon,
   PROFILE_DISCOVERY_PRESETS,
   type PreferenceLevel,
   type ProfilePresetKey,
@@ -127,12 +128,6 @@ const METRIC_CONFIG: MetricConfig[] = [
 const MODE_OPTIONS: Array<{ key: PanelMode; label: string }> = [
   { key: "compare", label: "Karşılaştır" },
   { key: "discover", label: "Profil Keşfet" },
-];
-
-const PREFERENCE_LEVEL_OPTIONS: Array<{ value: PreferenceLevel; label: string }> = [
-  { value: "low", label: "Düşük" },
-  { value: "medium", label: "Orta" },
-  { value: "high", label: "Yüksek" },
 ];
 
 const TIME_HORIZON_OPTIONS: Array<{ value: TimeHorizon; label: string }> = [
@@ -306,6 +301,15 @@ function profileRiskBand(level: PreferenceLevel): string {
   return "Yüksek risk";
 }
 
+function profileBandByHorizon(timeHorizon: TimeHorizon, level: PreferenceLevel): string {
+  if (timeHorizon === "1mo") {
+    if (level === "low") return "Dar Momentum Bandı";
+    if (level === "medium") return "Dengeli Momentum Bandı";
+    return "Agresif Momentum Bandı";
+  }
+  return profileRiskBand(level);
+}
+
 function isProfilePresetKey(value: string): value is ProfilePresetKey {
   return value in PROFILE_DISCOVERY_PRESETS;
 }
@@ -386,8 +390,8 @@ export default function UniversalAssetComparisonPanel() {
   const [discoveryCatalogSignature, setDiscoveryCatalogSignature] = useState("");
   const [discoveryHorizon, setDiscoveryHorizon] = useState<TimeHorizon | null>(null);
 
-  const [selectedPresetKey, setSelectedPresetKey] = useState<ProfilePresetKey>(DEFAULT_PROFILE_PRESET_KEY);
-  const [criteria, setCriteria] = useState<DiscoveryCriteria>(defaultCriteriaByPreset(DEFAULT_PROFILE_PRESET_KEY));
+  const [selectedPresetKey, setSelectedPresetKey] = useState<ProfilePresetKey>(() => getDefaultProfilePresetKeyByHorizon("1y"));
+  const [criteria, setCriteria] = useState<DiscoveryCriteria>(() => defaultCriteriaByPreset(getDefaultProfilePresetKeyByHorizon("1y")));
 
   useEffect(() => {
     const controller = createAbortControllerSafe();
@@ -607,6 +611,14 @@ export default function UniversalAssetComparisonPanel() {
   }, [bestBalancedAsset]);
 
   const selectedPreset = PROFILE_DISCOVERY_PRESETS[selectedPresetKey];
+  const profilePresetOrder = useMemo(() => getProfilePresetOrderByHorizon(timeHorizon), [timeHorizon]);
+  const profileFieldConfig = useMemo(() => getProfileFieldConfigByHorizon(timeHorizon), [timeHorizon]);
+
+  useEffect(() => {
+    const nextPreset = getDefaultProfilePresetKeyByHorizon(timeHorizon);
+    setSelectedPresetKey(nextPreset);
+    setCriteria(defaultCriteriaByPreset(nextPreset));
+  }, [timeHorizon]);
 
   const discoveryRows = useMemo<DiscoveryRow[]>(() => {
     if (!discoveryData) return [];
@@ -667,7 +679,10 @@ export default function UniversalAssetComparisonPanel() {
   }, [criteria, discoveryData, selectedPreset]);
 
   const profileTopRows = useMemo(() => discoveryRows.slice(0, 10), [discoveryRows]);
-  const profileBandLabel = useMemo(() => profileRiskBand(criteria.riskSensitivity), [criteria.riskSensitivity]);
+  const profileBandLabel = useMemo(
+    () => profileBandByHorizon(timeHorizon, criteria.riskSensitivity),
+    [criteria.riskSensitivity, timeHorizon]
+  );
   const suitableProfileRows = useMemo(() => {
     const highFit = profileTopRows.filter((row) => row.profileFitScore >= 70).slice(0, 4);
     if (highFit.length > 0) return highFit;
@@ -815,7 +830,7 @@ export default function UniversalAssetComparisonPanel() {
                     <span>Profil Adı</span>
                     <span>Arka planda ağırlık</span>
                   </div>
-                  {PROFILE_DISCOVERY_PRESET_ORDER.map((presetKey) => {
+                  {profilePresetOrder.map((presetKey) => {
                     const preset = PROFILE_DISCOVERY_PRESETS[presetKey];
                     const isActive = selectedPresetKey === presetKey;
                     return (
@@ -836,62 +851,22 @@ export default function UniversalAssetComparisonPanel() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Risk hassasiyeti</span>
-                  <select
-                    value={criteria.riskSensitivity}
-                    onChange={(event) => handleCriteriaChange("riskSensitivity", event.target.value)}
-                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                  >
-                    {PREFERENCE_LEVEL_OPTIONS.map((option) => (
-                      <option key={`risk:${option.value}`} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Geçmiş getiri gücü beklentisi</span>
-                  <select
-                    value={criteria.returnExpectation}
-                    onChange={(event) => handleCriteriaChange("returnExpectation", event.target.value)}
-                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                  >
-                    {PREFERENCE_LEVEL_OPTIONS.map((option) => (
-                      <option key={`return:${option.value}`} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Nakde çevirme kolaylığı ihtiyacı</span>
-                  <select
-                    value={criteria.liquidityNeed}
-                    onChange={(event) => handleCriteriaChange("liquidityNeed", event.target.value)}
-                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                  >
-                    {PREFERENCE_LEVEL_OPTIONS.map((option) => (
-                      <option key={`liquidity:${option.value}`} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Portföy dengeleme hedefi</span>
-                  <select
-                    value={criteria.diversificationGoal}
-                    onChange={(event) => handleCriteriaChange("diversificationGoal", event.target.value)}
-                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                  >
-                    {PREFERENCE_LEVEL_OPTIONS.map((option) => (
-                      <option key={`diversification:${option.value}`} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {profileFieldConfig.map((fieldConfig) => (
+                  <label key={`profile-field:${fieldConfig.field}`} className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">{fieldConfig.label}</span>
+                    <select
+                      value={criteria[fieldConfig.field]}
+                      onChange={(event) => handleCriteriaChange(fieldConfig.field, event.target.value)}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      {fieldConfig.options.map((option) => (
+                        <option key={`${fieldConfig.field}:${option.value}`} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
               </div>
 
               <p className="mt-3 text-xs text-slate-300">{selectedPreset.summary}</p>
