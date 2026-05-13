@@ -1,10 +1,25 @@
 import { randomUUID } from "crypto";
 import { AnalyzeResponseSchema, type AnalyzeRequest, type AnalyzeResponse } from "@/lib/contracts/universal-asset-schemas";
 import type { DiscoveryJob } from "@/lib/contracts/discover-job-schemas";
+import {
+  getDiscoveryBackendTimeoutMs,
+  getDiscoveryRetryBaseDelayMs,
+  getDiscoveryRetryCount,
+} from "@/lib/discovery/discovery-config";
 
 const DISCOVERY_TTL_MS = 5 * 60 * 1000;
 const DISCOVERY_JOB_TTL_MS = 5 * 60 * 1000;
-const DISCOVERY_BACKEND_TIMEOUT_MS = 20_000;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function buildBackoffDelayMs(attempt: number): number {
+  const base = getDiscoveryRetryBaseDelayMs();
+  const exponential = Math.min(base * Math.pow(2, attempt), 5_000);
+  const jitter = Math.floor(Math.random() * Math.max(120, Math.floor(base * 0.35)));
+  return exponential + jitter;
+}
 
 interface DiscoverCacheEntry {
   key: string;
@@ -37,21 +52,40 @@ function cleanupJobs(): void {
     .forEach(([id]) => discoverJobs.delete(id));
 }
 
-function withBackendTimeout<T>(promise: Promise<T>, timeoutMs = DISCOVERY_BACKEND_TIMEOUT_MS): Promise<T> {
+function withBackendTimeout<T>(jobFn: () => Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timeoutSignal = AbortSignal.timeout(timeoutMs);
-    const onAbort = () => reject(new Error("discover_backend_timeout"));
-    timeoutSignal.addEventListener("abort", onAbort, { once: true });
-    promise
+    const timeoutHandle = setTimeout(() => reject(new Error("discover_backend_timeout")), timeoutMs);
+    jobFn()
       .then((value) => {
-        timeoutSignal.removeEventListener("abort", onAbort);
+        clearTimeout(timeoutHandle);
         resolve(value);
       })
       .catch((error) => {
-        timeoutSignal.removeEventListener("abort", onAbort);
+        clearTimeout(timeoutHandle);
         reject(error);
       });
   });
+}
+
+async function withBackendTimeoutRetry<T>(jobFn: () => Promise<T>): Promise<T> {
+  const timeoutMs = getDiscoveryBackendTimeoutMs();
+  const retries = getDiscoveryRetryCount();
+
+  let attempt = 0;
+  while (attempt <= retries) {
+    try {
+      return await withBackendTimeout(jobFn, timeoutMs);
+    } catch (error) {
+      const isTimeout = error instanceof Error && error.message === "discover_backend_timeout";
+      if (!isTimeout || attempt >= retries) {
+        throw error;
+      }
+      await wait(buildBackoffDelayMs(attempt));
+      attempt += 1;
+    }
+  }
+
+  throw new Error("discover_backend_timeout");
 }
 
 function toDiscoverCacheKey(requestData: AnalyzeRequest): string {
@@ -117,7 +151,7 @@ async function runDiscoverJob(
   updateJobProgress(job.id, "processing", 10, null);
 
   try {
-    const analyzed = await withBackendTimeout(analyzeFn(), DISCOVERY_BACKEND_TIMEOUT_MS);
+    const analyzed = await withBackendTimeoutRetry(analyzeFn);
     const parsed = AnalyzeResponseSchema.parse(analyzed);
     setDiscoverCache(job.key, parsed);
     updateJobProgress(job.id, "completed", 100, parsed);

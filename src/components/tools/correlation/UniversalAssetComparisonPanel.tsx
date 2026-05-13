@@ -13,6 +13,8 @@ import {
   DiscoveryJobAcceptedSchema,
   DiscoveryJobStatusResponseSchema,
 } from "@/lib/contracts/discover-job-schemas";
+import { mapDiscoveryErrorCode } from "@/lib/discovery/discovery-error-dictionary";
+import { resolveDiscoveryErrorMessage } from "@/lib/discovery/discovery-error-handler";
 import {
   AssetClass,
   type NormalizedAsset,
@@ -307,6 +309,9 @@ function profileRiskBand(level: PreferenceLevel): string {
 
 const DISCOVERY_CLIENT_ABORT_MS = 130_000;
 const DISCOVERY_JOB_POLL_TIMEOUT_MS = 120_000;
+const DISCOVERY_POLL_BASE_DELAY_MS = 1_200;
+const DISCOVERY_POLL_MAX_DELAY_MS = 6_000;
+const DISCOVERY_POLL_JITTER_MS = 300;
 
 function scheduleAbort(controller: AbortController | null, timeoutMs: number): ReturnType<typeof setTimeout> | null {
   if (!controller || timeoutMs <= 0) return null;
@@ -319,6 +324,12 @@ function clearAbortTimer(timer: ReturnType<typeof setTimeout> | null): void {
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function nextDiscoveryPollDelay(attempt: number): number {
+  const exponential = Math.min(DISCOVERY_POLL_BASE_DELAY_MS * Math.pow(2, attempt), DISCOVERY_POLL_MAX_DELAY_MS);
+  const jitter = Math.floor(Math.random() * DISCOVERY_POLL_JITTER_MS);
+  return exponential + jitter;
 }
 
 function profileBandByHorizon(timeHorizon: TimeHorizon, level: PreferenceLevel): string {
@@ -544,6 +555,7 @@ export default function UniversalAssetComparisonPanel() {
 
     const pollDiscoveryJob = async (jobId: string): Promise<AnalyzeResponse> => {
       const startedAt = Date.now();
+      let pollAttempt = 0;
 
       while (Date.now() - startedAt < DISCOVERY_JOB_POLL_TIMEOUT_MS) {
         const response = await fetch(`/api/analyze/status/${jobId}`, {
@@ -575,13 +587,14 @@ export default function UniversalAssetComparisonPanel() {
           if (statusPayload.job.data) {
             return AnalyzeResponseSchema.parse(statusPayload.job.data);
           }
-          throw new Error(statusPayload.job.error ?? "Profil keşif işi başarısız oldu.");
+          throw new Error(mapDiscoveryErrorCode(statusPayload.job.error));
         }
 
-        await wait(2_000);
+        await wait(nextDiscoveryPollDelay(pollAttempt));
+        pollAttempt += 1;
       }
 
-      throw new Error("Profil keşif isteği zaman aşımına uğradı. Lütfen tekrar deneyin.");
+      throw new Error(mapDiscoveryErrorCode("discover_backend_timeout"));
     };
 
     fetch("/api/analyze", {
@@ -637,7 +650,7 @@ export default function UniversalAssetComparisonPanel() {
         setDiscoveryData(null);
         setDiscoveryLoading(false);
         setDiscoveryProgress(null);
-        setDiscoveryError(error instanceof Error ? error.message : "Profil keşif verisi alınamadı.");
+        setDiscoveryError(resolveDiscoveryErrorMessage(error));
       });
 
     return () => {
