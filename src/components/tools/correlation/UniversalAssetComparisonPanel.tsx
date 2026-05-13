@@ -301,6 +301,17 @@ function profileRiskBand(level: PreferenceLevel): string {
   return "Yüksek risk";
 }
 
+const DISCOVERY_REQUEST_TIMEOUT_MS = 25_000;
+
+function scheduleAbort(controller: AbortController | null, timeoutMs: number): ReturnType<typeof setTimeout> | null {
+  if (!controller || timeoutMs <= 0) return null;
+  return setTimeout(() => controller.abort(), timeoutMs);
+}
+
+function clearAbortTimer(timer: ReturnType<typeof setTimeout> | null): void {
+  if (timer) clearTimeout(timer);
+}
+
 function profileBandByHorizon(timeHorizon: TimeHorizon, level: PreferenceLevel): string {
   if (timeHorizon === "1mo") {
     if (level === "low") return "Dar Momentum Bandı";
@@ -517,6 +528,7 @@ export default function UniversalAssetComparisonPanel() {
     }
 
     const controller = createAbortControllerSafe();
+    const timeoutTimer = scheduleAbort(controller, DISCOVERY_REQUEST_TIMEOUT_MS);
     setDiscoveryLoading(true);
     setDiscoveryError(null);
 
@@ -541,19 +553,29 @@ export default function UniversalAssetComparisonPanel() {
         return AnalyzeResponseSchema.parse(payload);
       })
       .then((data) => {
+        clearAbortTimer(timeoutTimer);
         setDiscoveryData(data);
         setDiscoveryCatalogSignature(catalogSignature);
         setDiscoveryHorizon(timeHorizon);
         setDiscoveryLoading(false);
       })
       .catch((error: unknown) => {
-        if (isRequestAborted(controller)) return;
+        clearAbortTimer(timeoutTimer);
+        if (isRequestAborted(controller)) {
+          setDiscoveryData(null);
+          setDiscoveryLoading(false);
+          setDiscoveryError("Profil keşif isteği zaman aşımına uğradı. Lütfen tekrar deneyin.");
+          return;
+        }
         setDiscoveryData(null);
         setDiscoveryLoading(false);
         setDiscoveryError(error instanceof Error ? error.message : "Profil keşif verisi alınamadı.");
       });
 
-    return () => controller?.abort();
+    return () => {
+      clearAbortTimer(timeoutTimer);
+      controller?.abort();
+    };
   }, [catalogData, catalogSignature, discoveryCatalogSignature, discoveryData, discoveryHorizon, mode, timeHorizon]);
 
   const assets = useMemo(() => analysisData?.assets ?? [], [analysisData?.assets]);
