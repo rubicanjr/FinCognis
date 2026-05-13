@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AssetClass } from "@/components/tools/correlation/universal-asset-comparison";
 import type {
-  AssetCatalogItem,
   MarketDataGatewayPort,
   MarketHistory,
   MarketHistoryOptions,
@@ -54,7 +53,7 @@ function buildHistoryFromReturns(symbol: string, providerSymbol: string, returns
 class MockGateway implements MarketDataGatewayPort {
   public readonly historyCalls: Array<{ symbol: string; options: MarketHistoryOptions | undefined }> = [];
 
-  getSupportedAssets(): AssetCatalogItem[] {
+  getSupportedAssets() {
     return [];
   }
 
@@ -89,13 +88,14 @@ class MockGateway implements MarketDataGatewayPort {
       profile: {
         liquidationDays: 2,
         marginAddOn: 0.01,
+        slippageMultiplier: 1.1,
       },
     };
   }
 }
 
 class SparseDataGateway implements MarketDataGatewayPort {
-  getSupportedAssets(): AssetCatalogItem[] {
+  getSupportedAssets() {
     return [];
   }
 
@@ -130,6 +130,7 @@ class SparseDataGateway implements MarketDataGatewayPort {
       profile: {
         liquidationDays: 5,
         marginAddOn: 0.02,
+        slippageMultiplier: 1.2,
       },
     };
   }

@@ -35,13 +35,23 @@ const returnsBySymbol: Record<string, number[]> = {
 function historyFromReturns(symbol: string, returns: number[]): MarketHistory {
   const points: MarketHistory["points"] = [];
   let close = 100;
-  points.push({ date: "2026-01-01", close, volume: 10_000_000 });
+  points.push({
+    date: "2026-01-01",
+    close,
+    adjustedClose: close,
+    volume: 10_000_000,
+    high: close * 1.01,
+    low: close * 0.99,
+  });
   returns.forEach((ret, index) => {
     close = close * (1 + ret);
     points.push({
       date: `2026-01-${String(index + 2).padStart(2, "0")}`,
       close,
+      adjustedClose: close,
       volume: 10_000_000,
+      high: close * 1.01,
+      low: close * 0.99,
     });
   });
   return {

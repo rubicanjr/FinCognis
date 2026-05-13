@@ -10,6 +10,10 @@ import {
   type AssetsApiResponse,
 } from "@/lib/contracts/universal-asset-schemas";
 import {
+  DiscoveryJobAcceptedSchema,
+  DiscoveryJobStatusResponseSchema,
+} from "@/lib/contracts/discover-job-schemas";
+import {
   AssetClass,
   type NormalizedAsset,
   type UniversalMetrics,
@@ -301,7 +305,8 @@ function profileRiskBand(level: PreferenceLevel): string {
   return "Yüksek risk";
 }
 
-const DISCOVERY_REQUEST_TIMEOUT_MS = 25_000;
+const DISCOVERY_CLIENT_ABORT_MS = 130_000;
+const DISCOVERY_JOB_POLL_TIMEOUT_MS = 120_000;
 
 function scheduleAbort(controller: AbortController | null, timeoutMs: number): ReturnType<typeof setTimeout> | null {
   if (!controller || timeoutMs <= 0) return null;
@@ -310,6 +315,10 @@ function scheduleAbort(controller: AbortController | null, timeoutMs: number): R
 
 function clearAbortTimer(timer: ReturnType<typeof setTimeout> | null): void {
   if (timer) clearTimeout(timer);
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function profileBandByHorizon(timeHorizon: TimeHorizon, level: PreferenceLevel): string {
@@ -400,6 +409,7 @@ export default function UniversalAssetComparisonPanel() {
   const [discoveryData, setDiscoveryData] = useState<AnalyzeResponse | null>(null);
   const [discoveryCatalogSignature, setDiscoveryCatalogSignature] = useState("");
   const [discoveryHorizon, setDiscoveryHorizon] = useState<TimeHorizon | null>(null);
+  const [discoveryProgress, setDiscoveryProgress] = useState<number | null>(null);
 
   const [selectedPresetKey, setSelectedPresetKey] = useState<ProfilePresetKey>(() => getDefaultProfilePresetKeyByHorizon("1y"));
   const [criteria, setCriteria] = useState<DiscoveryCriteria>(() => defaultCriteriaByPreset(getDefaultProfilePresetKeyByHorizon("1y")));
@@ -528,9 +538,51 @@ export default function UniversalAssetComparisonPanel() {
     }
 
     const controller = createAbortControllerSafe();
-    const timeoutTimer = scheduleAbort(controller, DISCOVERY_REQUEST_TIMEOUT_MS);
+    const timeoutTimer = scheduleAbort(controller, DISCOVERY_CLIENT_ABORT_MS);
     setDiscoveryLoading(true);
     setDiscoveryError(null);
+
+    const pollDiscoveryJob = async (jobId: string): Promise<AnalyzeResponse> => {
+      const startedAt = Date.now();
+
+      while (Date.now() - startedAt < DISCOVERY_JOB_POLL_TIMEOUT_MS) {
+        const response = await fetch(`/api/analyze/status/${jobId}`, {
+          signal: getRequestSignal(controller),
+        });
+        const { payload, parseError } = await parseJsonResponseSafely(response);
+        if (!response.ok) {
+          throw new Error(parseErrorMessage(payload, "Profil keşif iş durumu alınamadı."));
+        }
+        if (payload === null) {
+          throw new Error(
+            parseError
+              ? `Profil keşif iş durumu çözümlenemedi: ${parseError}`
+              : "Profil keşif iş durumu boş geldi."
+          );
+        }
+
+        const statusPayload = DiscoveryJobStatusResponseSchema.parse(payload);
+        setDiscoveryProgress(statusPayload.job.progress);
+
+        if (statusPayload.job.status === "completed") {
+          if (!statusPayload.job.data) {
+            throw new Error("Profil keşif sonucu boş döndü.");
+          }
+          return AnalyzeResponseSchema.parse(statusPayload.job.data);
+        }
+
+        if (statusPayload.job.status === "failed") {
+          if (statusPayload.job.data) {
+            return AnalyzeResponseSchema.parse(statusPayload.job.data);
+          }
+          throw new Error(statusPayload.job.error ?? "Profil keşif işi başarısız oldu.");
+        }
+
+        await wait(2_000);
+      }
+
+      throw new Error("Profil keşif isteği zaman aşımına uğradı. Lütfen tekrar deneyin.");
+    };
 
     fetch("/api/analyze", {
       method: "POST",
@@ -540,6 +592,19 @@ export default function UniversalAssetComparisonPanel() {
     })
       .then(async (response) => {
         const { payload, parseError } = await parseJsonResponseSafely(response);
+        if (response.status === 202) {
+          if (payload === null) {
+            throw new Error(
+              parseError
+                ? `Profil keşif iş cevabı çözümlenemedi: ${parseError}`
+                : "Profil keşif iş cevabı boş geldi."
+            );
+          }
+          const accepted = DiscoveryJobAcceptedSchema.parse(payload);
+          setDiscoveryProgress(accepted.progress);
+          return pollDiscoveryJob(accepted.jobId);
+        }
+
         if (!response.ok) {
           throw new Error(parseErrorMessage(payload, "Profil keşif verisi alınamadı."));
         }
@@ -557,6 +622,7 @@ export default function UniversalAssetComparisonPanel() {
         setDiscoveryData(data);
         setDiscoveryCatalogSignature(catalogSignature);
         setDiscoveryHorizon(timeHorizon);
+        setDiscoveryProgress(null);
         setDiscoveryLoading(false);
       })
       .catch((error: unknown) => {
@@ -564,11 +630,13 @@ export default function UniversalAssetComparisonPanel() {
         if (isRequestAborted(controller)) {
           setDiscoveryData(null);
           setDiscoveryLoading(false);
+          setDiscoveryProgress(null);
           setDiscoveryError("Profil keşif isteği zaman aşımına uğradı. Lütfen tekrar deneyin.");
           return;
         }
         setDiscoveryData(null);
         setDiscoveryLoading(false);
+        setDiscoveryProgress(null);
         setDiscoveryError(error instanceof Error ? error.message : "Profil keşif verisi alınamadı.");
       });
 
@@ -898,11 +966,13 @@ export default function UniversalAssetComparisonPanel() {
         </div>
 
         {isLoading ? (
-          <div className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/12 px-3 py-2 text-xs text-slate-100">
-            <LoaderCircle className="h-4 w-4 animate-spin" style={{ color: ACCENT_BLUE }} />
-            {mode === "compare" ? "Karşılaştırma hesaplanıyor..." : "Profil eşleştirmesi hazırlanıyor..."}
-          </div>
-        ) : null}
+        <div className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/12 px-3 py-2 text-xs text-slate-100">
+          <LoaderCircle className="h-4 w-4 animate-spin" style={{ color: ACCENT_BLUE }} />
+          {mode === "compare"
+            ? "Karşılaştırma hesaplanıyor..."
+            : `Profil eşleştirmesi hazırlanıyor${typeof discoveryProgress === "number" ? ` (%${Math.round(discoveryProgress)})` : "..."}`}
+        </div>
+      ) : null}
 
         {dataError ? (
           <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-warning/40 bg-warning-container/25 px-3 py-2 text-xs text-warning">
