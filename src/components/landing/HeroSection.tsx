@@ -132,16 +132,16 @@ export default function HeroSection() {
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-[2.55rem] font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-[3.2rem] md:text-[4.1rem] lg:text-[5.75rem]">
-          <span className="block whitespace-nowrap">
+        <h1 className="animate-fade-in-up-delay-1 mb-5 max-w-full break-words font-display text-[clamp(1.5rem,5vw,5.75rem)] font-semibold leading-[1.04] tracking-[-0.03em] text-white [overflow-wrap:break-word]">
+          <span className="block">
             <span className="font-display text-[0.9em]">FİNANSAL</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">KARARLAR</span>
           </span>
-          <span className="block whitespace-nowrap">
+          <span className="block">
             <span className="font-display text-[0.9em]">VERİYLE</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">ŞEKİLLENİYOR</span>
           </span>
-          <span className="block whitespace-nowrap">
+          <span className="block">
             <span className="font-display text-[0.9em]">FINCOGNIS İLE</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">NETLEŞİYOR</span>
           </span>

@@ -44,6 +44,7 @@ import {
 import { resolveCriterionDisplayScore } from "@/lib/analysis/criteria-display-score";
 import { computeCriteriaTotal } from "@/lib/analysis/criteria-total";
 import { parseJsonResponseSafely } from "@/lib/http/safe-json-response";
+import { filterDiscoverableStockAssets } from "@/lib/services/discovery-asset-filter";
 
 const ACCENT_BLUE = "#22b7ff";
 
@@ -236,11 +237,14 @@ function criterionScore(asset: NormalizedAsset | undefined, criterion: AnalysisC
 }
 
 function toCatalogAnalyzeAssets(assetsApi: AssetsApiResponse): AnalyzeRequest["assets"] {
-  return assetsApi.assets.slice(0, 40).map((asset) => ({
+  const mapped = assetsApi.assets.slice(0, 40).map((asset) => ({
     symbol: asset.symbol,
     originalInput: asset.name,
     class: asset.class,
+    category: asset.category,
   }));
+
+  return filterDiscoverableStockAssets(mapped);
 }
 
 function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {

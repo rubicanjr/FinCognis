@@ -25,6 +25,7 @@ function buildRequest(assetsCount: number, timeHorizon: AnalyzeRequest["timeHori
       symbol: `SYM${index + 1}`,
       originalInput: `SYM${index + 1}`,
       class: AssetClass.Equity,
+      category: index % 2 === 0 ? "BIST_STOCK" : "US_STOCK",
     })),
   };
 }

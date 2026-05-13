@@ -37,4 +37,20 @@ describe("HeroSection typography", () => {
     expect(screen.getAllByText("Decısıon Intellıgence").length).toBeGreaterThan(0);
     expect(screen.getAllByText("yaklaşımı").length).toBeGreaterThan(0);
   });
+
+  it("uses fluid typography and mobile-safe wrapping for hero title", () => {
+    Object.defineProperty(window, "innerWidth", { value: 375, configurable: true });
+
+    render(<HeroSection />);
+
+    const heading = screen.getAllByRole("heading", {
+      level: 1,
+      name: /FİNANSAL\s*KARARLAR\s*VERİYLE\s*ŞEKİLLENİYOR\s*FINCOGNIS\s*İLE\s*NETLEŞİYOR/,
+    })[0];
+
+    expect(heading.className).toContain("text-[clamp(");
+    expect(heading.className).toContain("max-w-full");
+    expect(heading.className).toContain("[overflow-wrap:break-word]");
+    expect(heading.className).toContain("break-words");
+  });
 });

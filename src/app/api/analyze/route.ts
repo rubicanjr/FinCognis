@@ -8,6 +8,7 @@ import {
 } from "@/lib/contracts/universal-asset-schemas";
 import { DiscoveryJobAcceptedSchema } from "@/lib/contracts/discover-job-schemas";
 import { marketDataGateway } from "@/lib/gateways/market-data-gateway";
+import { filterDiscoverableStockAssets } from "@/lib/services/discovery-asset-filter";
 import { analyzeUniversalAssets } from "@/lib/services/universal-asset-analysis-service";
 import { createOrReuseDiscoverJob } from "@/lib/services/discovery-engine";
 
@@ -145,7 +146,22 @@ async function analyzeAndBuildResponse(requestData: AnalyzeRequest): Promise<Ana
 }
 
 async function handleDiscover(requestData: AnalyzeRequest): Promise<NextResponse> {
-  const jobResult = createOrReuseDiscoverJob(requestData, () => analyzeAndBuildResponse(requestData));
+  const filteredAssets = filterDiscoverableStockAssets(requestData.assets);
+  if (filteredAssets.length === 0) {
+    return NextResponse.json(
+      {
+        error: "Profil keşfi için yalnızca BIST ve ABD hisse varlıkları kullanılabilir.",
+      },
+      { status: 422 }
+    );
+  }
+
+  const filteredRequestData: AnalyzeRequest = {
+    ...requestData,
+    assets: filteredAssets,
+  };
+
+  const jobResult = createOrReuseDiscoverJob(filteredRequestData, () => analyzeAndBuildResponse(filteredRequestData));
 
   if (jobResult.mode === "cached" && jobResult.cached) {
     return NextResponse.json(jobResult.cached, { status: 200, headers: { "x-fincognis-discover-cache": "hit" } });
