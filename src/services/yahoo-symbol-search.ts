@@ -22,16 +22,37 @@ function setCached<T>(cache: Map<string, { expiresAt: number; value: T }>, key: 
   cache.set(key, { expiresAt: Date.now() + SEARCH_CACHE_TTL_MS, value });
 }
 
-function mapUnknownExchangeToClass(exchange: string): CatalogAssetClass {
+const ALLOWED_EQUITY_EXCHANGES = new Set([
+  "IST",   // BIST (İstanbul)
+  "NYQ",   // NYSE
+  "NMS",   // NASDAQ
+  "NGM",   // NASDAQ Global Market
+  "PCX",   // NYSE Arca (ETF'ler)
+]);
+
+const BLOCKED_EXCHANGES = new Set([
+  "OTC", "OTCM", "OTCQB", "OTCQX", "PNK", "PINK",
+]);
+
+/**
+ * Bir borsa kodunun hisse senedi analizi için kabul edilebilir olup olmadığını kontrol eder.
+ * Sadece BIST (IST) ve ABD borsaları (NYSE, NASDAQ) kabul edilir.
+ */
+function isAllowedStockExchange(exchange: string): boolean {
   const code = exchange.toUpperCase();
-  if (code === "IST") return "equity_bist";
-  if (["NYQ", "NMS", "NGM", "PCX"].includes(code)) return "equity_us";
-  if (code === "CCC") return "crypto";
-  if (code === "COMMODITY") return "commodity";
-  return "equity_us";
+  if (BLOCKED_EXCHANGES.has(code)) return false;
+  return ALLOWED_EQUITY_EXCHANGES.has(code);
 }
 
-function mapAssetClassFromValue(value: unknown, exchange: string): CatalogAssetClass {
+function mapExchangeToAssetClass(exchange: string): CatalogAssetClass | null {
+  const code = exchange.toUpperCase();
+  if (code === "IST") return "equity_bist";
+  if (ALLOWED_EQUITY_EXCHANGES.has(code)) return "equity_us";
+  // Tanınmayan borsa — hisse senedi değil, reddet
+  return null;
+}
+
+function mapAssetClassFromValue(value: unknown, exchange: string): CatalogAssetClass | null {
   if (
     value === "equity_bist" ||
     value === "equity_us" ||
@@ -42,7 +63,7 @@ function mapAssetClassFromValue(value: unknown, exchange: string): CatalogAssetC
   ) {
     return value;
   }
-  return mapUnknownExchangeToClass(exchange);
+  return mapExchangeToAssetClass(exchange);
 }
 
 export async function searchYahooSymbols(query: string): Promise<YahooSearchAsset[]> {
@@ -70,13 +91,19 @@ export async function searchYahooSymbols(query: string): Promise<YahooSearchAsse
       const yahooSymbol = typeof item.yahooSymbol === "string" ? item.yahooSymbol : ticker;
       const currency = item.currency === "TRY" ? "TRY" : "USD";
       if (!ticker || !name || !yahooSymbol) continue;
+
+      // Borsa filtresi: sadece BIST + ABD borsalarından hisse senetleri
+      const assetClass = mapAssetClassFromValue(item.assetClass, exchange);
+      if (!assetClass) continue;
+      if (!isAllowedStockExchange(exchange)) continue;
+
       mapped.push({
         ticker,
         name,
         exchange,
         yahooSymbol,
         currency,
-        assetClass: mapAssetClassFromValue(item.assetClass, exchange),
+        assetClass,
         isVerified: true,
         source: "yahoo_search",
       });
@@ -125,13 +152,24 @@ export async function verifyYahooTicker(input: string): Promise<YahooSearchAsset
       return null;
     }
 
+    // Borsa filtresi: sadece BIST + ABD borsalarından hisse senetleri
+    const assetClass = mapAssetClassFromValue(result.assetClass, exchange);
+    if (!assetClass) {
+      setCached(verifyCache, normalized, null);
+      return null;
+    }
+    if (!isAllowedStockExchange(exchange)) {
+      setCached(verifyCache, normalized, null);
+      return null;
+    }
+
     const mapped: YahooSearchAsset = {
       ticker,
       name,
       exchange,
       yahooSymbol,
       currency,
-      assetClass: mapAssetClassFromValue(result.assetClass, exchange),
+      assetClass,
       isVerified: true,
       source: "yahoo_verify",
     };

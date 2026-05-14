@@ -16,6 +16,14 @@ interface UseEconomicCalendarState {
   error: string | null;
   updatedAt: string | null;
   toast: string | null;
+  source: "finnhub" | "fmp" | "holiday_api" | "legacy_adapter" | "cache";
+  reason: string | null;
+  metadata: {
+    stale_age_seconds: number;
+    next_sync_permitted_at: string;
+    reason_code?: string;
+    is_lkg?: boolean;
+  };
 }
 
 const SOURCE_UNAVAILABLE_MESSAGE = "Veri sunucusu senkronizasyonunda geçici bir gecikme yaşanıyor.";
@@ -28,6 +36,12 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
     error: null,
     updatedAt: null,
     toast: null,
+    source: "cache",
+    reason: null,
+    metadata: {
+      stale_age_seconds: -1,
+      next_sync_permitted_at: new Date().toISOString(),
+    },
   });
 
   useEffect(() => {
@@ -54,7 +68,7 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
         const payload = EconomicMirrorResponseSchema.parse(payloadUnknown);
         if (!active) return;
 
-        const isUnavailable = payload.status === "SOURCE_UNAVAILABLE";
+        const isUnavailable = payload.status === "COOLDOWN" || payload.status === "DEGRADED";
         setState({
           status: payload.status,
           events: payload.events,
@@ -62,17 +76,27 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
           error: isUnavailable ? payload.message ?? SOURCE_UNAVAILABLE_MESSAGE : null,
           updatedAt: payload.updatedAt,
           toast: payload.message,
+          source: payload.source,
+          reason: payload.reason,
+          metadata: payload.metadata,
         });
       } catch (error: unknown) {
         if (!active || controller.signal.aborted) return;
         const message = error instanceof Error ? error.message : SOURCE_UNAVAILABLE_MESSAGE;
         setState({
-          status: "SOURCE_UNAVAILABLE",
+          status: "COOLDOWN",
           events: [],
           isLoading: false,
           error: message,
           updatedAt: null,
           toast: SOURCE_UNAVAILABLE_MESSAGE,
+          source: "cache",
+          reason: "network_error",
+          metadata: {
+            stale_age_seconds: -1,
+            next_sync_permitted_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+            reason_code: "ERROR_CODE_NETWORK",
+          },
         });
       }
     };
@@ -87,7 +111,8 @@ export function useEconomicCalendar(tab: EconomicTab, range: EconomicRange) {
 
   const emptyStateMessage = useMemo(() => {
     if (state.isLoading) return null;
-    if (state.status === "SOURCE_UNAVAILABLE") return SOURCE_UNAVAILABLE_MESSAGE;
+    if (state.status === "COOLDOWN") return "Takvim sağlayıcısı hız sınırında. Kısa süre sonra otomatik tekrar denenecek.";
+    if (state.status === "DEGRADED" && state.events.length === 0) return SOURCE_UNAVAILABLE_MESSAGE;
     if (state.events.length === 0) return "Bu sekme için şu anda listelenecek veri bulunamadı.";
     return null;
   }, [state.events.length, state.isLoading, state.status]);

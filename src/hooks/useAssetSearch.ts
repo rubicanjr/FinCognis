@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
-  ASSET_CATALOG,
+  STOCK_ONLY_ASSET_CATALOG,
   type CatalogAsset,
   type CatalogAssetClass,
 } from "@/data/asset-catalog";
@@ -103,7 +103,7 @@ function searchStaticCatalog(query: string): AssetSearchOption[] {
   const normalizedQuery = normalizeSearchValue(query);
   if (normalizedQuery.length < 2) return [];
 
-  const ranked = ASSET_CATALOG
+  const ranked = STOCK_ONLY_ASSET_CATALOG
     .map((asset) => staticMatchRank(asset, normalizedQuery))
     .filter((item): item is StaticRank => item !== null)
     .sort((left, right) => {

@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import {
   ArrowLeftRight,
+  BadgeCheck,
   BarChart3,
   CandlestickChart,
   Diamond,
@@ -12,6 +13,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 interface SidebarItem {
   icon: LucideIcon;
@@ -60,124 +62,56 @@ const SPONSORS = [
 
 export default function HeroSection() {
   return (
-    <header id="karsilastir" className="landing-section relative flex min-h-[980px] flex-col items-center justify-center overflow-hidden px-4 pb-24 pt-28 sm:px-6">
+    <header
+      id="karsilastir"
+      className="landing-section relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4 pb-12 pt-24 sm:px-6 sm:pb-16 sm:pt-28"
+    >
+      {/* ── Borsa Uzayı Background Layers ── */}
+      <div className="hero-candlestick-bg" aria-hidden="true" />
+      <div className="hero-depth-gradient" aria-hidden="true" />
       <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 82%, rgb(34 211 238 / 0.26) 0%, transparent 44%), radial-gradient(circle at 12% 4%, rgb(34 183 255 / 0.18) 0%, transparent 34%), radial-gradient(circle at 88% 6%, rgb(79 70 229 / 0.16) 0%, transparent 34%), linear-gradient(180deg, rgba(2,9,21,0.98) 0%, rgba(1,7,18,0.98) 100%)",
-        }}
+        className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(to_right,rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.07)_1px,transparent_1px)] [background-size:28px_28px]"
+        aria-hidden="true"
       />
-      <div className="pointer-events-none absolute inset-0 -translate-y-10 overflow-hidden opacity-[0.14] blur-[0.45px]">
-        <svg viewBox="0 0 1440 860" className="h-full w-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <defs>
-            <linearGradient id="heroCandleGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3bf4ff" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="#1d95ff" stopOpacity="0.72" />
-            </linearGradient>
-          </defs>
 
-          {[120, 170, 220, 270, 320, 370, 420, 470, 520, 570].map((x) => (
-            <line key={`g-${x}`} x1={x} y1="70" x2={x} y2="790" stroke="rgba(75, 211, 255, 0.20)" strokeWidth="1" />
-          ))}
-
-          <path
-            d="M 20 610 C 140 520, 220 450, 300 500 C 380 550, 460 570, 560 470 C 660 370, 740 490, 840 410 C 940 330, 1040 420, 1140 320 C 1240 230, 1330 170, 1420 130"
-            fill="none"
-            stroke="rgba(54, 226, 255, 0.62)"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-          />
-
-          <path
-            d="M 0 520 C 180 430, 240 560, 360 520 C 460 490, 520 470, 650 520 C 760 560, 820 410, 950 460 C 1080 510, 1180 380, 1440 450"
-            fill="none"
-            stroke="rgba(39, 191, 255, 0.45)"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-
-          {[
-            [120, 640, 34], [165, 612, 56], [205, 585, 42], [245, 560, 66], [292, 540, 48],
-            [338, 565, 38], [382, 540, 44], [425, 505, 74], [470, 522, 36], [515, 492, 62],
-            [560, 455, 82], [606, 470, 44], [650, 430, 94], [694, 452, 52], [738, 392, 112],
-            [785, 415, 62], [830, 360, 126], [875, 390, 58], [920, 340, 136], [966, 370, 72],
-            [1010, 316, 142], [1054, 335, 82], [1098, 290, 156], [1142, 320, 88], [1186, 256, 168],
-            [1232, 285, 98], [1278, 220, 186], [1324, 190, 194], [1366, 168, 204]
-          ].map(([x, y, h], index) => (
-            <g key={`candle-${x}-${index}`}>
-              <line x1={String(x)} y1={String(y - h / 2)} x2={String(x)} y2={String(y + h / 2)} stroke="rgba(77, 244, 255, 0.62)" strokeWidth="2" />
-              <rect x={String(x - 7)} y={String(y - h / 3)} width="14" height={String(h / 1.45)} fill="url(#heroCandleGrad)" rx="1.5" />
-            </g>
-          ))}
-
-          <g fontFamily="var(--font-kusanagi-heading)" fontSize="42" fontWeight="700" fill="rgba(173, 241, 255, 0.86)">
-            <text x="130" y="675">07.28</text>
-            <text x="475" y="655">18.75</text>
-            <text x="555" y="510">22.10</text>
-            <text x="695" y="550">24.78</text>
-            <text x="815" y="485">25.01</text>
-            <text x="1060" y="430">25.21</text>
-            <text x="1225" y="250">29.79</text>
-          </g>
-        </svg>
-      </div>
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(2,8,23,0.14)_0%,rgba(2,8,23,0.32)_55%,rgba(2,8,23,0.44)_100%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,rgba(148,163,184,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.07)_1px,transparent_1px)] [background-size:28px_28px]" />
-
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-2 pb-10 pt-12 text-center sm:px-6">
-        <div className="animate-fade-in-up relative left-[calc(-50vw+50%)] mb-20 w-screen pl-4 text-left sm:mb-24 sm:pl-6 md:pl-8 lg:pl-10">
-          <span className="font-display text-[54px] font-semibold leading-none tracking-[-0.03em] text-white sm:text-[68px]">
-            FınCognıs
+      {/* ── Hero Content (vertically centered) ── */}
+      <div className="relative z-10 mx-auto w-full max-w-5xl text-center">
+        <div className="animate-fade-in-up mb-6 inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/40 bg-[#22b7ff]/10 px-4 py-1.5 backdrop-blur-sm">
+          <BadgeCheck className="h-4 w-4 text-[#9ce7ff]" strokeWidth={1.5} />
+          <span className="kicker-label font-display text-[11px] font-semibold tracking-[0.1em] text-[#dff4ff]">
+            FinCognis Karşılaştırma ve Profil Keşif Katmanı
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-5 max-w-full break-words font-display text-[clamp(1.5rem,5vw,5.75rem)] font-semibold leading-[1.04] tracking-[-0.03em] text-white [overflow-wrap:break-word]">
-          <span className="block">
-            <span className="font-display text-[0.9em]">FİNANSAL</span>{" "}
-            <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">KARARLAR</span>
-          </span>
-          <span className="block">
-            <span className="font-display text-[0.9em]">VERİYLE</span>{" "}
-            <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">ŞEKİLLENİYOR</span>
-          </span>
-          <span className="block">
-            <span className="font-display text-[0.9em]">FINCOGNIS İLE</span>{" "}
-            <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">NETLEŞİYOR</span>
+        <h1 className="animate-fade-in-up-delay-1 mb-5 font-tight text-[2.5rem] font-black leading-[1.05] tracking-[-0.04em] text-white sm:text-5xl md:text-6xl lg:text-[4.25rem]">
+          Yatırım kararlarını{" "}
+          <span className="bg-gradient-to-r from-[#22d3ee] via-[#22b7ff] to-[#6366f1] bg-clip-text text-transparent">
+            sistemle al
           </span>
         </h1>
 
-        <div className="animate-fade-in-up-delay-3 mt-10 flex justify-center">
-          <a
-            href="https://fincognis.onrender.com/tools"
-            target="_blank"
-            rel="noreferrer"
-            className="landing-primary-btn w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-display text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
-          >
-            ARACI AÇ
-          </a>
-        </div>
+        <p className="animate-fade-in-up-delay-2 mx-auto mb-10 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg md:text-xl">
+          FinCognis ile karar vermeden önce riski görün, yatırım gücünüzü artırın.
+        </p>
 
-        <div className="animate-fade-in-up-delay-3 mt-16 grid grid-cols-1 items-start gap-8 text-left sm:grid-cols-3 sm:gap-12 lg:gap-20">
-          <div className="min-w-0">
-            <div className="font-display text-3xl font-semibold text-white sm:text-4xl">
-              <span>60 Milyon TL</span>
-              <span className="relative -top-[0.28em] ml-1 inline-block text-[0.8em] leading-none">+</span>
-            </div>
-            <div className="mt-2 text-sm text-slate-300">Bireysel Finansal Hacim</div>
-          </div>
-          <div className="min-w-0">
-            <div className="font-display text-3xl font-semibold text-white sm:text-4xl">+30</div>
-            <div className="mt-2 text-sm text-slate-300">yıllık tecrübe</div>
-          </div>
-          <div className="min-w-0 sm:-ml-2 lg:-ml-4">
-            <div className="font-display whitespace-nowrap text-3xl font-semibold leading-none text-white sm:text-4xl">Decısıon Intellıgence</div>
-            <div className="mt-2 text-sm text-slate-300">yaklaşımı</div>
-          </div>
+        <div className="animate-fade-in-up-delay-3 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <Link
+            href="/tools"
+            className="landing-primary-btn w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-tight text-lg font-bold tracking-[-0.02em] text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
+          >
+            Karşılaştırmayı Aç
+          </Link>
+          <Link
+            href="/#profil-kesif"
+            className="landing-secondary-btn w-full rounded-xl border border-white/12 bg-slate-900/55 px-8 py-4 text-center font-tight text-lg font-bold tracking-[-0.02em] text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] active:scale-95 sm:w-auto"
+          >
+            Profil Keşfi İncele
+          </Link>
         </div>
       </div>
 
-      <div className="animate-fade-in-up-delay-3 relative mx-auto mt-56 w-full max-w-6xl">
+      {/* ── Dashboard Preview (below fold) ── */}
+      <div className="animate-fade-in-up-delay-3 relative z-10 mx-auto mt-12 w-full max-w-6xl sm:mt-16">
         <div className="landing-card overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-xl sm:p-4">
           <div className="w-full select-none overflow-hidden rounded-xl border border-white/12 bg-slate-950/70" aria-label="FinCognis Dashboard Önizleme">
             <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
@@ -187,7 +121,7 @@ export default function HeroSection() {
               <span className="ml-4 font-data text-[11px] tracking-[0.04em] text-slate-400">app.fincognis.com/dashboard</span>
             </div>
 
-            <div className="flex min-h-[340px] sm:min-h-[420px]">
+            <div className="flex min-h-[280px] sm:min-h-[360px]">
               <div className="hidden w-48 shrink-0 flex-col gap-1 border-r border-white/10 bg-slate-900/55 p-3 sm:flex">
                 <div className="mb-4 flex items-center gap-2 px-2">
                   <Diamond className="h-4 w-4 text-[#8ddfff]" strokeWidth={1.5} />
@@ -285,51 +219,11 @@ export default function HeroSection() {
                     <span className="mb-3 font-display text-[10px] tracking-[0.08em] text-slate-400">Dağılım</span>
                     <PieChart className="mb-2 h-6 w-6 text-[#8ddfff]" strokeWidth={1.5} />
                     <svg viewBox="0 0 80 80" className="h-20 w-20">
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="rgba(148,163,184,0.3)"
-                        strokeWidth="8"
-                        strokeOpacity="0.5"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="#22b7ff"
-                        strokeWidth="8"
-                        strokeDasharray="94 94"
-                        strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="#60a5fa"
-                        strokeWidth="8"
-                        strokeDasharray="38 150"
-                        strokeDashoffset="-94"
-                        strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="30"
-                        fill="none"
-                        stroke="#a855f7"
-                        strokeWidth="8"
-                        strokeDasharray="28 160"
-                        strokeDashoffset="-132"
-                        strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
-                      />
-                      <text x="40" y="42" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="JetBrains Mono" fontWeight="700">
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(148,163,184,0.3)" strokeWidth="8" strokeOpacity="0.5" />
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="#22b7ff" strokeWidth="8" strokeDasharray="94 94" strokeLinecap="round" transform="rotate(-90 40 40)" />
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="#60a5fa" strokeWidth="8" strokeDasharray="38 150" strokeDashoffset="-94" strokeLinecap="round" transform="rotate(-90 40 40)" />
+                      <circle cx="40" cy="40" r="30" fill="none" stroke="#a855f7" strokeWidth="8" strokeDasharray="28 160" strokeDashoffset="-132" strokeLinecap="round" transform="rotate(-90 40 40)" />
+                      <text x="40" y="42" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="Orbitron, Exo 2, sans-serif" fontWeight="700">
                         64%
                       </text>
                     </svg>
@@ -368,4 +262,3 @@ export default function HeroSection() {
     </header>
   );
 }
-

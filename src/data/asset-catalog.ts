@@ -220,6 +220,14 @@ export const ASSET_CATALOG: CatalogAsset[] = [
   ...US_ETF_ASSETS,
 ].sort((left, right) => left.ticker.localeCompare(right.ticker));
 
+function isStockAssetClass(assetClass: CatalogAssetClass): boolean {
+  return assetClass === "equity_bist" || assetClass === "equity_us";
+}
+
+export const STOCK_ONLY_ASSET_CATALOG: CatalogAsset[] = ASSET_CATALOG.filter((asset) =>
+  isStockAssetClass(asset.assetClass)
+);
+
 export const ASSET_BY_TICKER = ASSET_CATALOG.reduce<Record<string, CatalogAsset>>((acc, asset) => {
   acc[asset.ticker.toUpperCase()] = asset;
   return acc;

@@ -1,56 +1,75 @@
 ﻿import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import HeroSection from "@/components/landing/HeroSection";
 
-describe("HeroSection typography", () => {
+afterEach(() => {
+  cleanup();
+});
+
+describe("HeroSection typography and layout", () => {
   it("applies tabular-nums to primary metric score", () => {
     render(<HeroSection />);
-
     const score = screen.getByText("4.8 / 10");
     expect(score).toHaveClass("tabular-nums");
   });
 
-  it("renders redesigned headline phrases", () => {
+  it("renders h1 with font-tight class for premium typography", () => {
     render(<HeroSection />);
-
-    const headings = screen.getAllByRole("heading", {
-      level: 1,
-      name: /FİNANSAL\s*KARARLAR\s*VERİYLE\s*ŞEKİLLENİYOR\s*FINCOGNIS\s*İLE\s*NETLEŞİYOR/,
-    });
-
-    expect(headings.length).toBeGreaterThan(0);
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading).toHaveClass("font-tight");
   });
 
-  it("renders single CTA and left-bottom metrics", () => {
+  it("h1 uses font-black weight", () => {
     render(<HeroSection />);
-
-    const ctaLinks = screen.getAllByRole("link", { name: /ARACI AÇ/i });
-    expect(ctaLinks.length).toBeGreaterThan(0);
-    expect(ctaLinks[0]).toHaveAttribute("href", "https://fincognis.onrender.com/tools");
-
-    expect(screen.getAllByText("60 Milyon TL").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("+").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Bireysel Finansal Hacim").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("+30").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("yıllık tecrübe").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Decısıon Intellıgence").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("yaklaşımı").length).toBeGreaterThan(0);
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading).toHaveClass("font-black");
   });
 
-  it("uses fluid typography and mobile-safe wrapping for hero title", () => {
-    Object.defineProperty(window, "innerWidth", { value: 375, configurable: true });
-
+  it("h1 has tight tracking for authoritarian look", () => {
     render(<HeroSection />);
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(heading.className).toContain("tracking-[-0.04em]");
+  });
 
-    const heading = screen.getAllByRole("heading", {
-      level: 1,
-      name: /FİNANSAL\s*KARARLAR\s*VERİYLE\s*ŞEKİLLENİYOR\s*FINCOGNIS\s*İLE\s*NETLEŞİYOR/,
-    })[0];
+  it("renders hero header with full viewport height", () => {
+    render(<HeroSection />);
+    const header = document.getElementById("karsilastir");
+    expect(header).not.toBeNull();
+    expect(header!.className).toContain("min-h-[100dvh]");
+  });
 
-    expect(heading.className).toContain("text-[clamp(");
-    expect(heading.className).toContain("max-w-full");
-    expect(heading.className).toContain("[overflow-wrap:break-word]");
-    expect(heading.className).toContain("break-words");
+  it("hero header uses flex centering for vertical alignment", () => {
+    render(<HeroSection />);
+    const header = document.getElementById("karsilastir");
+    expect(header).toHaveClass("justify-center");
+  });
+
+  it("renders both CTA buttons via link href", () => {
+    render(<HeroSection />);
+    const toolsLinks = screen.getAllByRole("link", { name: /Karşılaştırmayı Aç/ });
+    expect(toolsLinks.length).toBeGreaterThanOrEqual(1);
+
+    const profileLinks = screen.getAllByRole("link", { name: /Profil Keşfi İncele/ });
+    expect(profileLinks.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("CTA buttons use font-tight", () => {
+    render(<HeroSection />);
+    const toolsLinks = screen.getAllByRole("link", { name: /Karşılaştırmayı Aç/ });
+    const primaryBtn = toolsLinks[0];
+    expect(primaryBtn).toHaveClass("font-tight");
+  });
+
+  it("renders candlestick background layer", () => {
+    render(<HeroSection />);
+    const bgLayer = document.querySelector(".hero-candlestick-bg");
+    expect(bgLayer).not.toBeNull();
+  });
+
+  it("renders depth gradient layer", () => {
+    render(<HeroSection />);
+    const depthLayer = document.querySelector(".hero-depth-gradient");
+    expect(depthLayer).not.toBeNull();
   });
 });

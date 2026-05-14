@@ -5,6 +5,10 @@ import Link from "next/link";
 import { CircleGauge, ShieldCheck, Sparkles } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import CorrelationTest from "@/components/tools/CorrelationTest";
+import TcmbExchangeRates from "@/components/tools/TcmbExchangeRates";
+import BistScreener from "@/components/tools/BistScreener";
+import BistDebate from "@/components/tools/BistDebate";
+import BistBacktest from "@/components/tools/BistBacktest";
 
 interface ClientBoundaryState {
   hasError: boolean;
@@ -154,6 +158,26 @@ export default function ToolsPageClient() {
           </div>
 
           <CorrelationTest />
+
+          {/* BIST Screener Section */}
+          <div className="mt-6">
+            <BistScreener />
+          </div>
+
+          {/* BIST Debate Section */}
+          <div className="mt-6">
+            <BistDebate />
+          </div>
+
+          {/* BIST Backtest Section */}
+          <div className="mt-6">
+            <BistBacktest />
+          </div>
+
+          {/* TCMB Exchange Rates Section */}
+          <div className="mt-6">
+            <TcmbExchangeRates />
+          </div>
         </main>
       </div>
     </ToolsClientBoundary>

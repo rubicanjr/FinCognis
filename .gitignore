@@ -23,3 +23,4 @@ out/
 # Root package-lock.json only (hooks/ needs its own for CI)
 /package-lock.json
 plugin-config.json
+.vercel

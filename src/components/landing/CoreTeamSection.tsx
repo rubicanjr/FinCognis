@@ -160,10 +160,12 @@ export default function CoreTeamSection() {
                   data-testid="core-team-member-card"
                   className="landing-card flex flex-col items-center gap-5 rounded-2xl border border-white/12 bg-[linear-gradient(180deg,rgba(15,23,42,0.62),rgba(2,6,23,0.82))] p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#22b7ff]/60 md:flex-row md:items-start md:justify-between"
                 >
+                  {/* Avatar — centered on mobile */}
                   <div className="md:hidden">
                     <MemberAvatar src={member.imageUrl} alt={member.name} />
                   </div>
 
+                  {/* Text block */}
                   <div className="flex-1 text-center md:text-left">
                     <MemberName member={member} />
                     <p className="mt-2 text-sm font-semibold tracking-[0.02em] text-[#8ddfff]">{member.role}</p>
@@ -172,6 +174,7 @@ export default function CoreTeamSection() {
                     </div>
                   </div>
 
+                  {/* Avatar — right side on md+ */}
                   <div className="hidden md:block">
                     <MemberAvatar src={member.imageUrl} alt={member.name} />
                   </div>

@@ -51,7 +51,7 @@ export default function AnalyticsBento() {
         <span className="inline-flex rounded-full border border-white/12 bg-white/5 px-4 py-1 font-display text-xs font-semibold tracking-[0.1em] text-[#8ddfff]">
           Servisler
         </span>
-        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">Uzmanlık Alanlarımız</h2>
+        <h2 className="mt-5 font-display text-4xl font-bold tracking-[-0.02em] text-slate-50 md:text-5xl">Uzmanlık Alanlarımız</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -65,7 +65,7 @@ export default function AnalyticsBento() {
               <div className="mb-5 inline-flex rounded-lg border border-[#22b7ff]/30 bg-[#22b7ff]/12 p-2.5">
                 <Icon className="h-5 w-5 text-[#8ddfff]" />
               </div>
-              <h3 className="font-display text-2xl font-semibold tracking-[0.01em] text-slate-100">{item.title}</h3>
+              <h3 className="font-display text-2xl font-bold tracking-[-0.02em] text-slate-100">{item.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-slate-300">{item.description}</p>
             </article>
           );

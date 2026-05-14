@@ -6,9 +6,9 @@ import { getAllFinlabEntries, getFinlabEntryBySlug } from "@/lib/finlab";
 import { SITE_NAME, createPageMetadata } from "@/lib/seo";
 
 interface FinlabDetailPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export function generateStaticParams() {
@@ -16,7 +16,8 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: FinlabDetailPageProps): Promise<Metadata> {
-  const entry = await getFinlabEntryBySlug(params.slug);
+  const { slug } = await params;
+  const entry = await getFinlabEntryBySlug(slug);
   if (!entry) {
     return createPageMetadata({
       title: `${SITE_NAME} | FinLab`,
@@ -33,7 +34,8 @@ export async function generateMetadata({ params }: FinlabDetailPageProps): Promi
 }
 
 export default async function FinlabDetailPage({ params }: FinlabDetailPageProps) {
-  const entry = await getFinlabEntryBySlug(params.slug);
+  const { slug } = await params;
+  const entry = await getFinlabEntryBySlug(slug);
   if (!entry) notFound();
 
   return (
@@ -66,4 +68,3 @@ export default async function FinlabDetailPage({ params }: FinlabDetailPageProps
     </div>
   );
 }
-

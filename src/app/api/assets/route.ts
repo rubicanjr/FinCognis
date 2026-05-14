@@ -1,8 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { AssetClass } from "@/components/tools/correlation/universal-asset-comparison";
 import {
-  ASSET_CATALOG,
-  STATIC_ALIAS_TO_TICKER,
+  STOCK_ONLY_ASSET_CATALOG,
   type CatalogAssetClass,
 } from "@/data/asset-catalog";
 import { AssetsApiResponseSchema } from "@/lib/contracts/universal-asset-schemas";
@@ -37,8 +36,9 @@ function toAssetCategory(assetClass: CatalogAssetClass): "BIST_STOCK" | "US_STOC
 }
 
 export async function GET() {
+  const stockAssets = STOCK_ONLY_ASSET_CATALOG.filter((asset) => asset.isVerified);
   const payload = AssetsApiResponseSchema.parse({
-    assets: ASSET_CATALOG.filter((asset) => asset.isVerified).map((asset) => ({
+    assets: stockAssets.map((asset) => ({
       symbol: asset.ticker,
       name: asset.name,
       class: toAssetClass(asset.assetClass),
@@ -51,14 +51,18 @@ export async function GET() {
         ]).values()
       ).filter(Boolean),
     })),
-    aliasDictionary: Object.entries(STATIC_ALIAS_TO_TICKER).reduce<Record<string, string>>(
-      (acc, [alias, ticker]) => {
-        const normalized = normalizeAliasKey(alias);
-        if (normalized) acc[normalized] = ticker.toUpperCase();
-        return acc;
-      },
-      {}
-    ),
+    aliasDictionary: stockAssets.reduce<Record<string, string>>((acc, asset) => {
+      const ticker = asset.ticker.toUpperCase();
+      const normalizedTicker = normalizeAliasKey(asset.ticker);
+      const normalizedName = normalizeAliasKey(asset.name);
+      if (normalizedTicker) acc[normalizedTicker] = ticker;
+      if (normalizedName) acc[normalizedName] = ticker;
+      for (const alias of asset.aliases ?? []) {
+        const normalizedAlias = normalizeAliasKey(alias);
+        if (normalizedAlias) acc[normalizedAlias] = ticker;
+      }
+      return acc;
+    }, {}),
     meta: {
       mode: "realtime_gateway",
       provider: "Yahoo Finance MarketDataGateway",

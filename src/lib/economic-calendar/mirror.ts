@@ -548,7 +548,7 @@ export async function fetchCalendarEvents(tab: EconomicTab, range: EconomicRange
 
   if (!isValidEventMap(events) || events.length === 0) {
     return {
-      status: "SOURCE_UNAVAILABLE",
+      status: "COOLDOWN",
       tab,
       range,
       updatedAt: null,

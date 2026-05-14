@@ -4,13 +4,13 @@ import Footer from "@/components/landing/Footer";
 import { SITE_NAME, createPageMetadata } from "@/lib/seo";
 
 interface NewsDetailPageProps {
-  params: { articleId: string };
-  searchParams: {
+  params: Promise<{ articleId: string }>;
+  searchParams: Promise<{
     u?: string;
     t?: string;
     d?: string;
     p?: string;
-  };
+  }>;
 }
 
 export const metadata: Metadata = createPageMetadata({
@@ -57,6 +57,62 @@ function stripHtml(value: string): string {
     .trim();
 }
 
+function isBlockedHostname(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase();
+  if (!host) return true;
+
+  if (host === "localhost" || host === "::1" || host.endsWith(".local")) return true;
+  if (host === "0.0.0.0") return true;
+
+  if (/^127\./.test(host)) return true;
+  if (/^10\./.test(host)) return true;
+  if (/^192\.168\./.test(host)) return true;
+  if (/^169\.254\./.test(host)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true;
+
+  if (host === "100.100.100.200" || host === "169.254.169.254") return true;
+
+  if (host.includes(":")) {
+    // IPv6 or unusual literal host; deny by default for SSRF safety.
+    return true;
+  }
+
+  return false;
+}
+
+const ALLOWED_NEWS_HOST_SUFFIXES = [
+  "investing.com",
+  "bloomberght.com",
+  "reuters.com",
+  "bloomberg.com",
+  "yahoo.com",
+  "wsj.com",
+  "ft.com",
+];
+
+function isAllowedNewsHost(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase();
+  if (!host) return false;
+
+  return ALLOWED_NEWS_HOST_SUFFIXES.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
+}
+
+function sanitizeSourceUrl(input: string): string | null {
+  if (!input) return null;
+
+  try {
+    const parsed = new URL(input);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    if (isBlockedHostname(parsed.hostname)) return null;
+    if (!isAllowedNewsHost(parsed.hostname)) return null;
+    if (parsed.username || parsed.password) return null;
+    if (input.length > 2048) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 async function fetchArticleParagraphs(url: string): Promise<string[]> {
   try {
     const response = await fetch(url, {
@@ -67,6 +123,7 @@ async function fetchArticleParagraphs(url: string): Promise<string[]> {
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
       },
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) return [];
 
@@ -113,11 +170,13 @@ async function fetchArticleParagraphs(url: string): Promise<string[]> {
 }
 
 export default async function NewsDetailPage({ searchParams }: NewsDetailPageProps) {
-  const sourceUrl = safeDecode(searchParams.u);
-  const title = safeDecode(searchParams.t) || "Haber Detayı";
-  const summary = safeDecode(searchParams.d);
-  const publishedAt = formatDate(safeDecode(searchParams.p));
-  const paragraphs = sourceUrl ? await fetchArticleParagraphs(sourceUrl) : [];
+  const resolvedSearchParams = await searchParams;
+  const sourceUrl = safeDecode(resolvedSearchParams.u);
+  const sanitizedSourceUrl = sanitizeSourceUrl(sourceUrl);
+  const title = safeDecode(resolvedSearchParams.t) || "Haber Detayı";
+  const summary = safeDecode(resolvedSearchParams.d);
+  const publishedAt = formatDate(safeDecode(resolvedSearchParams.p));
+  const paragraphs = sanitizedSourceUrl ? await fetchArticleParagraphs(sanitizedSourceUrl) : [];
 
   return (
     <div className="landing-shell relative min-h-screen overflow-hidden text-slate-100">

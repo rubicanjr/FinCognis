@@ -25,20 +25,25 @@ function parseRange(value: string | null): EconomicRange {
   return parsed.success ? parsed.data : "today";
 }
 
-async function fetchWithTimeout(tab: EconomicTab, range: EconomicRange) {
+async function fetchWithTimeout(tab: EconomicTab, range: EconomicRange, work: Promise<CalendarFetchResult>) {
   return Promise.race([
-    fetchCalendarEvents(tab, range),
+    work,
     new Promise<CalendarFetchResult>((resolve) => {
       setTimeout(() => {
         resolve({
-          status: "SOURCE_UNAVAILABLE",
+          status: "COOLDOWN",
           tab,
           range,
           updatedAt: null,
           events: [],
           message: "Takvim kaynağı zaman aşımına uğradı. Lütfen kısa süre sonra tekrar deneyin.",
-          source: "none",
+          source: "cache",
           reason: "timeout",
+          metadata: {
+            stale_age_seconds: -1,
+            next_sync_permitted_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+            reason_code: "ERROR_CODE_TIMEOUT",
+          },
         });
       }, 15_000);
     }),
@@ -49,9 +54,10 @@ export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const tab = parseTab(searchParams.get("tab"));
   const range = parseRange(searchParams.get("range"));
+  const symbol = searchParams.get("symbol");
 
   try {
-    const result = await fetchWithTimeout(tab, range);
+    const result = await fetchWithTimeout(tab, range, fetchCalendarEvents(tab, range, { symbol }));
     const payload = EconomicMirrorResponseSchema.parse({
       status: result.status,
       message: result.message,
@@ -59,6 +65,9 @@ export async function GET(request: Request) {
       range: result.range,
       updatedAt: result.updatedAt,
       events: result.events,
+      source: result.source,
+      reason: result.reason,
+      metadata: result.metadata,
     });
 
     return NextResponse.json(payload, {
@@ -73,19 +82,26 @@ export async function GET(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Takvim verisi şu anda alınamıyor.";
     const payload = EconomicMirrorResponseSchema.parse({
-      status: "SOURCE_UNAVAILABLE",
+      status: "COOLDOWN",
       message: "Takvim verisinde geçici senkronizasyon gecikmesi var. Lütfen kısa süre sonra tekrar deneyin.",
       tab,
       range,
       updatedAt: null,
       events: [],
+      source: "cache",
+      reason: "route_exception",
+      metadata: {
+        stale_age_seconds: -1,
+        next_sync_permitted_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+        reason_code: "ERROR_CODE_ROUTE_EXCEPTION",
+      },
     });
 
     return NextResponse.json(payload, {
       status: 200,
       headers: {
-        "X-Calendar-Status": "SOURCE_UNAVAILABLE",
-        "X-Calendar-Source": "none",
+        "X-Calendar-Status": "COOLDOWN",
+        "X-Calendar-Source": "cache",
         "X-Calendar-Reason": "route_exception",
         "X-Calendar-Build": buildSignature(),
         "X-Calendar-Error": message,

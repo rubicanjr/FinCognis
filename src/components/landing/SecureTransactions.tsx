@@ -53,7 +53,7 @@ export default function SecureTransactions() {
         <span className="inline-flex rounded-full border border-white/12 bg-white/5 px-4 py-1 font-display text-xs font-semibold tracking-[0.1em] text-[#8ddfff]">
           Avantajlar
         </span>
-        <h2 className="mt-5 font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
+        <h2 className="mt-5 font-display text-4xl font-bold tracking-[-0.02em] text-slate-50 md:text-5xl">
           Ekipler Neden FinCognis&apos;i Tercih Ediyor
         </h2>
       </div>
@@ -69,7 +69,7 @@ export default function SecureTransactions() {
               <div className="mb-4 inline-flex rounded-lg border border-[#22b7ff]/30 bg-[#22b7ff]/12 p-2.5">
                 <Icon className="h-4 w-4 text-[#8ddfff]" />
               </div>
-              <h3 className="font-display text-xl font-semibold text-slate-100">{card.title}</h3>
+              <h3 className="font-display text-xl font-bold tracking-[-0.01em] text-slate-100">{card.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-slate-300">{card.description}</p>
             </article>
           );
@@ -80,7 +80,7 @@ export default function SecureTransactions() {
         <div className="pointer-events-none absolute -bottom-24 left-1/2 h-64 w-[130%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/25" />
         <div className="pointer-events-none absolute -bottom-28 left-1/2 h-72 w-[140%] -translate-x-1/2 rounded-[100%] border border-[#22b7ff]/15" />
 
-        <h3 className="proof-metrics-title font-display text-4xl font-semibold tracking-[0.01em] text-slate-50 md:text-5xl">
+        <h3 className="proof-metrics-title font-display text-4xl font-bold tracking-[-0.02em] text-slate-50 md:text-5xl">
           Sadece bizim sözümüze güvenmeyin.
         </h3>
 

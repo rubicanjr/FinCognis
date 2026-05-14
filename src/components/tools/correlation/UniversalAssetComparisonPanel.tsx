@@ -1,20 +1,16 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { LoaderCircle, SlidersHorizontal, Sparkles } from "lucide-react";
 import {
   AnalyzeResponseSchema,
   AssetsApiResponseSchema,
+  DiscoverResponseSchema,
   type AnalyzeRequest,
   type AnalyzeResponse,
   type AssetsApiResponse,
+  type DiscoverResponse,
 } from "@/lib/contracts/universal-asset-schemas";
-import {
-  DiscoveryJobAcceptedSchema,
-  DiscoveryJobStatusResponseSchema,
-} from "@/lib/contracts/discover-job-schemas";
-import { mapDiscoveryErrorCode } from "@/lib/discovery/discovery-error-dictionary";
-import { resolveDiscoveryErrorMessage } from "@/lib/discovery/discovery-error-handler";
 import {
   AssetClass,
   type NormalizedAsset,
@@ -22,15 +18,6 @@ import {
 } from "@/components/tools/correlation/universal-asset-comparison";
 import MetricExplanation from "@/components/tools/correlation/MetricExplanation";
 import {
-  getDefaultProfilePresetKeyByHorizon,
-  getProfileFieldConfigByHorizon,
-  getProfilePresetOrderByHorizon,
-  PROFILE_DISCOVERY_PRESETS,
-  type PreferenceLevel,
-  type ProfilePresetKey,
-} from "@/lib/services/profile-discovery-config";
-import {
-  enforceNeutralInvestmentLanguage,
   sanitizeNeutralNarratives,
 } from "@/lib/compliance/investment-language-guard";
 import AssetSearchInput from "@/components/AssetSearchInput";
@@ -44,7 +31,6 @@ import {
 import { resolveCriterionDisplayScore } from "@/lib/analysis/criteria-display-score";
 import { computeCriteriaTotal } from "@/lib/analysis/criteria-total";
 import { parseJsonResponseSafely } from "@/lib/http/safe-json-response";
-import { filterDiscoverableStockAssets } from "@/lib/services/discovery-asset-filter";
 
 const ACCENT_BLUE = "#22b7ff";
 
@@ -56,7 +42,7 @@ const QUICK_PICK_ASSETS: AssetSelectionPayload[] = [
 ];
 
 const COMPLIANCE_DISCLAIMER =
-  "Bu içerik yatırım tavsiyesi değildir. FinCognis, kullanıcıların finansal karar süreçlerini desteklemek amacıyla genel nitelikli karşılaştırmalı analiz ve profil eşleştirmesi sunar. Kullanıcının kişisel finansal durumu, risk tercihi ve yatırım hedefleri dikkate alınmamıştır.";
+  "Yatırım tavsiyesi değil; farklı metriklere göre yatırımcı profilinize uygun analiz çerçevesi.";
 
 const NEUTRAL_FALLBACK_TEXT =
   "Bu içerik yatırım tavsiyesi içermez; yalnızca genel karşılaştırmalı profil bilgisidir.";
@@ -82,25 +68,39 @@ interface MetricConfig {
   matrixLabel: MatrixMetricLabel;
 }
 
-interface DiscoveryCriteria {
-  riskSensitivity: PreferenceLevel;
-  returnExpectation: PreferenceLevel;
-  liquidityNeed: PreferenceLevel;
-  diversificationGoal: PreferenceLevel;
-}
+type DiscoverHorizon = "short" | "long";
 
-interface DiscoveryRow {
-  symbol: string;
-  assetClassLabel: string;
-  risk: number;
-  return: number;
-  liquidity: number | null;
-  diversification: number;
-  profileFitScore: number;
-  shortExplanation: string;
-  isFallback: boolean;
-  hasCriticalDataGap: boolean;
-}
+type ShortPresetKey =
+  | "dengeli"
+  | "hizli_hareket"
+  | "kurumsal_takip"
+  | "katalizor_odakli"
+  | "teknik_kurumsal_teyit"
+  | "dusuk_gurultu";
+
+type LongPresetKey =
+  | "dengeli"
+  | "kaliteli_sirket"
+  | "ucuz_hisse"
+  | "enflasyona_karsi"
+  | "sermaye_disiplini"
+  | "bist_ozgu_firsat"
+  | "kalite_uygun_fiyat";
+
+type DiscoverProfilePreset = {
+  key: string;
+  label: string;
+  summary: string;
+  weights: {
+    teknikMomentum?: number;
+    kurumsalAkis?: number;
+    katalizorTakvimi?: number;
+    kazancKalitesi?: number;
+    sermayeTahsisi?: number;
+    degerleme?: number;
+    bistOzgu?: number;
+  };
+};
 
 interface CompareCardData {
   symbol: string;
@@ -137,26 +137,126 @@ const MODE_OPTIONS: Array<{ key: PanelMode; label: string }> = [
   { key: "discover", label: "Profil Keşfet" },
 ];
 
+const HORIZON_OPTIONS: Array<{ value: DiscoverHorizon; label: string }> = [
+  { value: "short", label: "Kısa Vade" },
+  { value: "long", label: "Uzun Vade" },
+];
+
 const TIME_HORIZON_OPTIONS: Array<{ value: TimeHorizon; label: string }> = [
   { value: "1mo", label: "Kısa Vade (1-4 hafta)" },
   { value: "1y", label: "Uzun Vade (3-12 ay)" },
 ];
 
-const PREFERENCE_TARGET_SCORE: Record<PreferenceLevel, number> = {
-  low: 3,
-  medium: 6,
-  high: 9,
+const SHORT_DISCOVER_PRESETS: Record<ShortPresetKey, DiscoverProfilePreset> = {
+  dengeli: {
+    key: "dengeli",
+    label: "Dengeli",
+    summary: "Kısa vadede üç metriğe eşit ağırlık verir.",
+    weights: { teknikMomentum: 33.33, katalizorTakvimi: 33.33, kurumsalAkis: 33.34 },
+  },
+  hizli_hareket: {
+    key: "hizli_hareket",
+    label: "Hızlı Hareket Yakalıyorum",
+    summary: "Teknik hareketi önceliklendirir.",
+    weights: { teknikMomentum: 65, katalizorTakvimi: 25, kurumsalAkis: 10 },
+  },
+  kurumsal_takip: {
+    key: "kurumsal_takip",
+    label: "Kurumsal Takip Ediyorum",
+    summary: "Kurumsal akış teyidini önceliklendirir.",
+    weights: { kurumsalAkis: 65, teknikMomentum: 20, katalizorTakvimi: 15 },
+  },
+  katalizor_odakli: {
+    key: "katalizor_odakli",
+    label: "Katalizör Odaklıyım",
+    summary: "Yakın tarihli katalizör etkisini öne alır.",
+    weights: { katalizorTakvimi: 65, kurumsalAkis: 25, teknikMomentum: 10 },
+  },
+  teknik_kurumsal_teyit: {
+    key: "teknik_kurumsal_teyit",
+    label: "Teknik + Kurumsal Teyit",
+    summary: "Teknik ve kurumsal teyidi birlikte arar.",
+    weights: { teknikMomentum: 50, kurumsalAkis: 40, katalizorTakvimi: 10 },
+  },
+  dusuk_gurultu: {
+    key: "dusuk_gurultu",
+    label: "Düşük Gürültü",
+    summary: "Gürültüyü azaltmak için kurumsal/katalizör dengesini öne çıkarır.",
+    weights: { kurumsalAkis: 50, katalizorTakvimi: 35, teknikMomentum: 15 },
+  },
 };
 
-const CLASS_LABELS: Record<AssetClass, string> = {
-  [AssetClass.Equity]: "Hisse",
-  [AssetClass.Crypto]: "Kripto",
-  [AssetClass.Commodity]: "Emtia",
-  [AssetClass.Index]: "Endeks",
-  [AssetClass.FX]: "Döviz",
-  [AssetClass.Bond]: "Tahvil",
-  [AssetClass.Fund]: "Fon",
-  [AssetClass.Unknown]: "Diğer",
+const LONG_DISCOVER_PRESETS: Record<LongPresetKey, DiscoverProfilePreset> = {
+  dengeli: {
+    key: "dengeli",
+    label: "Dengeli",
+    summary: "Uzun vadede dört metriğe eşit ağırlık verir.",
+    weights: { kazancKalitesi: 25, sermayeTahsisi: 25, degerleme: 25, bistOzgu: 25 },
+  },
+  kaliteli_sirket: {
+    key: "kaliteli_sirket",
+    label: "Kaliteli Şirket Arıyorum",
+    summary: "Kazanç kalitesi ve sermaye tahsisini önceliklendirir.",
+    weights: { kazancKalitesi: 50, sermayeTahsisi: 30, degerleme: 10, bistOzgu: 10 },
+  },
+  ucuz_hisse: {
+    key: "ucuz_hisse",
+    label: "Ucuz Hisse Arıyorum",
+    summary: "Değerleme odaklı, kalite destekli seçim yapar.",
+    weights: { degerleme: 55, kazancKalitesi: 25, bistOzgu: 15, sermayeTahsisi: 5 },
+  },
+  enflasyona_karsi: {
+    key: "enflasyona_karsi",
+    label: "Enflasyona Karşı Kazanayım",
+    summary: "BIST özgü metriklere ve kazanç kalitesine odaklanır.",
+    weights: { bistOzgu: 50, kazancKalitesi: 25, degerleme: 15, sermayeTahsisi: 10 },
+  },
+  sermaye_disiplini: {
+    key: "sermaye_disiplini",
+    label: "Sermaye Disiplini",
+    summary: "Sermaye tahsisi kalitesini öne alır.",
+    weights: { sermayeTahsisi: 55, kazancKalitesi: 30, degerleme: 10, bistOzgu: 5 },
+  },
+  bist_ozgu_firsat: {
+    key: "bist_ozgu_firsat",
+    label: "BIST Özgü Fırsat",
+    summary: "BIST özgü koşulları merkezde tutar.",
+    weights: { bistOzgu: 60, degerleme: 20, kazancKalitesi: 15, sermayeTahsisi: 5 },
+  },
+  kalite_uygun_fiyat: {
+    key: "kalite_uygun_fiyat",
+    label: "Kalite + Uygun Fiyat",
+    summary: "Kalite ve değerleme dengesini öne çıkarır.",
+    weights: { kazancKalitesi: 40, degerleme: 35, sermayeTahsisi: 15, bistOzgu: 10 },
+  },
+};
+
+type ShortFilters = {
+  momentumTolerance: "low" | "medium" | "high";
+  catalystExpectation: "near" | "mid" | "irrelevant";
+  institutionalConfirmation: "required" | "preferred" | "irrelevant";
+  liquidityNeed: "low" | "medium" | "high";
+};
+
+type LongFilters = {
+  riskSensitivity: "low" | "medium" | "high";
+  growthExpectation: "value" | "balanced" | "growth";
+  fxSensitivity: "tl_strength" | "neutral" | "tl_weakness";
+  minMarketCap: "bist30" | "bist100" | "all";
+};
+
+const DEFAULT_SHORT_FILTERS: ShortFilters = {
+  momentumTolerance: "medium",
+  catalystExpectation: "mid",
+  institutionalConfirmation: "preferred",
+  liquidityNeed: "medium",
+};
+
+const DEFAULT_LONG_FILTERS: LongFilters = {
+  riskSensitivity: "medium",
+  growthExpectation: "balanced",
+  fxSensitivity: "neutral",
+  minMarketCap: "bist100",
 };
 
 const PANEL_CARD =
@@ -199,19 +299,6 @@ function clampScore(value: number): number {
   return Math.max(1, Math.min(10, value));
 }
 
-function clampNullableScore(value: number | null): number | null {
-  if (value === null) return null;
-  return clampScore(value);
-}
-
-function clampProfileFitScore(value: number): number {
-  return Math.max(0, Math.min(100, Number(value.toFixed(1))));
-}
-
-function hasFallbackReason(asset: NormalizedAsset | undefined, reason: string): boolean {
-  return Boolean(asset?.computation?.fallbackReasons.includes(reason));
-}
-
 function hasCriticalMetricGap(asset: NormalizedAsset | undefined): boolean {
   void asset;
   return false;
@@ -234,17 +321,6 @@ function marketTypeFromSelection(asset: AssetSelectionPayload | undefined, symbo
 
 function criterionScore(asset: NormalizedAsset | undefined, criterion: AnalysisCriterion): number | null {
   return asset ? resolveCriterionDisplayScore(asset, criterion) : null;
-}
-
-function toCatalogAnalyzeAssets(assetsApi: AssetsApiResponse): AnalyzeRequest["assets"] {
-  const mapped = assetsApi.assets.slice(0, 40).map((asset) => ({
-    symbol: asset.symbol,
-    originalInput: asset.name,
-    class: asset.class,
-    category: asset.category,
-  }));
-
-  return filterDiscoverableStockAssets(mapped);
 }
 
 function createComparisonMatrix(assets: NormalizedAsset[]): ComparisonMatrix {
@@ -305,94 +381,62 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
   return sanitizeNeutralNarratives(lines, NEUTRAL_FALLBACK_TEXT);
 }
 
-function profileRiskBand(level: PreferenceLevel): string {
-  if (level === "high") return "Düşük risk";
-  if (level === "medium") return "Orta risk";
-  return "Yüksek risk";
+function activeDiscoverPresetMap(horizon: DiscoverHorizon): Record<string, DiscoverProfilePreset> {
+  return horizon === "short" ? SHORT_DISCOVER_PRESETS : LONG_DISCOVER_PRESETS;
 }
 
-const DISCOVERY_CLIENT_ABORT_MS = 130_000;
-const DISCOVERY_JOB_POLL_TIMEOUT_MS = 120_000;
-const DISCOVERY_POLL_BASE_DELAY_MS = 1_200;
-const DISCOVERY_POLL_MAX_DELAY_MS = 6_000;
-const DISCOVERY_POLL_JITTER_MS = 300;
-
-function scheduleAbort(controller: AbortController | null, timeoutMs: number): ReturnType<typeof setTimeout> | null {
-  if (!controller || timeoutMs <= 0) return null;
-  return setTimeout(() => controller.abort(), timeoutMs);
+function defaultPresetKeyByHorizon(horizon: DiscoverHorizon): string {
+  return horizon === "short" ? "dengeli" : "dengeli";
 }
 
-function clearAbortTimer(timer: ReturnType<typeof setTimeout> | null): void {
-  if (timer) clearTimeout(timer);
-}
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function nextDiscoveryPollDelay(attempt: number): number {
-  const exponential = Math.min(DISCOVERY_POLL_BASE_DELAY_MS * Math.pow(2, attempt), DISCOVERY_POLL_MAX_DELAY_MS);
-  const jitter = Math.floor(Math.random() * DISCOVERY_POLL_JITTER_MS);
-  return exponential + jitter;
-}
-
-function profileBandByHorizon(timeHorizon: TimeHorizon, level: PreferenceLevel): string {
-  if (timeHorizon === "1mo") {
-    if (level === "low") return "Dar Momentum Bandı";
-    if (level === "medium") return "Dengeli Momentum Bandı";
-    return "Agresif Momentum Bandı";
-  }
-  return profileRiskBand(level);
-}
-
-function isProfilePresetKey(value: string): value is ProfilePresetKey {
-  return value in PROFILE_DISCOVERY_PRESETS;
-}
-
-function defaultCriteriaByPreset(presetKey: ProfilePresetKey): DiscoveryCriteria {
-  const defaults = PROFILE_DISCOVERY_PRESETS[presetKey].defaults;
-  return {
-    riskSensitivity: defaults.riskSensitivity,
-    returnExpectation: defaults.returnExpectation,
-    liquidityNeed: defaults.liquidityNeed,
-    diversificationGoal: defaults.diversificationGoal,
+function applyShortFilterModifiers(
+  weights: DiscoverProfilePreset["weights"],
+  filters: ShortFilters
+): DiscoverProfilePreset["weights"] {
+  const next = {
+    teknikMomentum: weights.teknikMomentum ?? 0,
+    kurumsalAkis: weights.kurumsalAkis ?? 0,
+    katalizorTakvimi: weights.katalizorTakvimi ?? 0,
   };
+
+  if (filters.momentumTolerance === "low") next.teknikMomentum = Math.max(0, next.teknikMomentum - 10);
+  if (filters.momentumTolerance === "high") next.teknikMomentum += 10;
+
+  if (filters.catalystExpectation === "near") next.katalizorTakvimi += 10;
+  if (filters.catalystExpectation === "irrelevant") next.katalizorTakvimi = Math.max(0, next.katalizorTakvimi - 10);
+
+  if (filters.institutionalConfirmation === "required") next.kurumsalAkis += 10;
+  if (filters.institutionalConfirmation === "irrelevant") next.kurumsalAkis = Math.max(0, next.kurumsalAkis - 10);
+
+  if (filters.liquidityNeed === "high") next.kurumsalAkis += 5;
+  if (filters.liquidityNeed === "low") next.teknikMomentum += 5;
+
+  return next;
 }
 
-function qualityScoreByTarget(value: number, target: number): number {
-  return clampScore(10 - Math.abs(value - target));
-}
+function applyLongFilterModifiers(
+  weights: DiscoverProfilePreset["weights"],
+  filters: LongFilters
+): DiscoverProfilePreset["weights"] {
+  const next = {
+    kazancKalitesi: weights.kazancKalitesi ?? 0,
+    sermayeTahsisi: weights.sermayeTahsisi ?? 0,
+    degerleme: weights.degerleme ?? 0,
+    bistOzgu: weights.bistOzgu ?? 0,
+  };
 
-function riskQuality(riskLevel: number): number {
-  return clampScore(11 - riskLevel);
-}
+  if (filters.riskSensitivity === "low") next.degerleme += 8;
+  if (filters.riskSensitivity === "high") next.kazancKalitesi += 8;
 
-function profileDescription(row: Omit<DiscoveryRow, "shortExplanation">): string {
-  const notes: string[] = [];
+  if (filters.growthExpectation === "value") next.degerleme += 10;
+  if (filters.growthExpectation === "growth") next.kazancKalitesi += 10;
 
-  if (riskQuality(row.risk) >= 7.5) {
-    notes.push("Bu varlık düşük oynaklık profiline daha yakındır.");
-  }
-  if (typeof row.liquidity === "number" && row.liquidity >= 7) {
-    notes.push("Nakde çevirme kolaylığı açısından güçlü görünmektedir.");
-  }
-  if (row.diversification >= 7) {
-    notes.push("Portföy dengeleme gücü görece yüksektir.");
-  }
-  if (row.return >= 7) {
-    notes.push("Geçmiş getiri gücü görece yüksektir.");
-  }
+  if (filters.fxSensitivity === "tl_weakness") next.bistOzgu += 10;
+  if (filters.fxSensitivity === "tl_strength") next.degerleme += 6;
 
-  if (row.profileFitScore >= 75) {
-    notes.push("Seçilen profile göre üst sıralarda yer almaktadır.");
-  } else if (row.profileFitScore >= 55) {
-    notes.push("Seçilen profile orta düzeyde uyum göstermektedir.");
-  } else {
-    notes.push("Seçilen profile sınırlı düzeyde uyum göstermektedir.");
-  }
+  if (filters.minMarketCap === "bist30") next.sermayeTahsisi += 8;
 
-  const composed = notes.slice(0, 2).join(" ");
-  return enforceNeutralInvestmentLanguage(composed, NEUTRAL_FALLBACK_TEXT);
+  return next;
 }
 
 export default function UniversalAssetComparisonPanel() {
@@ -421,13 +465,13 @@ export default function UniversalAssetComparisonPanel() {
 
   const [discoveryLoading, setDiscoveryLoading] = useState(false);
   const [discoveryError, setDiscoveryError] = useState<string | null>(null);
-  const [discoveryData, setDiscoveryData] = useState<AnalyzeResponse | null>(null);
-  const [discoveryCatalogSignature, setDiscoveryCatalogSignature] = useState("");
-  const [discoveryHorizon, setDiscoveryHorizon] = useState<TimeHorizon | null>(null);
-  const [discoveryProgress, setDiscoveryProgress] = useState<number | null>(null);
-
-  const [selectedPresetKey, setSelectedPresetKey] = useState<ProfilePresetKey>(() => getDefaultProfilePresetKeyByHorizon("1y"));
-  const [criteria, setCriteria] = useState<DiscoveryCriteria>(() => defaultCriteriaByPreset(getDefaultProfilePresetKeyByHorizon("1y")));
+  const [discoveryData, setDiscoveryData] = useState<DiscoverResponse | null>(null);
+  const [discoverProgressText, setDiscoverProgressText] = useState<string | null>(null);
+  const [discoverHorizon, setDiscoverHorizon] = useState<DiscoverHorizon>("short");
+  const [selectedDiscoverPresetKey, setSelectedDiscoverPresetKey] = useState<string>(defaultPresetKeyByHorizon("short"));
+  const [shortFilters, setShortFilters] = useState<ShortFilters>(DEFAULT_SHORT_FILTERS);
+  const [longFilters, setLongFilters] = useState<LongFilters>(DEFAULT_LONG_FILTERS);
+  const discoverRequestVersionRef = useRef(0);
 
   useEffect(() => {
     const controller = createAbortControllerSafe();
@@ -530,138 +574,105 @@ export default function UniversalAssetComparisonPanel() {
     return () => controller?.abort();
   }, [catalogData, mode, selectedCompareAssets, timeHorizon]);
 
-  const catalogSignature = useMemo(() => {
-    if (!catalogData) return "";
-    return catalogData.assets
-      .map((asset) => asset.symbol)
-      .sort((left, right) => left.localeCompare(right))
-      .join("|");
-  }, [catalogData]);
+  useEffect(() => {
+    setSelectedDiscoverPresetKey(defaultPresetKeyByHorizon(discoverHorizon));
+    setShortFilters(DEFAULT_SHORT_FILTERS);
+    setLongFilters(DEFAULT_LONG_FILTERS);
+  }, [discoverHorizon]);
+
+  const discoverPresetMap = useMemo(() => activeDiscoverPresetMap(discoverHorizon), [discoverHorizon]);
+  const selectedDiscoverPreset =
+    discoverPresetMap[selectedDiscoverPresetKey] ?? discoverPresetMap[defaultPresetKeyByHorizon(discoverHorizon)];
+
+  const discoverProfileWeights = useMemo(() => {
+    if (!selectedDiscoverPreset) return {};
+    if (discoverHorizon === "short") {
+      return applyShortFilterModifiers(selectedDiscoverPreset.weights, shortFilters);
+    }
+    return applyLongFilterModifiers(selectedDiscoverPreset.weights, longFilters);
+  }, [discoverHorizon, longFilters, selectedDiscoverPreset, shortFilters]);
+
+  const discoverMinMarketCap = useMemo<"bist30" | "bist100" | "all">(() => {
+    if (discoverHorizon === "long") return longFilters.minMarketCap;
+    return "all";
+  }, [discoverHorizon, longFilters.minMarketCap]);
 
   useEffect(() => {
     if (mode !== "discover") return;
-    if (!catalogData) return;
-
-    if (discoveryData && discoveryCatalogSignature === catalogSignature && discoveryHorizon === timeHorizon) return;
-
-    const discoveryAssets = toCatalogAnalyzeAssets(catalogData);
-    if (discoveryAssets.length === 0) {
-      setDiscoveryData(null);
-      setDiscoveryError("Profil keşfi için uygun varlık listesi bulunamadı.");
-      setDiscoveryLoading(false);
+    if (!selectedDiscoverPreset) return;
+    if (typeof EventSource === "undefined") {
+      setDiscoveryError("Tarayıcı SSE (EventSource) desteği sunmuyor.");
       return;
     }
 
-    const controller = createAbortControllerSafe();
-    const timeoutTimer = scheduleAbort(controller, DISCOVERY_CLIENT_ABORT_MS);
+    const params = new URLSearchParams({
+      horizon: discoverHorizon,
+      weights: JSON.stringify(discoverProfileWeights),
+      minMarketCap: discoverMinMarketCap,
+    });
+
     setDiscoveryLoading(true);
     setDiscoveryError(null);
+    setDiscoverProgressText(null);
 
-    const pollDiscoveryJob = async (jobId: string): Promise<AnalyzeResponse> => {
-      const startedAt = Date.now();
-      let pollAttempt = 0;
+    const activeVersion = ++discoverRequestVersionRef.current;
+    let source: EventSource | null = null;
+    const debounceTimer = setTimeout(() => {
+      if (discoverRequestVersionRef.current !== activeVersion) return;
 
-      while (Date.now() - startedAt < DISCOVERY_JOB_POLL_TIMEOUT_MS) {
-        const response = await fetch(`/api/analyze/status/${jobId}`, {
-          signal: getRequestSignal(controller),
-        });
-        const { payload, parseError } = await parseJsonResponseSafely(response);
-        if (!response.ok) {
-          throw new Error(parseErrorMessage(payload, "Profil keşif iş durumu alınamadı."));
+      source = new EventSource(`/api/discover/stream?${params.toString()}`);
+
+      source.addEventListener("progress", (event) => {
+        if (discoverRequestVersionRef.current !== activeVersion) return;
+        try {
+          const payload = JSON.parse((event as MessageEvent<string>).data) as { message?: string };
+          if (payload.message) setDiscoverProgressText(payload.message);
+        } catch {
+          // no-op
         }
-        if (payload === null) {
-          throw new Error(
-            parseError
-              ? `Profil keşif iş durumu çözümlenemedi: ${parseError}`
-              : "Profil keşif iş durumu boş geldi."
-          );
-        }
-
-        const statusPayload = DiscoveryJobStatusResponseSchema.parse(payload);
-        setDiscoveryProgress(statusPayload.job.progress);
-
-        if (statusPayload.job.status === "completed") {
-          if (!statusPayload.job.data) {
-            throw new Error("Profil keşif sonucu boş döndü.");
-          }
-          return AnalyzeResponseSchema.parse(statusPayload.job.data);
-        }
-
-        if (statusPayload.job.status === "failed") {
-          if (statusPayload.job.data) {
-            return AnalyzeResponseSchema.parse(statusPayload.job.data);
-          }
-          throw new Error(mapDiscoveryErrorCode(statusPayload.job.error));
-        }
-
-        await wait(nextDiscoveryPollDelay(pollAttempt));
-        pollAttempt += 1;
-      }
-
-      throw new Error(mapDiscoveryErrorCode("discover_backend_timeout"));
-    };
-
-    fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ assets: discoveryAssets, timeHorizon, analysisMode: "discover" }),
-      signal: getRequestSignal(controller),
-    })
-      .then(async (response) => {
-        const { payload, parseError } = await parseJsonResponseSafely(response);
-        if (response.status === 202) {
-          if (payload === null) {
-            throw new Error(
-              parseError
-                ? `Profil keşif iş cevabı çözümlenemedi: ${parseError}`
-                : "Profil keşif iş cevabı boş geldi."
-            );
-          }
-          const accepted = DiscoveryJobAcceptedSchema.parse(payload);
-          setDiscoveryProgress(accepted.progress);
-          return pollDiscoveryJob(accepted.jobId);
-        }
-
-        if (!response.ok) {
-          throw new Error(parseErrorMessage(payload, "Profil keşif verisi alınamadı."));
-        }
-        if (payload === null) {
-          throw new Error(
-            parseError
-              ? `Profil keşif yanıtı çözümlenemedi: ${parseError}`
-              : "Profil keşif yanıtı boş geldi."
-          );
-        }
-        return AnalyzeResponseSchema.parse(payload);
-      })
-      .then((data) => {
-        clearAbortTimer(timeoutTimer);
-        setDiscoveryData(data);
-        setDiscoveryCatalogSignature(catalogSignature);
-        setDiscoveryHorizon(timeHorizon);
-        setDiscoveryProgress(null);
-        setDiscoveryLoading(false);
-      })
-      .catch((error: unknown) => {
-        clearAbortTimer(timeoutTimer);
-        if (isRequestAborted(controller)) {
-          setDiscoveryData(null);
-          setDiscoveryLoading(false);
-          setDiscoveryProgress(null);
-          setDiscoveryError("Profil keşif isteği zaman aşımına uğradı. Lütfen tekrar deneyin.");
-          return;
-        }
-        setDiscoveryData(null);
-        setDiscoveryLoading(false);
-        setDiscoveryProgress(null);
-        setDiscoveryError(resolveDiscoveryErrorMessage(error));
       });
 
+      source.addEventListener("result", (event) => {
+        if (discoverRequestVersionRef.current !== activeVersion) return;
+        try {
+          const payload = JSON.parse((event as MessageEvent<string>).data);
+          const parsed = DiscoverResponseSchema.parse(payload);
+          setDiscoveryData(parsed);
+          setDiscoveryLoading(false);
+          source?.close();
+        } catch (error: unknown) {
+          setDiscoveryData(null);
+          setDiscoveryLoading(false);
+          setDiscoveryError(error instanceof Error ? error.message : "Profil keşif sonucu okunamadı.");
+          source?.close();
+        }
+      });
+
+      source.addEventListener("error", (event) => {
+        if (discoverRequestVersionRef.current !== activeVersion) return;
+        const payload = (event as MessageEvent<string>).data;
+        if (payload) {
+          try {
+            const parsed = JSON.parse(payload) as { message?: string };
+            if (parsed.message) {
+              setDiscoveryError(parsed.message);
+            }
+          } catch {
+            setDiscoveryError("Profil keşif akışı beklenmedik şekilde kesildi.");
+          }
+        } else {
+          setDiscoveryError("Profil keşif akışı beklenmedik şekilde kesildi.");
+        }
+        setDiscoveryLoading(false);
+        source?.close();
+      });
+    }, 300);
+
     return () => {
-      clearAbortTimer(timeoutTimer);
-      controller?.abort();
+      clearTimeout(debounceTimer);
+      if (source) source.close();
     };
-  }, [catalogData, catalogSignature, discoveryCatalogSignature, discoveryData, discoveryHorizon, mode, timeHorizon]);
+  }, [discoverHorizon, discoverMinMarketCap, discoverProfileWeights, mode, selectedDiscoverPreset]);
 
   const assets = useMemo(() => analysisData?.assets ?? [], [analysisData?.assets]);
   const matrix = useMemo(() => createComparisonMatrix(assets), [assets]);
@@ -717,111 +728,24 @@ export default function UniversalAssetComparisonPanel() {
     return factors.join(" + ");
   }, [bestBalancedAsset]);
 
-  const selectedPreset = PROFILE_DISCOVERY_PRESETS[selectedPresetKey];
-  const profilePresetOrder = useMemo(() => getProfilePresetOrderByHorizon(timeHorizon), [timeHorizon]);
-  const profileFieldConfig = useMemo(() => getProfileFieldConfigByHorizon(timeHorizon), [timeHorizon]);
-
-  useEffect(() => {
-    const nextPreset = getDefaultProfilePresetKeyByHorizon(timeHorizon);
-    setSelectedPresetKey(nextPreset);
-    setCriteria(defaultCriteriaByPreset(nextPreset));
-  }, [timeHorizon]);
-
-  const discoveryRows = useMemo<DiscoveryRow[]>(() => {
-    if (!discoveryData) return [];
-
-    const weights = selectedPreset.weights;
-    const riskTarget = PREFERENCE_TARGET_SCORE[criteria.riskSensitivity];
-    const returnTarget = PREFERENCE_TARGET_SCORE[criteria.returnExpectation];
-    const liquidityTarget = PREFERENCE_TARGET_SCORE[criteria.liquidityNeed];
-    const diversificationTarget = PREFERENCE_TARGET_SCORE[criteria.diversificationGoal];
-    const calmnessTarget =
-      criteria.riskSensitivity === "high" ? 9 : criteria.riskSensitivity === "medium" ? 6 : 4;
-
-    return discoveryData.assets
-      .map((asset) => {
-        const risk = clampScore(asset.metrics.risk);
-        const returnScore = clampScore(asset.metrics.return);
-        const liquidity = clampNullableScore(asset.metrics.liquidity);
-        const diversification = clampScore(asset.metrics.diversification);
-        const calmness = clampNullableScore(asset.metrics.calmness);
-
-        const riskFit = qualityScoreByTarget(riskQuality(risk), riskTarget);
-        const returnFit = qualityScoreByTarget(returnScore, returnTarget);
-        const liquidityFit = qualityScoreByTarget(liquidity ?? 0, liquidityTarget);
-        const diversificationFit = qualityScoreByTarget(diversification, diversificationTarget);
-        const calmnessFit = qualityScoreByTarget(calmness ?? 0, calmnessTarget);
-
-        const hasCriticalDataGap = hasCriticalMetricGap(asset);
-        const weightedFit =
-          riskFit * (weights.risk / 100) +
-          returnFit * (weights.return / 100) +
-          liquidityFit * (weights.liquidity / 100) +
-          diversificationFit * (weights.diversification / 100) +
-          calmnessFit * (weights.calmness / 100);
-
-        const profileFitScore =
-          hasCriticalDataGap || liquidity === null ? 0 : clampProfileFitScore(weightedFit * 10);
-
-        const baseRow: Omit<DiscoveryRow, "shortExplanation"> = {
-          symbol: asset.symbol,
-          assetClassLabel: CLASS_LABELS[asset.class],
-          risk,
-          return: returnScore,
-          liquidity,
-          diversification,
-          profileFitScore,
-          isFallback: Boolean(asset.computation?.isFallback),
-          hasCriticalDataGap,
-        };
-
-        return {
-          ...baseRow,
-          shortExplanation: hasCriticalDataGap
-            ? "Bu varlık için veri yetersiz olduğu için profil uyumu puanı üretilmemiştir."
-            : profileDescription(baseRow),
-        };
-      })
-      .sort((left, right) => right.profileFitScore - left.profileFitScore);
-  }, [criteria, discoveryData, selectedPreset]);
-
-  const profileTopRows = useMemo(() => discoveryRows.slice(0, 10), [discoveryRows]);
-  const profileBandLabel = useMemo(
-    () => profileBandByHorizon(timeHorizon, criteria.riskSensitivity),
-    [criteria.riskSensitivity, timeHorizon]
-  );
-  const suitableProfileRows = useMemo(() => {
-    const highFit = profileTopRows.filter((row) => row.profileFitScore >= 70).slice(0, 4);
-    if (highFit.length > 0) return highFit;
-    return profileTopRows.slice(0, 3);
-  }, [profileTopRows]);
-  const higherRiskRows = useMemo(
-    () =>
-      discoveryRows
-        .filter((row) => row.risk >= 7)
-        .sort((left, right) => right.risk - left.risk)
-        .slice(0, 4),
-    [discoveryRows]
-  );
+  const discoverResults = useMemo(() => discoveryData?.results ?? [], [discoveryData]);
+  const discoverTopRows = useMemo(() => discoverResults.slice(0, 12), [discoverResults]);
 
   const title = mode === "compare" ? "Hisseleri Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Hisseleri Keşfedin";
   const subtitle =
     "Yatırım tavsiyesi değil; farklı metriklere göre yatırımcı profilinize uygun analiz çerçevesi.";
 
-  const dataError = unsupportedAssetMessage ?? catalogError ?? (mode === "compare" ? analysisError : discoveryError);
+  const dataError =
+    mode === "compare"
+      ? unsupportedAssetMessage ?? catalogError ?? analysisError
+      : discoveryError;
 
   const isLoading = mode === "compare" ? analysisLoading : discoveryLoading;
   const shouldRenderCompareOutputs = mode !== "compare" || !unsupportedAssetMessage;
 
-  function handlePresetChange(nextValue: string): void {
-    if (!isProfilePresetKey(nextValue)) return;
-    setSelectedPresetKey(nextValue);
-    setCriteria(defaultCriteriaByPreset(nextValue));
-  }
-
-  function handleCriteriaChange(field: keyof DiscoveryCriteria, value: string): void {
-    if (value !== "low" && value !== "medium" && value !== "high") return;
-    setCriteria((current) => ({ ...current, [field]: value }));
+  function handleDiscoverPresetChange(nextValue: string): void {
+    if (!(nextValue in discoverPresetMap)) return;
+    setSelectedDiscoverPresetKey(nextValue);
   }
 
   return (
@@ -872,20 +796,37 @@ export default function UniversalAssetComparisonPanel() {
 
         <div className="mx-auto mt-7 max-w-3xl">
           <div className="mb-3 rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
-            <label className="block space-y-1">
-              <span className="font-display text-[11px] text-slate-300">Yatırım ufku</span>
-              <select
-                value={timeHorizon}
-                onChange={(event) => setTimeHorizon(event.target.value as TimeHorizon)}
-                className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-              >
-                {TIME_HORIZON_OPTIONS.map((option) => (
-                  <option key={`horizon:${option.value}`} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {mode === "compare" ? (
+              <label className="block space-y-1">
+                <span className="font-display text-[11px] text-slate-300">Yatırım ufku</span>
+                <select
+                  value={timeHorizon}
+                  onChange={(event) => setTimeHorizon(event.target.value as TimeHorizon)}
+                  className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                >
+                  {TIME_HORIZON_OPTIONS.map((option) => (
+                    <option key={`horizon:${option.value}`} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <label className="block space-y-1">
+                <span className="font-display text-[11px] text-slate-300">Profil ufku</span>
+                <select
+                  value={discoverHorizon}
+                  onChange={(event) => setDiscoverHorizon(event.target.value as DiscoverHorizon)}
+                  className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                >
+                  {HORIZON_OPTIONS.map((option) => (
+                    <option key={`discover-horizon:${option.value}`} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
 
           {mode === "compare" && shouldRenderCompareOutputs ? (
@@ -928,68 +869,148 @@ export default function UniversalAssetComparisonPanel() {
 
               <div className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-3">
                 <h4 className="font-display text-base font-semibold text-slate-100">Önerilen Profil Listesi</h4>
-                <p className="mt-1 text-xs text-slate-300">
-                  Her profil bir kullanıcı tipini temsil etmeli - metrik kombinasyonu değil,{" "}
-                  <span className="font-semibold text-slate-100">insan niyeti</span>.
-                </p>
+                <p className="mt-1 text-xs text-slate-300">Ufuk değişince profil listesi ve dropdown seçimleri sıfırlanır.</p>
                 <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
                   <div className="grid grid-cols-[minmax(160px,1fr)_minmax(260px,2fr)] border-b border-white/10 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200">
                     <span>Profil Adı</span>
-                    <span>Arka planda ağırlık</span>
+                    <span>Özet</span>
                   </div>
-                  {profilePresetOrder.map((presetKey) => {
-                    const preset = PROFILE_DISCOVERY_PRESETS[presetKey];
-                    const isActive = selectedPresetKey === presetKey;
+                  {Object.values(discoverPresetMap).map((preset) => {
+                    const isActive = selectedDiscoverPreset?.key === preset.key;
                     return (
                       <button
-                        key={`preset-row:${presetKey}`}
+                        key={`preset-row:${preset.key}`}
                         type="button"
-                        onClick={() => handlePresetChange(presetKey)}
+                        onClick={() => handleDiscoverPresetChange(preset.key)}
                         className={`grid w-full grid-cols-[minmax(160px,1fr)_minmax(260px,2fr)] border-b border-white/10 px-3 py-2 text-left text-xs transition-colors last:border-b-0 ${
                           isActive ? "bg-[#22b7ff]/14 text-[#dff4ff]" : "bg-slate-950/45 text-slate-200 hover:bg-slate-900/70"
                         }`}
                       >
                         <span className="font-display font-semibold">{preset.label}</span>
-                        <span className="text-slate-300">{preset.weightDescription}</span>
+                        <span className="text-slate-300">{preset.summary}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                {profileFieldConfig.map((fieldConfig) => (
-                  <label key={`profile-field:${fieldConfig.field}`} className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">{fieldConfig.label}</span>
+              {discoverHorizon === "short" ? (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Momentum Toleransı</span>
                     <select
-                      value={criteria[fieldConfig.field]}
-                      onChange={(event) => handleCriteriaChange(fieldConfig.field, event.target.value)}
+                      value={shortFilters.momentumTolerance}
+                      onChange={(event) => setShortFilters((current) => ({ ...current, momentumTolerance: event.target.value as ShortFilters["momentumTolerance"] }))}
                       className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
                     >
-                      {fieldConfig.options.map((option) => (
-                        <option key={`${fieldConfig.field}:${option.value}`} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
+                      <option value="low">Düşük</option>
+                      <option value="medium">Orta</option>
+                      <option value="high">Yüksek</option>
                     </select>
                   </label>
-                ))}
-              </div>
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Katalizör Beklentisi</span>
+                    <select
+                      value={shortFilters.catalystExpectation}
+                      onChange={(event) => setShortFilters((current) => ({ ...current, catalystExpectation: event.target.value as ShortFilters["catalystExpectation"] }))}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      <option value="near">Yakın (7 gün)</option>
+                      <option value="mid">Orta (7-30 gün)</option>
+                      <option value="irrelevant">Önemsiz</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Kurumsal Teyit</span>
+                    <select
+                      value={shortFilters.institutionalConfirmation}
+                      onChange={(event) => setShortFilters((current) => ({ ...current, institutionalConfirmation: event.target.value as ShortFilters["institutionalConfirmation"] }))}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      <option value="required">Zorunlu</option>
+                      <option value="preferred">Tercih Edilir</option>
+                      <option value="irrelevant">Önemsiz</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Nakde Çevirme</span>
+                    <select
+                      value={shortFilters.liquidityNeed}
+                      onChange={(event) => setShortFilters((current) => ({ ...current, liquidityNeed: event.target.value as ShortFilters["liquidityNeed"] }))}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      <option value="low">Düşük</option>
+                      <option value="medium">Orta</option>
+                      <option value="high">Yüksek</option>
+                    </select>
+                  </label>
+                </div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Risk Hassasiyeti</span>
+                    <select
+                      value={longFilters.riskSensitivity}
+                      onChange={(event) => setLongFilters((current) => ({ ...current, riskSensitivity: event.target.value as LongFilters["riskSensitivity"] }))}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      <option value="low">Düşük</option>
+                      <option value="medium">Orta</option>
+                      <option value="high">Yüksek</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Büyüme Beklentisi</span>
+                    <select
+                      value={longFilters.growthExpectation}
+                      onChange={(event) => setLongFilters((current) => ({ ...current, growthExpectation: event.target.value as LongFilters["growthExpectation"] }))}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      <option value="value">Değer Odaklı</option>
+                      <option value="balanced">Dengeli</option>
+                      <option value="growth">Büyüme Odaklı</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Döviz Hassasiyeti</span>
+                    <select
+                      value={longFilters.fxSensitivity}
+                      onChange={(event) => setLongFilters((current) => ({ ...current, fxSensitivity: event.target.value as LongFilters["fxSensitivity"] }))}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      <option value="tl_strength">TL Güçlenme</option>
+                      <option value="neutral">Nötr</option>
+                      <option value="tl_weakness">TL Zayıflama</option>
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="font-display text-[11px] text-slate-300">Minimum Piyasa Değeri</span>
+                    <select
+                      value={longFilters.minMarketCap}
+                      onChange={(event) => setLongFilters((current) => ({ ...current, minMarketCap: event.target.value as LongFilters["minMarketCap"] }))}
+                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    >
+                      <option value="bist30">BIST30</option>
+                      <option value="bist100">BIST100</option>
+                      <option value="all">Tümü</option>
+                    </select>
+                  </label>
+                </div>
+              )}
 
-              <p className="mt-3 text-xs text-slate-300">{selectedPreset.summary}</p>
+              <p className="mt-3 text-xs text-slate-300">{selectedDiscoverPreset?.summary}</p>
             </div>
           )}
-
         </div>
 
         {isLoading ? (
-        <div className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/12 px-3 py-2 text-xs text-slate-100">
-          <LoaderCircle className="h-4 w-4 animate-spin" style={{ color: ACCENT_BLUE }} />
-          {mode === "compare"
-            ? "Karşılaştırma hesaplanıyor..."
-            : `Profil eşleştirmesi hazırlanıyor${typeof discoveryProgress === "number" ? ` (%${Math.round(discoveryProgress)})` : "..."}`}
-        </div>
-      ) : null}
+          <div className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/12 px-3 py-2 text-xs text-slate-100">
+            <LoaderCircle className="h-4 w-4 animate-spin" style={{ color: ACCENT_BLUE }} />
+            {mode === "compare"
+              ? "Karşılaştırma hesaplanıyor..."
+              : discoverProgressText ?? "Profil eşleştirmesi hazırlanıyor..."}
+          </div>
+        ) : null}
 
         {dataError ? (
           <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-warning/40 bg-warning-container/25 px-3 py-2 text-xs text-warning">
@@ -1091,67 +1112,52 @@ export default function UniversalAssetComparisonPanel() {
             <>
               <div className={PANEL_CARD}>
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Profil Keşif Çıktısı</p>
-                <p className="mt-2 text-sm text-slate-200">Senin profilin: <span className="font-display font-semibold text-[#8ddfff]">{profileBandLabel}</span></p>
+                <p className="mt-2 text-sm text-slate-200">Tarama Evreni: Tüm BIST hisseleri (.IS doğrulamalı)</p>
                 <p className="mt-1 text-xs text-slate-300">
-                  Bu liste yatırım tavsiyesi değildir; genel karşılaştırmalı profil eşleştirmesidir.
+                  Taranan hisse: {discoveryData?.totalScanned ?? 0} · Cache: {discoveryData?.cached ? `Evet (${discoveryData.cacheAge})` : "Hayır"}
                 </p>
+                {discoveryData?.macroSnapshot ? (
+                  <>
+                    <p className="mt-1 text-xs text-slate-300">
+                      Makro Snapshot: Politika faizi %{discoveryData.macroSnapshot.policyRate.toFixed(2)} · Kaynak: {discoveryData.macroSnapshot.source}
+                    </p>
+                    {discoveryData.macroSnapshot.source === "last_known_fallback" ? (
+                      <p className="mt-1 text-xs text-amber-300">
+                        Politika faizi: %{discoveryData.macroSnapshot.policyRate.toFixed(0)} (son bilinen değer — canlı TCMB verisi bekleniyor)
+                      </p>
+                    ) : null}
+                  </>
+                ) : null}
               </div>
 
               <div className={PANEL_CARD}>
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Uygun Varlıklar</p>
                 <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {suitableProfileRows.map((row, index) => (
-                    <article key={`suitable:${row.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
-                      <div className="flex items-center justify-between">
+                  {discoverTopRows.map((row, index) => (
+                    <article key={`discover:${row.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
+                      <div className="flex items-center justify-between gap-2">
                         <h4 className="font-display text-lg font-semibold text-slate-100">{row.symbol}</h4>
-                        <div className="flex items-center gap-2">
-                          {row.isFallback ? (
-                            <span
-                              className="rounded-full border border-white/20 bg-slate-900/70 px-2 py-0.5 text-xs text-slate-200"
-                              title="Bu veri sınıf ortalamasından üretilmiştir."
-                            >
-                              ℹ️
-                            </span>
-                          ) : null}
-                          <span className="rounded-md border border-[#22b7ff]/35 bg-[#22b7ff]/14 px-2 py-1 font-data text-xs text-[#8ddfff]">
-                            {row.hasCriticalDataGap ? "Uyum: Veri yetersiz" : `Uyum ${row.profileFitScore.toFixed(1)}`}
-                          </span>
-                        </div>
+                        <span className="rounded-md border border-[#22b7ff]/35 bg-[#22b7ff]/14 px-2 py-1 font-data text-xs text-[#8ddfff]">
+                          Uyum {row.profileFitScore.toFixed(1)}
+                        </span>
                       </div>
-                      <p className="mt-1 text-xs text-slate-300">{row.assetClassLabel}</p>
-                      <p className="mt-2 text-sm text-slate-200">{row.shortExplanation}</p>
+                      <p className="mt-1 text-xs text-slate-300">{row.name} · {row.sector}</p>
+                      <p className="mt-2 text-sm text-slate-200">Öne çıkan metrik: {row.highlightMetric}</p>
+                      {row.macroPenaltyApplied ? (
+                        <p className="mt-2 text-xs text-amber-300">⚠️ Bu hisse mevcut faiz ortamında düşük ağırlık aldı.</p>
+                      ) : null}
+                      {row.dataWarning ? <p className="mt-2 text-xs text-slate-300">{row.dataWarning}</p> : null}
+                      <p className="mt-2 text-[11px] text-slate-400">{discoveryData?.disclaimer}</p>
                     </article>
                   ))}
                 </div>
-              </div>
-
-              <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Daha Riskli Varlıklar</p>
-                {higherRiskRows.length > 0 ? (
-                  <ul className="mt-3 space-y-2">
-                    {higherRiskRows.map((row) => (
-                      <li key={`riskier:${row.symbol}`} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-sm text-slate-100`}>
-                        <span className="font-display font-semibold">{row.symbol}</span>
-                        {row.isFallback ? (
-                          <span className="ml-2 text-xs text-slate-300" title="Bu veri sınıf ortalamasından üretilmiştir.">
-                            ℹ️
-                          </span>
-                        ) : null}{" "}
-                        · En Kötü Düşüş {row.risk.toFixed(1)} ·{" "}
-                        {row.shortExplanation}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-3 text-sm text-slate-300">Belirgin yüksek riskli varlık bulunmuyor.</p>
-                )}
               </div>
             </>
           )}
 
           <div className={PANEL_CARD}>
             <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Uyum ve Bilgilendirme</p>
-            <p className="mt-2 text-sm text-slate-200">{COMPLIANCE_DISCLAIMER}</p>
+            <p className="mt-2 text-sm text-slate-200">{mode === "discover" ? discoveryData?.disclaimer ?? COMPLIANCE_DISCLAIMER : COMPLIANCE_DISCLAIMER}</p>
           </div>
 
           <MetricExplanation />

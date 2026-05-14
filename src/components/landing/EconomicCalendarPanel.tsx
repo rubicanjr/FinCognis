@@ -83,7 +83,15 @@ function LoadingSkeleton() {
 export default function EconomicCalendarPanel() {
   const [activeTab, setActiveTab] = useState<EconomicTab>("economic");
   const [activeRange, setActiveRange] = useState<EconomicRange>("today");
-  const { events, isLoading, updatedAt, emptyStateMessage, toast, status } = useEconomicCalendar(activeTab, activeRange);
+  const { events, isLoading, updatedAt, emptyStateMessage, toast, status, source, metadata } = useEconomicCalendar(activeTab, activeRange);
+
+  const statusLabel = useMemo(() => {
+    if (status === "READY") return source === "cache" ? "READY (CACHE)" : "READY";
+    if (status === "READY_FALLBACK") return "READY_FALLBACK";
+    if (status === "DEGRADED") return "DEGRADED";
+    if (status === "COOLDOWN") return "COOLDOWN";
+    return "LOADING";
+  }, [source, status]);
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
@@ -132,14 +140,26 @@ export default function EconomicCalendarPanel() {
             );
           })}
         </div>
-        <p className="font-data text-xs text-slate-400">Son güncelleme: {formatUpdateTime(updatedAt)}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            data-testid="calendar-status"
+            className={`rounded-full border px-2.5 py-1 font-data text-[11px] ${
+              status === "DEGRADED" || status === "COOLDOWN"
+                ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                : "border-[#0a84ff]/45 bg-[#0a84ff]/12 text-[#dff4ff]"
+            }`}
+          >
+            {statusLabel}
+          </span>
+          <p className="font-data text-xs text-slate-400">Son güncelleme: {formatUpdateTime(updatedAt)}</p>
+        </div>
       </div>
 
       {toast ? (
         <div
           data-testid="calendar-toast"
           className={`mb-4 flex items-start gap-2 rounded-xl px-3 py-2 text-sm ${
-            status === "SOURCE_UNAVAILABLE"
+            status === "COOLDOWN" || status === "DEGRADED"
               ? "border border-red-400/35 bg-red-500/10 text-red-200"
               : "border border-[#0a84ff]/40 bg-[#0a84ff]/12 text-[#dff4ff]"
           }`}
@@ -193,8 +213,16 @@ export default function EconomicCalendarPanel() {
         </div>
       </div>
 
-      {!isLoading && status === "SOURCE_UNAVAILABLE" ? (
-        <p className="mt-3 text-xs text-slate-400">{SOURCE_UNAVAILABLE_MESSAGE}</p>
+      {!isLoading && status === "DEGRADED" ? (
+        <p data-testid="stale-warning" className="mt-3 text-xs text-amber-200">
+          Son doğrulanan veri gösteriliyor. Veri yaşı: {Math.max(0, metadata.stale_age_seconds)} sn.
+        </p>
+      ) : null}
+
+      {!isLoading && status === "COOLDOWN" ? (
+        <p data-testid="cooldown-message" className="mt-3 text-xs text-slate-300">
+          Takvim sağlayıcısı hız sınırında. Sonraki deneme: {formatUpdateTime(metadata.next_sync_permitted_at)}
+        </p>
       ) : null}
     </section>
   );
