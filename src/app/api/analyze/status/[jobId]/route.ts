@@ -2,14 +2,9 @@ import { NextResponse } from "next/server";
 import { DiscoveryJobStatusResponseSchema } from "@/lib/contracts/discover-job-schemas";
 import { getDiscoveryJob } from "@/lib/services/discovery-engine";
 
-interface JobRouteContext {
-  params: {
-    jobId: string;
-  };
-}
-
-export async function GET(_: Request, context: JobRouteContext) {
-  const job = getDiscoveryJob(context.params.jobId);
+export async function GET(_: Request, { params }: { params: Promise<{ jobId: string }> }) {
+  const { jobId } = await params;
+  const job = getDiscoveryJob(jobId);
   if (!job) {
     return NextResponse.json({ error: "Discovery job not found or expired." }, { status: 404 });
   }
