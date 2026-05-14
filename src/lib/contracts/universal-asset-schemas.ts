@@ -94,6 +94,58 @@ export const AnalyzeResponseSchema = z.object({
   meta: LiveDataMetaSchema,
 });
 
+export const DiscoverHorizonSchema = z.enum(["short", "long"]);
+
+export const DiscoverProfileWeightsSchema = z.object({
+  teknikMomentum: z.number().min(0).max(100).optional(),
+  kurumsalAkis: z.number().min(0).max(100).optional(),
+  katalizorTakvimi: z.number().min(0).max(100).optional(),
+  kazancKalitesi: z.number().min(0).max(100).optional(),
+  sermayeTahsisi: z.number().min(0).max(100).optional(),
+  degerleme: z.number().min(0).max(100).optional(),
+  bistOzgu: z.number().min(0).max(100).optional(),
+});
+
+export const DiscoverRequestSchema = z.object({
+  horizon: DiscoverHorizonSchema,
+  profileWeights: DiscoverProfileWeightsSchema,
+  macroFilter: z.literal(true),
+  minMarketCap: z.enum(["bist30", "bist100", "all"]).default("all"),
+});
+
+export const MacroSnapshotSchema = z.object({
+  policyRate: z.number(),
+  source: z.enum(["tcmb_evds_live", "last_known_fallback"]),
+  fetchedAtIso: z.string().datetime(),
+  note: z.string().min(1).optional(),
+});
+
+export const DiscoverStockResultSchema = z.object({
+  symbol: z.string().min(1),
+  name: z.string().min(1),
+  sector: z.string().min(1),
+  industry: z.string().min(1).optional(),
+  sectorMapped: z.boolean(),
+  sectorSource: z.enum(["yahoo", "static_map", "unknown"]),
+  profileFitScore: z.number().min(0).max(100),
+  highlightMetric: z.string().min(1),
+  macroCoefficient: z.number().positive(),
+  macroPenaltyApplied: z.boolean(),
+  macroPenaltyMessage: z.string().min(1).optional(),
+  dataWarning: z.string().min(1).optional(),
+});
+
+export const DiscoverResponseSchema = z.object({
+  results: z.array(DiscoverStockResultSchema),
+  totalScanned: z.number().int().nonnegative(),
+  cached: z.boolean(),
+  cacheAge: z.string().min(1),
+  macroSnapshot: MacroSnapshotSchema,
+  disclaimer: z.literal(
+    "Bu analiz eğitim amaçlıdır. Yatırım tavsiyesi değildir. SPK lisanslı danışmana başvurunuz."
+  ),
+});
+
 export const DecisionIntentSchema = z.enum(["ADD", "COMPARE", "REPLACE"]);
 
 export const DecisionContextSchema = z.object({
@@ -135,5 +187,7 @@ export const DecisionResponseSchema = z.object({
 export type AssetsApiResponse = z.infer<typeof AssetsApiResponseSchema>;
 export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>;
 export type AnalyzeResponse = z.infer<typeof AnalyzeResponseSchema>;
+export type DiscoverRequest = z.infer<typeof DiscoverRequestSchema>;
+export type DiscoverResponse = z.infer<typeof DiscoverResponseSchema>;
 export type DecisionRequest = z.infer<typeof DecisionRequestSchema>;
 export type DecisionResponse = z.infer<typeof DecisionResponseSchema>;
