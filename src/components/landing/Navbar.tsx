@@ -1,87 +1,115 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, Menu, X } from "lucide-react";
 import OnlineUsersBadge from "@/components/landing/OnlineUsersBadge";
-import { ABOUT_NAV_ITEMS } from "@/lib/about-nav";
 
-const NAV_ITEMS: Array<{ label: string; href: string; highlighted?: boolean; finLab?: boolean }> = [
-  { label: "Ana Sayfa", href: "/" },
-  { label: "Haberler", href: "/haberler" },
-  { label: "FinLab", href: "/finlab", finLab: true },
+const NAV_ITEMS: Array<{ label: string; href: string; finLab?: boolean }> = [
+  { label: "ANA SAYFA", href: "/" },
+  { label: "HABERLER", href: "/haberler" },
+  { label: "FINLAB", href: "/finlab", finLab: true },
+  { label: "HAKKIMIZDA", href: "/#hakkimizda" },
+];
+
+const ABOUT_MENU_ITEMS = [
+  { label: "MISYON & VİZYON", href: "/hakkimizda/misyon-vizyon" },
+  { label: "FELSEFE", href: "/hakkimizda/felsefe" },
+  { label: "YOL HARİTASI", href: "/hakkimizda/yol-haritasi" },
+  { label: "TOPLULUK & ERKEN ERİŞİM", href: "/hakkimizda/topluluk-erken-erisim" },
+  { label: "BASINDA BİZ / GÜNCELLEMELER", href: "/hakkimizda/basinda-biz-guncellemeler" },
+  { label: "CORETEAM", href: "/ekip" },
+  { label: "İLETİŞİM", href: "/iletisim" },
 ];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [aboutDesktopOpen, setAboutDesktopOpen] = useState(false);
-  const [aboutMobileOpen, setAboutMobileOpen] = useState(false);
+  const [aboutMenuOpen, setAboutMenuOpen] = useState(false);
+  const aboutCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearAboutCloseTimer = () => {
+    if (aboutCloseTimerRef.current) {
+      clearTimeout(aboutCloseTimerRef.current);
+      aboutCloseTimerRef.current = null;
+    }
+  };
+
+  const openAboutMenu = () => {
+    clearAboutCloseTimer();
+    setAboutMenuOpen(true);
+  };
+
+  const scheduleAboutMenuClose = () => {
+    clearAboutCloseTimer();
+    aboutCloseTimerRef.current = setTimeout(() => {
+      setAboutMenuOpen(false);
+    }, 180);
+  };
+
+  useEffect(() => {
+    return () => clearAboutCloseTimer();
+  }, []);
 
   return (
     <nav className="landing-nav fixed top-0 z-50 w-full border-b border-[#22b7ff]/20 bg-[#030915]/75 shadow-[0_14px_35px_rgba(2,8,23,0.65)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between px-6 py-4">
         <div className="hidden items-center gap-6 md:flex">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`landing-nav-link font-display transition-colors duration-300 ${
-                item.highlighted ? "font-bold tracking-[0.02em] text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"
-              }`}
-            >
-              {item.finLab ? (
-                <span className="inline-flex items-center">
-                  <span>Fin</span>
-                  <span className="landing-finlab-tag">Lab</span>
-                </span>
-              ) : (
-                item.label
-              )}
-            </Link>
-          ))}
-
-          <div
-            className="relative"
-            onMouseEnter={() => setAboutDesktopOpen(true)}
-            onMouseLeave={() => setAboutDesktopOpen(false)}
-            onFocusCapture={() => setAboutDesktopOpen(true)}
-            onBlurCapture={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                setAboutDesktopOpen(false);
-              }
-            }}
-          >
-            <button
-              type="button"
-              className="landing-nav-link inline-flex items-center gap-1 font-display text-slate-300 transition-colors duration-300 hover:text-[#8ddfff]"
-              aria-haspopup="true"
-              aria-expanded={aboutDesktopOpen}
-              aria-controls="about-desktop-menu"
-              onClick={() => setAboutDesktopOpen((current) => !current)}
-            >
-              Hakkımızda
-              <ChevronDown className="h-4 w-4" />
-            </button>
-
-            <div
-              id="about-desktop-menu"
-              className={`absolute left-0 top-full z-30 w-[320px] rounded-2xl border border-white/12 bg-slate-950/95 p-2 shadow-[0_18px_50px_rgba(2,8,23,0.75)] transition-all duration-200 ${
-                aboutDesktopOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-              }`}
-            >
-              {ABOUT_NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block rounded-xl border border-transparent px-3 py-2 transition-colors hover:border-white/10 hover:bg-white/5"
-                  onClick={() => setAboutDesktopOpen(false)}
+          {NAV_ITEMS.map((item) => {
+            if (item.label === "HAKKIMIZDA") {
+              return (
+                <div
+                  key={item.label}
+                  className="relative"
+                  onMouseEnter={openAboutMenu}
+                  onMouseLeave={scheduleAboutMenuClose}
                 >
-                  <p className="font-display text-sm font-semibold text-slate-100">{item.label}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
+                  <Link
+                    href={item.href}
+                    className="landing-nav-link inline-flex items-center gap-1 font-display text-slate-300 transition-colors duration-300 hover:text-[#8ddfff]"
+                  >
+                    {item.label}
+                    <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.6} />
+                  </Link>
+                  <div
+                    className={`absolute left-0 top-full z-50 mt-2 min-w-[420px] rounded-xl border border-white/25 bg-[#020a1f]/95 p-2 shadow-[0_20px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ${
+                      aboutMenuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
+                    }`}
+                    onMouseEnter={openAboutMenu}
+                    onMouseLeave={scheduleAboutMenuClose}
+                  >
+                    {ABOUT_MENU_ITEMS.map((aboutItem) => (
+                      <Link
+                        key={aboutItem.label}
+                        href={aboutItem.href}
+                        className="block whitespace-nowrap rounded-md px-3 py-2 font-display text-[18px] leading-[1.1] tracking-[0.01em] text-slate-100 transition-colors hover:bg-white/5 hover:text-[#8ddfff]"
+                        onClick={() => setAboutMenuOpen(false)}
+                      >
+                        {aboutItem.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="landing-nav-link font-display text-slate-300 transition-colors duration-300 hover:text-[#8ddfff]"
+              >
+                {item.finLab ? (
+                  <span className="inline-flex items-center">
+                    <span>FIN</span>
+                    <span className="landing-finlab-tag">LAB</span>
+                  </span>
+                ) : (
+                  item.label
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-3">
@@ -103,22 +131,14 @@ export default function Navbar() {
           </a>
           <Link
             href="/tools"
-            className="landing-secondary-btn hidden items-center rounded-xl border border-white/12 bg-slate-900/55 px-4 py-2.5 font-display text-sm font-bold tracking-[-0.01em] text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] sm:inline-flex"
+            className="landing-secondary-btn hidden items-center rounded-xl border border-white/12 bg-slate-900/55 px-4 py-2.5 font-display text-sm font-semibold text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] sm:inline-flex"
           >
             Araçlar
-          </Link>
-          <Link
-            href="/tools"
-            className="landing-primary-btn rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-5 py-2.5 font-display text-sm font-bold tracking-[-0.01em] text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95"
-          >
-            Başla
           </Link>
           <button
             className="ml-1 text-slate-100 md:hidden"
             onClick={() => setMobileOpen((current) => !current)}
-            aria-label={mobileOpen ? "Menüyü kapat" : "Menüyü aç"}
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-nav"
+            aria-label="Menüyü aç"
           >
             {mobileOpen ? <X className="h-5 w-5" strokeWidth={1.5} /> : <Menu className="h-5 w-5" strokeWidth={1.5} />}
           </button>
@@ -126,68 +146,42 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div id="mobile-nav" className="landing-mobile-nav space-y-4 border-t border-[#22b7ff]/25 bg-[#030915]/90 px-6 py-6 backdrop-blur-xl md:hidden">
+        <div className="landing-mobile-nav space-y-4 border-t border-[#22b7ff]/25 bg-[#030915]/90 px-6 py-6 backdrop-blur-xl md:hidden">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className={`block font-display ${item.highlighted ? "font-semibold text-[#8ddfff]" : "text-slate-300 hover:text-[#8ddfff]"}`}
+              className="block font-display text-slate-300 hover:text-[#8ddfff]"
               onClick={() => setMobileOpen(false)}
             >
               {item.finLab ? (
                 <span className="inline-flex items-center">
-                  <span>Fin</span>
-                  <span className="landing-finlab-tag">Lab</span>
+                  <span>FIN</span>
+                  <span className="landing-finlab-tag">LAB</span>
                 </span>
               ) : (
                 item.label
               )}
             </Link>
           ))}
-
           <div className="border-t border-[#22b7ff]/25 pt-2">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between font-display text-slate-300 hover:text-[#8ddfff]"
-              onClick={() => setAboutMobileOpen((current) => !current)}
-              aria-expanded={aboutMobileOpen}
-              aria-controls="about-mobile-menu"
-            >
-              <span>Hakkımızda</span>
-              <ChevronDown className={`h-4 w-4 transition-transform ${aboutMobileOpen ? "rotate-180" : "rotate-0"}`} />
-            </button>
-            {aboutMobileOpen ? (
-              <div id="about-mobile-menu" className="mt-2 space-y-1 rounded-xl border border-white/10 bg-slate-950/50 p-2">
-                {ABOUT_NAV_ITEMS.map((item) => (
-                  <Link
-                    key={`mobile:${item.href}`}
-                    href={item.href}
-                    className="block rounded-lg px-2 py-1.5 text-sm text-slate-300 hover:bg-white/5 hover:text-[#8ddfff]"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      setAboutMobileOpen(false);
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            ) : null}
+            {ABOUT_MENU_ITEMS.map((aboutItem) => (
+              <Link
+                key={aboutItem.label}
+                href={aboutItem.href}
+                className="block py-1.5 font-display text-slate-300 hover:text-[#8ddfff]"
+                onClick={() => setMobileOpen(false)}
+              >
+                {aboutItem.label}
+              </Link>
+            ))}
           </div>
-
           <Link
             href="/tools"
             className="block border-t border-[#22b7ff]/25 pt-2 font-display font-semibold text-[#8ddfff]"
             onClick={() => setMobileOpen(false)}
           >
             Araçlar
-          </Link>
-          <Link
-            href="/tools"
-            className="block font-display text-slate-300 hover:text-[#8ddfff]"
-            onClick={() => setMobileOpen(false)}
-          >
-            Başla
           </Link>
         </div>
       )}
