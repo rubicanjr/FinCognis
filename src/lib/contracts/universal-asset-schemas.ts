@@ -2,6 +2,14 @@ import { z } from "zod";
 import { AssetClass } from "@/components/tools/correlation/universal-asset-comparison";
 
 export const AssetClassSchema = z.nativeEnum(AssetClass);
+export const AssetCategorySchema = z.enum([
+  "BIST_STOCK",
+  "US_STOCK",
+  "CRYPTO",
+  "COMMODITY",
+  "FX",
+  "US_ETF",
+]);
 export const AnalyzeTimeHorizonSchema = z.enum(["1mo", "1y", "5y"]);
 export const AnalyzeModeSchema = z.enum(["compare", "discover"]);
 
@@ -60,6 +68,7 @@ export const AssetCatalogItemSchema = z.object({
   symbol: z.string().min(1),
   name: z.string().min(1),
   class: AssetClassSchema,
+  category: AssetCategorySchema,
   aliases: z.array(z.string().min(1)),
 });
 
@@ -82,6 +91,7 @@ export const AnalyzeRequestSchema = z.object({
       symbol: z.string().min(1),
       originalInput: z.string().min(1),
       class: AssetClassSchema,
+      category: AssetCategorySchema.optional(),
     })
   ).max(40),
   timeHorizon: AnalyzeTimeHorizonSchema.default("1y"),
@@ -185,6 +195,7 @@ export const DecisionResponseSchema = z.object({
 });
 
 export type AssetsApiResponse = z.infer<typeof AssetsApiResponseSchema>;
+export type AssetCategory = z.infer<typeof AssetCategorySchema>;
 export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>;
 export type AnalyzeResponse = z.infer<typeof AnalyzeResponseSchema>;
 export type DiscoverRequest = z.infer<typeof DiscoverRequestSchema>;

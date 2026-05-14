@@ -26,6 +26,15 @@ function toAssetClass(assetClass: CatalogAssetClass): AssetClass {
   return AssetClass.Unknown;
 }
 
+function toAssetCategory(assetClass: CatalogAssetClass): "BIST_STOCK" | "US_STOCK" | "CRYPTO" | "COMMODITY" | "FX" | "US_ETF" {
+  if (assetClass === "equity_bist") return "BIST_STOCK";
+  if (assetClass === "equity_us") return "US_STOCK";
+  if (assetClass === "crypto") return "CRYPTO";
+  if (assetClass === "commodity") return "COMMODITY";
+  if (assetClass === "fx") return "FX";
+  return "US_ETF";
+}
+
 export async function GET() {
   const stockAssets = STOCK_ONLY_ASSET_CATALOG.filter((asset) => asset.isVerified);
   const payload = AssetsApiResponseSchema.parse({
@@ -33,6 +42,7 @@ export async function GET() {
       symbol: asset.ticker,
       name: asset.name,
       class: toAssetClass(asset.assetClass),
+      category: toAssetCategory(asset.assetClass),
       aliases: Array.from(
         new Set([
           normalizeAliasKey(asset.ticker),
