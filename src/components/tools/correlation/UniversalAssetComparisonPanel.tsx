@@ -441,18 +441,19 @@ function applyLongFilterModifiers(
 
 export default function UniversalAssetComparisonPanel() {
   const [mode, setMode] = useState<PanelMode>("compare");
-  const [timeHorizon, setTimeHorizon] = useState<TimeHorizon>("1y");
+  const [timeHorizon, setTimeHorizon] = useState<TimeHorizon | "">("");
   const [unsupportedAssetMessage, setUnsupportedAssetMessage] = useState<string | null>(null);
 
-  const [selectedCompareAssets, setSelectedCompareAssets] = useState<AssetSelectionPayload[]>([
-    QUICK_PICK_ASSETS[0],
-    QUICK_PICK_ASSETS[1],
-  ]);
+  const [selectedCompareAssets, setSelectedCompareAssets] = useState<AssetSelectionPayload[]>([]);
+  const [compareRequested, setCompareRequested] = useState(false);
 
   const handleCompareSelectionChange = (assets: AssetSelectionPayload[]) => {
     setSelectedCompareAssets(assets);
     if (assets.length > 0) {
       setUnsupportedAssetMessage(null);
+    }
+    if (assets.length < 2) {
+      setCompareRequested(false);
     }
   };
 
@@ -471,6 +472,9 @@ export default function UniversalAssetComparisonPanel() {
   const [selectedDiscoverPresetKey, setSelectedDiscoverPresetKey] = useState<string>(defaultPresetKeyByHorizon("short"));
   const [shortFilters, setShortFilters] = useState<ShortFilters>(DEFAULT_SHORT_FILTERS);
   const [longFilters, setLongFilters] = useState<LongFilters>(DEFAULT_LONG_FILTERS);
+  const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
+  const [discoveryRequested, setDiscoveryRequested] = useState(false);
+  const [discoverRunNonce, setDiscoverRunNonce] = useState(0);
   const discoverRequestVersionRef = useRef(0);
 
   useEffect(() => {
@@ -511,8 +515,10 @@ export default function UniversalAssetComparisonPanel() {
   useEffect(() => {
     if (mode !== "compare") return;
     if (!catalogData) return;
+    if (!compareRequested) return;
+    if (!timeHorizon) return;
 
-    if (selectedCompareAssets.length === 0) {
+    if (selectedCompareAssets.length < 2) {
       setAnalysisData(null);
       setAnalysisError(null);
       setAnalysisLoading(false);
@@ -572,7 +578,7 @@ export default function UniversalAssetComparisonPanel() {
       });
 
     return () => controller?.abort();
-  }, [catalogData, mode, selectedCompareAssets, timeHorizon]);
+  }, [catalogData, compareRequested, mode, selectedCompareAssets, timeHorizon]);
 
   useEffect(() => {
     setSelectedDiscoverPresetKey(defaultPresetKeyByHorizon(discoverHorizon));
@@ -600,6 +606,7 @@ export default function UniversalAssetComparisonPanel() {
   useEffect(() => {
     if (mode !== "discover") return;
     if (!selectedDiscoverPreset) return;
+    if (!discoveryRequested) return;
     if (typeof EventSource === "undefined") {
       setDiscoveryError("Tarayıcı SSE (EventSource) desteği sunmuyor.");
       return;
@@ -672,18 +679,19 @@ export default function UniversalAssetComparisonPanel() {
       clearTimeout(debounceTimer);
       if (source) source.close();
     };
-  }, [discoverHorizon, discoverMinMarketCap, discoverProfileWeights, mode, selectedDiscoverPreset]);
+  }, [discoverHorizon, discoverMinMarketCap, discoverProfileWeights, discoverRunNonce, discoveryRequested, mode, selectedDiscoverPreset]);
 
   const assets = useMemo(() => analysisData?.assets ?? [], [analysisData?.assets]);
   const matrix = useMemo(() => createComparisonMatrix(assets), [assets]);
   const insightLines = useMemo(() => generateCompareInsightLines(matrix), [matrix]);
+  const activeCompareHorizon: TimeHorizon = timeHorizon === "" ? "1y" : timeHorizon;
   const compareCards = useMemo<CompareCardData[]>(
     () =>
       matrix.assets.map((assetSymbol) => {
         const sourceAsset = assets.find((asset) => asset.symbol === assetSymbol);
         const selection = selectedCompareAssets.find((asset) => asset.ticker.toUpperCase() === assetSymbol.toUpperCase());
         const marketType = marketTypeFromSelection(selection, assetSymbol);
-        const activeCriteria = resolveAnalysisCriteria({ timeHorizon, marketType });
+        const activeCriteria = resolveAnalysisCriteria({ timeHorizon: activeCompareHorizon, marketType });
         const criteriaValues = activeCriteria.map((criterion) => ({
           criterion,
           value: criterionScore(sourceAsset, criterion),
@@ -709,7 +717,7 @@ export default function UniversalAssetComparisonPanel() {
           fallbackReasons: sourceAsset?.computation?.fallbackReasons ?? [],
         };
       }),
-    [assets, matrix.assets, selectedCompareAssets, timeHorizon]
+    [activeCompareHorizon, assets, matrix.assets, selectedCompareAssets]
   );
   const bestBalancedAsset = useMemo(() => {
     const eligible = compareCards.filter((card) => Number.isFinite(card.balanceScore));
@@ -738,14 +746,43 @@ export default function UniversalAssetComparisonPanel() {
   const dataError =
     mode === "compare"
       ? unsupportedAssetMessage ?? catalogError ?? analysisError
-      : discoveryError;
+      : catalogError ?? discoveryError;
 
   const isLoading = mode === "compare" ? analysisLoading : discoveryLoading;
   const shouldRenderCompareOutputs = mode !== "compare" || !unsupportedAssetMessage;
+  const compareStepReady = timeHorizon !== "";
+  const canSubmitCompare = compareStepReady && selectedCompareAssets.length >= 2;
+  const showCompareResults = mode === "compare" && compareRequested && Boolean(analysisData) && shouldRenderCompareOutputs;
+  const showDiscoveryResults = mode === "discover" && discoveryRequested && !discoveryLoading && Boolean(discoveryData);
 
   function handleDiscoverPresetChange(nextValue: string): void {
     if (!(nextValue in discoverPresetMap)) return;
     setSelectedDiscoverPresetKey(nextValue);
+    setDiscoveryRequested(false);
+    setDiscoveryData(null);
+    setDiscoveryError(null);
+  }
+
+  function handleStartCompare(): void {
+    if (!canSubmitCompare) return;
+    setCompareRequested(true);
+    setAnalysisError(null);
+  }
+
+  function handleDiscoverHorizonChange(next: DiscoverHorizon): void {
+    setDiscoverHorizon(next);
+    setAdvancedSettingsOpen(false);
+    setDiscoveryRequested(false);
+    setDiscoveryData(null);
+    setDiscoveryError(null);
+  }
+
+  function handleRunDiscover(): void {
+    setDiscoveryRequested(true);
+    setDiscoveryData(null);
+    setDiscoveryError(null);
+    setDiscoverProgressText(null);
+    setDiscoverRunNonce((current) => current + 1);
   }
 
   return (
@@ -794,216 +831,297 @@ export default function UniversalAssetComparisonPanel() {
           <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-300 sm:text-lg">{subtitle}</p>
         </div>
 
-        <div className="mx-auto mt-7 max-w-3xl">
-          <div className="mb-3 rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
-            {mode === "compare" ? (
-              <label className="block space-y-1">
-                <span className="font-display text-[11px] text-slate-300">Yatırım ufku</span>
-                <select
-                  value={timeHorizon}
-                  onChange={(event) => setTimeHorizon(event.target.value as TimeHorizon)}
-                  className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                >
-                  {TIME_HORIZON_OPTIONS.map((option) => (
-                    <option key={`horizon:${option.value}`} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : (
-              <label className="block space-y-1">
-                <span className="font-display text-[11px] text-slate-300">Profil ufku</span>
-                <select
-                  value={discoverHorizon}
-                  onChange={(event) => setDiscoverHorizon(event.target.value as DiscoverHorizon)}
-                  className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                >
-                  {HORIZON_OPTIONS.map((option) => (
-                    <option key={`discover-horizon:${option.value}`} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-          </div>
-
-          {mode === "compare" && shouldRenderCompareOutputs ? (
-            <div className="relative z-[90]">
-              <AssetSearchInput
-                selectedAssets={selectedCompareAssets}
-                onSelectionChange={handleCompareSelectionChange}
-                onUnsupportedAsset={() => {
-                  setUnsupportedAssetMessage("Bu araç yalnızca BIST ve ABD hisselerini destekler");
-                  setSelectedCompareAssets([]);
-                  setAnalysisData(null);
-                }}
-                maxSelection={5}
-              />
-              <div className="relative z-10 mt-3 flex flex-wrap gap-2">
-                {QUICK_PICK_ASSETS.map((asset) => (
-                  <button
-                    key={`quick-pick:${asset.ticker}`}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCompareAssets((prev) => {
-                        if (prev.some((item) => item.ticker === asset.ticker) || prev.length >= 5) return prev;
-                        setUnsupportedAssetMessage(null);
-                        return [...prev, asset];
-                      });
+        <div className="mx-auto mt-7 max-w-3xl space-y-3">
+          {mode === "compare" ? (
+            <>
+              <div className="rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
+                <label className="block space-y-1">
+                  <span className="font-display text-[11px] text-slate-300">Adım 1 · Yatırım ufku</span>
+                  <select
+                    value={timeHorizon}
+                    onChange={(event) => {
+                      const value = event.target.value as TimeHorizon;
+                      setTimeHorizon(value);
+                      setCompareRequested(false);
+                      setAnalysisData(null);
                     }}
-                    className="rounded-full border border-white/12 bg-slate-900/55 px-3 py-1 font-display text-[11px] tracking-[0.03em] text-slate-200 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/60 hover:text-[#8ddfff] hover:shadow-[0_10px_28px_rgba(34,183,255,0.2)]"
+                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
                   >
-                    {asset.ticker} ekle
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-3 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]">
-              <div className="mb-3 flex items-center gap-2 text-[#8ddfff]">
-                <SlidersHorizontal className="h-4 w-4" />
-                <p className="font-display text-xs font-semibold tracking-[0.08em]">Profil Kriterleri</p>
+                    <option value="" disabled>
+                      Önce yatırım ufkunu seçin
+                    </option>
+                    {TIME_HORIZON_OPTIONS.map((option) => (
+                      <option key={`horizon:${option.value}`} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
 
-              <div className="rounded-xl border border-white/12 bg-slate-950/70 px-3 py-3">
-                <h4 className="font-display text-base font-semibold text-slate-100">Önerilen Profil Listesi</h4>
-                <p className="mt-1 text-xs text-slate-300">Ufuk değişince profil listesi ve dropdown seçimleri sıfırlanır.</p>
-                <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
-                  <div className="grid grid-cols-[minmax(160px,1fr)_minmax(260px,2fr)] border-b border-white/10 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200">
-                    <span>Profil Adı</span>
-                    <span>Özet</span>
+              {compareStepReady ? (
+                <div className="relative z-[90] rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
+                  <p className="mb-2 font-display text-[11px] text-slate-300">Adım 2 · Hisse ekleme</p>
+                  <AssetSearchInput
+                    selectedAssets={selectedCompareAssets}
+                    onSelectionChange={handleCompareSelectionChange}
+                    onUnsupportedAsset={() => {
+                      setUnsupportedAssetMessage("Bu araç yalnızca BIST ve ABD hisselerini destekler");
+                      setSelectedCompareAssets([]);
+                      setAnalysisData(null);
+                      setCompareRequested(false);
+                    }}
+                    maxSelection={5}
+                  />
+                  <div className="relative z-10 mt-3 flex flex-wrap gap-2">
+                    {QUICK_PICK_ASSETS.map((asset) => (
+                      <button
+                        key={`quick-pick:${asset.ticker}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCompareAssets((prev) => {
+                            if (prev.some((item) => item.ticker === asset.ticker) || prev.length >= 5) return prev;
+                            setUnsupportedAssetMessage(null);
+                            return [...prev, asset];
+                          });
+                        }}
+                        className="rounded-full border border-slate-200/70 bg-slate-950/60 px-3 py-1 font-display text-[11px] tracking-[0.03em] text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/70 hover:text-[#8ddfff]"
+                      >
+                        {asset.ticker} ekle
+                      </button>
+                    ))}
                   </div>
+                </div>
+              ) : null}
+
+              {canSubmitCompare ? (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleStartCompare}
+                    className="rounded-xl border border-[#22b7ff]/60 bg-[#22b7ff]/20 px-4 py-2 font-display text-sm font-semibold text-[#dff4ff] transition hover:bg-[#22b7ff]/30"
+                  >
+                    Adım 3 · Hisseleri Karşılaştır
+                  </button>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <div className="rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
+                <label className="block space-y-1">
+                  <span className="font-display text-[11px] text-slate-300">Adım 1 · Profil ufku</span>
+                  <select
+                    value={discoverHorizon}
+                    onChange={(event) => handleDiscoverHorizonChange(event.target.value as DiscoverHorizon)}
+                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                  >
+                    {HORIZON_OPTIONS.map((option) => (
+                      <option key={`discover-horizon:${option.value}`} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-3 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]">
+                <div className="mb-3 flex items-center gap-2 text-[#8ddfff]">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <p className="font-display text-xs font-semibold tracking-[0.08em]">Adım 2 · Profil seçimi</p>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-2">
                   {Object.values(discoverPresetMap).map((preset) => {
                     const isActive = selectedDiscoverPreset?.key === preset.key;
                     return (
                       <button
-                        key={`preset-row:${preset.key}`}
+                        key={`preset-card:${preset.key}`}
                         type="button"
+                        role="radio"
+                        aria-checked={isActive}
                         onClick={() => handleDiscoverPresetChange(preset.key)}
-                        className={`grid w-full grid-cols-[minmax(160px,1fr)_minmax(260px,2fr)] border-b border-white/10 px-3 py-2 text-left text-xs transition-colors last:border-b-0 ${
-                          isActive ? "bg-[#22b7ff]/14 text-[#dff4ff]" : "bg-slate-950/45 text-slate-200 hover:bg-slate-900/70"
+                        className={`rounded-xl border p-3 text-left transition ${
+                          isActive
+                            ? "border-[#22b7ff]/70 bg-[#22b7ff]/14 text-[#dff4ff]"
+                            : "border-white/10 bg-slate-950/45 text-slate-200 hover:border-white/25"
                         }`}
                       >
-                        <span className="font-display font-semibold">{preset.label}</span>
-                        <span className="text-slate-300">{preset.summary}</span>
+                        <p className="font-display text-sm font-semibold">{preset.label}</p>
+                        <p className="mt-1 text-xs text-slate-300">{preset.summary}</p>
                       </button>
                     );
                   })}
                 </div>
+
+                <div className="mt-3 rounded-xl border border-white/12 bg-slate-950/60">
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedSettingsOpen((current) => !current)}
+                    className="flex w-full items-center justify-between px-3 py-2 font-display text-xs text-slate-200"
+                  >
+                    <span>Adım 3 · Gelişmiş Ayarlar</span>
+                    <span>{advancedSettingsOpen ? "−" : "+"}</span>
+                  </button>
+
+                  {advancedSettingsOpen ? (
+                    <div className="grid gap-3 border-t border-white/10 px-3 py-3 md:grid-cols-2">
+                      {discoverHorizon === "short" ? (
+                        <>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Momentum Toleransı</span>
+                            <select
+                              value={shortFilters.momentumTolerance}
+                              onChange={(event) => {
+                                setShortFilters((current) => ({ ...current, momentumTolerance: event.target.value as ShortFilters["momentumTolerance"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="low">Düşük</option>
+                              <option value="medium">Orta</option>
+                              <option value="high">Yüksek</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Katalizör Beklentisi</span>
+                            <select
+                              value={shortFilters.catalystExpectation}
+                              onChange={(event) => {
+                                setShortFilters((current) => ({ ...current, catalystExpectation: event.target.value as ShortFilters["catalystExpectation"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="near">Yakın (7 gün)</option>
+                              <option value="mid">Orta (7-30 gün)</option>
+                              <option value="irrelevant">Önemsiz</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Kurumsal Teyit</span>
+                            <select
+                              value={shortFilters.institutionalConfirmation}
+                              onChange={(event) => {
+                                setShortFilters((current) => ({ ...current, institutionalConfirmation: event.target.value as ShortFilters["institutionalConfirmation"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="required">Zorunlu</option>
+                              <option value="preferred">Tercih Edilir</option>
+                              <option value="irrelevant">Önemsiz</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Nakde Çevirme</span>
+                            <select
+                              value={shortFilters.liquidityNeed}
+                              onChange={(event) => {
+                                setShortFilters((current) => ({ ...current, liquidityNeed: event.target.value as ShortFilters["liquidityNeed"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="low">Düşük</option>
+                              <option value="medium">Orta</option>
+                              <option value="high">Yüksek</option>
+                            </select>
+                          </label>
+                        </>
+                      ) : (
+                        <>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Risk Hassasiyeti</span>
+                            <select
+                              value={longFilters.riskSensitivity}
+                              onChange={(event) => {
+                                setLongFilters((current) => ({ ...current, riskSensitivity: event.target.value as LongFilters["riskSensitivity"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="low">Düşük</option>
+                              <option value="medium">Orta</option>
+                              <option value="high">Yüksek</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Büyüme Beklentisi</span>
+                            <select
+                              value={longFilters.growthExpectation}
+                              onChange={(event) => {
+                                setLongFilters((current) => ({ ...current, growthExpectation: event.target.value as LongFilters["growthExpectation"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="value">Değer Odaklı</option>
+                              <option value="balanced">Dengeli</option>
+                              <option value="growth">Büyüme Odaklı</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Döviz Hassasiyeti</span>
+                            <select
+                              value={longFilters.fxSensitivity}
+                              onChange={(event) => {
+                                setLongFilters((current) => ({ ...current, fxSensitivity: event.target.value as LongFilters["fxSensitivity"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="tl_strength">TL Güçlenme</option>
+                              <option value="neutral">Nötr</option>
+                              <option value="tl_weakness">TL Zayıflama</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1">
+                            <span className="font-display text-[11px] text-slate-300">Minimum Piyasa Değeri</span>
+                            <select
+                              value={longFilters.minMarketCap}
+                              onChange={(event) => {
+                                setLongFilters((current) => ({ ...current, minMarketCap: event.target.value as LongFilters["minMarketCap"] }));
+                                setDiscoveryRequested(false);
+                                setDiscoveryData(null);
+                              }}
+                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                            >
+                              <option value="bist30">BIST30</option>
+                              <option value="bist100">BIST100</option>
+                              <option value="all">Tümü</option>
+                            </select>
+                          </label>
+                        </>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+
+                <p className="mt-3 text-xs text-slate-300">{selectedDiscoverPreset?.summary}</p>
+
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleRunDiscover}
+                    className="rounded-xl border border-[#22b7ff]/60 bg-[#22b7ff]/20 px-4 py-2 font-display text-sm font-semibold text-[#dff4ff] transition hover:bg-[#22b7ff]/30"
+                  >
+                    Adım 4 · Profili Tara
+                  </button>
+                </div>
               </div>
-
-              {discoverHorizon === "short" ? (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Momentum Toleransı</span>
-                    <select
-                      value={shortFilters.momentumTolerance}
-                      onChange={(event) => setShortFilters((current) => ({ ...current, momentumTolerance: event.target.value as ShortFilters["momentumTolerance"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="low">Düşük</option>
-                      <option value="medium">Orta</option>
-                      <option value="high">Yüksek</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Katalizör Beklentisi</span>
-                    <select
-                      value={shortFilters.catalystExpectation}
-                      onChange={(event) => setShortFilters((current) => ({ ...current, catalystExpectation: event.target.value as ShortFilters["catalystExpectation"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="near">Yakın (7 gün)</option>
-                      <option value="mid">Orta (7-30 gün)</option>
-                      <option value="irrelevant">Önemsiz</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Kurumsal Teyit</span>
-                    <select
-                      value={shortFilters.institutionalConfirmation}
-                      onChange={(event) => setShortFilters((current) => ({ ...current, institutionalConfirmation: event.target.value as ShortFilters["institutionalConfirmation"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="required">Zorunlu</option>
-                      <option value="preferred">Tercih Edilir</option>
-                      <option value="irrelevant">Önemsiz</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Nakde Çevirme</span>
-                    <select
-                      value={shortFilters.liquidityNeed}
-                      onChange={(event) => setShortFilters((current) => ({ ...current, liquidityNeed: event.target.value as ShortFilters["liquidityNeed"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="low">Düşük</option>
-                      <option value="medium">Orta</option>
-                      <option value="high">Yüksek</option>
-                    </select>
-                  </label>
-                </div>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Risk Hassasiyeti</span>
-                    <select
-                      value={longFilters.riskSensitivity}
-                      onChange={(event) => setLongFilters((current) => ({ ...current, riskSensitivity: event.target.value as LongFilters["riskSensitivity"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="low">Düşük</option>
-                      <option value="medium">Orta</option>
-                      <option value="high">Yüksek</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Büyüme Beklentisi</span>
-                    <select
-                      value={longFilters.growthExpectation}
-                      onChange={(event) => setLongFilters((current) => ({ ...current, growthExpectation: event.target.value as LongFilters["growthExpectation"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="value">Değer Odaklı</option>
-                      <option value="balanced">Dengeli</option>
-                      <option value="growth">Büyüme Odaklı</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Döviz Hassasiyeti</span>
-                    <select
-                      value={longFilters.fxSensitivity}
-                      onChange={(event) => setLongFilters((current) => ({ ...current, fxSensitivity: event.target.value as LongFilters["fxSensitivity"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="tl_strength">TL Güçlenme</option>
-                      <option value="neutral">Nötr</option>
-                      <option value="tl_weakness">TL Zayıflama</option>
-                    </select>
-                  </label>
-                  <label className="space-y-1">
-                    <span className="font-display text-[11px] text-slate-300">Minimum Piyasa Değeri</span>
-                    <select
-                      value={longFilters.minMarketCap}
-                      onChange={(event) => setLongFilters((current) => ({ ...current, minMarketCap: event.target.value as LongFilters["minMarketCap"] }))}
-                      className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
-                    >
-                      <option value="bist30">BIST30</option>
-                      <option value="bist100">BIST100</option>
-                      <option value="all">Tümü</option>
-                    </select>
-                  </label>
-                </div>
-              )}
-
-              <p className="mt-3 text-xs text-slate-300">{selectedDiscoverPreset?.summary}</p>
-            </div>
+            </>
           )}
         </div>
 
-        {isLoading ? (
+        {isLoading && ((mode === "compare" && compareRequested) || (mode === "discover" && discoveryRequested)) ? (
           <div className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/12 px-3 py-2 text-xs text-slate-100">
             <LoaderCircle className="h-4 w-4 animate-spin" style={{ color: ACCENT_BLUE }} />
             {mode === "compare"
@@ -1012,14 +1130,14 @@ export default function UniversalAssetComparisonPanel() {
           </div>
         ) : null}
 
-        {dataError ? (
+        {dataError && ((mode === "compare" && compareRequested) || (mode === "discover" && discoveryRequested)) ? (
           <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-warning/40 bg-warning-container/25 px-3 py-2 text-xs text-warning">
             {dataError}
           </div>
         ) : null}
 
         <div className="mx-auto mt-6 max-w-6xl space-y-4">
-          {mode === "compare" ? (
+          {showCompareResults ? (
             <>
               <div className={PANEL_CARD}>
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Tek Ekranda Karar Özeti</p>
@@ -1108,7 +1226,15 @@ export default function UniversalAssetComparisonPanel() {
                 </div>
               </div>
             </>
-          ) : (
+          ) : null}
+
+          {mode === "compare" && compareRequested && !analysisLoading && !analysisData && !analysisError ? (
+            <div className={PANEL_CARD}>
+              <p className="text-sm text-slate-300">Karşılaştırma sonucu üretilemedi. Varlık seçimini gözden geçirip tekrar deneyin.</p>
+            </div>
+          ) : null}
+
+          {showDiscoveryResults ? (
             <>
               <div className={PANEL_CARD}>
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Profil Keşif Çıktısı</p>
@@ -1147,13 +1273,12 @@ export default function UniversalAssetComparisonPanel() {
                         <p className="mt-2 text-xs text-amber-300">⚠️ Bu hisse mevcut faiz ortamında düşük ağırlık aldı.</p>
                       ) : null}
                       {row.dataWarning ? <p className="mt-2 text-xs text-slate-300">{row.dataWarning}</p> : null}
-                      <p className="mt-2 text-[11px] text-slate-400">{discoveryData?.disclaimer}</p>
                     </article>
                   ))}
                 </div>
               </div>
             </>
-          )}
+          ) : null}
 
           <div className={PANEL_CARD}>
             <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Uyum ve Bilgilendirme</p>
