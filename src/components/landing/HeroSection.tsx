@@ -111,7 +111,12 @@ export default function HeroSection() {
             </g>
           ))}
 
-          <g fontFamily="var(--font-kusanagi-heading)" fontSize="42" fontWeight="700" fill="rgba(173, 241, 255, 0.86)">
+          <g
+            fontFamily="Inter, -apple-system, BlinkMacSystemFont, Roboto, Arial, Helvetica, sans-serif"
+            fontSize="42"
+            fontWeight="700"
+            fill="rgba(173, 241, 255, 0.86)"
+          >
             <text x="130" y="675">07.28</text>
             <text x="475" y="655">18.75</text>
             <text x="555" y="510">22.10</text>
@@ -132,17 +137,17 @@ export default function HeroSection() {
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-5 font-display text-[2.55rem] font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-[3.2rem] md:text-[4.1rem] lg:text-[5.75rem]">
+        <h1 className="animate-fade-in-up-delay-1 mb-5 text-[2.55rem] font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-[3.2rem] md:text-[4.1rem] lg:text-[5.75rem]">
           <span className="block whitespace-nowrap">
-            <span className="font-display text-[0.9em]">FİNANSAL</span>{" "}
+            <span className="text-[0.9em]">FİNANSAL</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">KARARLAR</span>
           </span>
           <span className="block whitespace-nowrap">
-            <span className="font-display text-[0.9em]">VERİYLE</span>{" "}
+            <span className="text-[0.9em]">VERİYLE</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">ŞEKİLLENİYOR</span>
           </span>
           <span className="block whitespace-nowrap">
-            <span className="font-display text-[0.9em]">FINCOGNIS İLE</span>{" "}
+            <span className="text-[0.9em]">FINCOGNIS İLE</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">NETLEŞİYOR</span>
           </span>
         </h1>
@@ -152,7 +157,7 @@ export default function HeroSection() {
             href="https://fincognis.onrender.com/tools"
             target="_blank"
             rel="noreferrer"
-            className="landing-primary-btn w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center font-display text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
+            className="landing-primary-btn w-full rounded-xl border border-[#22b7ff]/55 bg-[#22b7ff]/18 px-8 py-4 text-center text-lg font-semibold text-[#dff4ff] transition-all hover:-translate-y-0.5 hover:bg-[#22b7ff]/26 active:scale-95 sm:w-auto"
           >
             ARACI AÇ
           </a>
@@ -160,18 +165,18 @@ export default function HeroSection() {
 
         <div className="animate-fade-in-up-delay-3 mt-16 grid grid-cols-1 items-start gap-8 text-left sm:grid-cols-3 sm:gap-12 lg:gap-20">
           <div className="min-w-0">
-            <div className="font-display text-3xl font-semibold text-white sm:text-4xl">
+            <div className="text-3xl font-semibold text-white sm:text-4xl">
               <span>60 Milyon TL</span>
               <span className="relative -top-[0.28em] ml-1 inline-block text-[0.8em] leading-none">+</span>
             </div>
             <div className="mt-2 text-sm text-slate-300">Bireysel Finansal Hacim</div>
           </div>
           <div className="min-w-0">
-            <div className="font-display text-3xl font-semibold text-white sm:text-4xl">+30</div>
+            <div className="text-3xl font-semibold text-white sm:text-4xl">+30</div>
             <div className="mt-2 text-sm text-slate-300">yıllık tecrübe</div>
           </div>
           <div className="min-w-0 sm:-ml-2 lg:-ml-4">
-            <div className="font-display whitespace-nowrap text-3xl font-semibold leading-none text-white sm:text-4xl">Decısıon Intellıgence</div>
+            <div className="whitespace-nowrap text-3xl font-semibold leading-none text-white sm:text-4xl">Decısıon Intellıgence</div>
             <div className="mt-2 text-sm text-slate-300">yaklaşımı</div>
           </div>
         </div>
@@ -329,7 +334,15 @@ export default function HeroSection() {
                         strokeLinecap="round"
                         transform="rotate(-90 40 40)"
                       />
-                      <text x="40" y="42" textAnchor="middle" fill="#e2e8f0" fontSize="10" fontFamily="JetBrains Mono" fontWeight="700">
+                      <text
+                        x="40"
+                        y="42"
+                        textAnchor="middle"
+                        fill="#e2e8f0"
+                        fontSize="10"
+                        fontFamily="Inter, -apple-system, BlinkMacSystemFont, Roboto, Arial, Helvetica, sans-serif"
+                        fontWeight="700"
+                      >
                         64%
                       </text>
                     </svg>
