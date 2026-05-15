@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -10,9 +10,9 @@
   --type-kicker-tracking: 0.3em;
   --type-body-tracking: 0.015em;
   --type-text-primary: rgb(241 245 249 / 0.9);
-  --font-kusanagi-heading: "Orbitron", "Exo 2", "Rajdhani", "Eurostile", "Segoe UI", sans-serif;
-  --font-kusanagi-sans: "Exo 2", "Orbitron", "Rajdhani", "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
-  --font-kusanagi-mono: "Orbitron", "Exo 2", "JetBrains Mono", "Geist Mono", "SFMono-Regular", "Menlo", "Monaco", "Consolas", monospace;
+  --font-kusanagi-heading: Inter, -apple-system, BlinkMacSystemFont, Roboto, Arial, Helvetica, sans-serif;
+  --font-kusanagi-sans: Inter, -apple-system, BlinkMacSystemFont, Roboto, Arial, Helvetica, sans-serif;
+  --font-kusanagi-mono: Inter, -apple-system, BlinkMacSystemFont, Roboto, Arial, Helvetica, sans-serif;
   --font-ui: var(--font-kusanagi-sans);
   --font-tight: var(--font-kusanagi-heading);
   --font-data: var(--font-kusanagi-mono);
@@ -120,7 +120,7 @@ html.light {
 }
 
 body {
-  font-family: var(--font-kusanagi-sans);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, Roboto, Arial, Helvetica, sans-serif;
   font-weight: var(--kusanagi-weight-body);
   background-color: rgb(var(--surface));
   color: rgb(var(--on-surface));
