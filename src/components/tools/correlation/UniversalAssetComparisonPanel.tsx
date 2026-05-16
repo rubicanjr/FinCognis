@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { LoaderCircle, SlidersHorizontal, Sparkles } from "lucide-react";
+import { LoaderCircle, SlidersHorizontal } from "lucide-react";
 import {
   AnalyzeResponseSchema,
   AssetsApiResponseSchema,
@@ -798,12 +798,7 @@ export default function UniversalAssetComparisonPanel() {
 
       <div className="relative z-10">
         <div className="mx-auto max-w-4xl text-center">
-          <p className="inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/45 bg-[#22b7ff]/12 px-4 py-1.5 font-display text-[10px] font-semibold tracking-[0.12em] text-[#8ddfff]">
-            <Sparkles className="h-3.5 w-3.5" style={{ color: ACCENT_BLUE }} />
-            FinCognis Karşılaştırma Motoru
-          </p>
-
-          <div className="mt-5 flex justify-center">
+          <div className="flex justify-center">
             <div className="inline-flex rounded-xl border border-white/12 bg-slate-900/55 p-1 backdrop-blur-xl">
               {MODE_OPTIONS.map((option) => {
                 const isActive = option.key === mode;
@@ -825,10 +820,16 @@ export default function UniversalAssetComparisonPanel() {
             </div>
           </div>
 
-          <h2 className="tools-hero-title mt-5 bg-[linear-gradient(92deg,#eaf6ff_10%,#8fddff_45%,#cf9dff_90%)] bg-clip-text font-display text-4xl font-semibold leading-[1.04] tracking-[0.02em] text-transparent sm:text-6xl">
-            {title}
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-300 sm:text-lg">{subtitle}</p>
+          <div className="mt-5 overflow-x-auto">
+            <h2 className="tools-hero-title inline-block whitespace-nowrap bg-[linear-gradient(92deg,#eaf6ff_10%,#8fddff_45%,#cf9dff_90%)] bg-clip-text font-display text-[clamp(1.2rem,4.3vw,3.75rem)] font-semibold leading-[1.04] tracking-[0.02em] text-transparent">
+              {title}
+            </h2>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <p className="mx-auto inline-block max-w-none whitespace-nowrap text-[clamp(0.68rem,1.75vw,1.125rem)] text-slate-300">
+              {subtitle}
+            </p>
+          </div>
         </div>
 
         <div className="mx-auto mt-7 max-w-3xl space-y-3">

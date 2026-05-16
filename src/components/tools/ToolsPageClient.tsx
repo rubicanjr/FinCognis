@@ -1,8 +1,6 @@
 ﻿"use client";
 
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
-import Link from "next/link";
-import { CircleGauge, ShieldCheck, Sparkles } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import CorrelationTest from "@/components/tools/CorrelationTest";
 import TcmbExchangeRates from "@/components/tools/TcmbExchangeRates";
@@ -110,52 +108,6 @@ export default function ToolsPageClient() {
 
         <main className="relative z-10 mx-auto max-w-[1320px] px-4 pb-10 pt-24 sm:px-6">
           <RuntimeIssueBanner />
-
-          <div className="tools-premium-banner mb-6 overflow-hidden rounded-3xl border border-white/15 p-5 shadow-[0_28px_80px_-40px_rgba(2,132,199,0.52)] backdrop-blur-xl sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/45 bg-cyan-400/10 px-3 py-1 font-display text-[11px] font-semibold tracking-[0.12em] text-cyan-200">
-                <Sparkles className="h-3.5 w-3.5" />
-                FinCognis Decision Engine
-              </span>
-              <Link
-                href="/tools/login"
-                className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-white/10 px-4 py-2 font-display text-xs font-semibold tracking-[0.07em] text-slate-100 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-300/70 hover:text-cyan-200"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Giriş Sayfası
-              </Link>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-end gap-3">
-              <h1 className="font-display text-3xl font-semibold leading-tight tracking-[0.01em] text-slate-50 sm:text-4xl">
-                Doğrulanmış Karar Çerçevesi
-              </h1>
-              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/45 bg-cyan-400/12 px-3 py-1 font-data text-xs text-cyan-100">
-                <CircleGauge className="h-3.5 w-3.5" />
-                BIST + ABD analiz katmanı
-              </span>
-            </div>
-
-            <p className="mt-3 max-w-4xl text-sm text-slate-300 sm:text-base">
-              Karşılaştırma, profil keşfi ve metrik içgörülerini tek akışta birleştiren; veri doğrulama ve
-              metodoloji şeffaflığını öne alan analiz paneli.
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[
-                "Kobalt Mavi UI",
-                "Canlı Varlık Eşleşmesi",
-                "Şeffaf Risk Metrikleri",
-              ].map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-white/20 bg-slate-900/65 px-3 py-1 font-display text-[11px] tracking-[0.04em] text-slate-200"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
 
           <CorrelationTest />
 
