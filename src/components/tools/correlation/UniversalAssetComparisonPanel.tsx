@@ -259,11 +259,10 @@ const DEFAULT_LONG_FILTERS: LongFilters = {
   minMarketCap: "bist100",
 };
 
-const PANEL_CARD =
-  "tools-card rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.58),rgba(2,6,23,0.78))] p-4 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]";
+const PANEL_CARD = "tools-card rounded-2xl border border-slate-300 bg-white p-4 shadow-sm";
 
 const GLASS_CHIP =
-  "tools-chip border border-white/12 bg-slate-950/55 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(148,163,184,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(2,6,23,0.55)]";
+  "tools-chip border border-slate-300 bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-sm";
 
 const HEATMAP_TONES = ["heat-tone-high", "heat-tone-mid", "heat-tone-low"] as const;
 
@@ -820,13 +819,13 @@ export default function UniversalAssetComparisonPanel() {
             </div>
           </div>
 
-          <div className="mt-5 overflow-x-auto">
-            <h2 className="tools-hero-title inline-block whitespace-nowrap bg-[linear-gradient(92deg,#eaf6ff_10%,#8fddff_45%,#cf9dff_90%)] bg-clip-text font-display text-[clamp(1.2rem,4.3vw,3.75rem)] font-semibold leading-[1.04] tracking-[0.02em] text-transparent">
+          <div className="mt-5 overflow-hidden">
+            <h2 className="tools-hero-title block truncate whitespace-nowrap bg-[linear-gradient(92deg,#eaf6ff_10%,#8fddff_45%,#cf9dff_90%)] bg-clip-text font-display text-[clamp(1.5rem,5.5vw,3.4rem)] font-semibold leading-[1.04] tracking-[0.02em] text-transparent">
               {title}
             </h2>
           </div>
-          <div className="mt-4 overflow-x-auto">
-            <p className="mx-auto inline-block max-w-none whitespace-nowrap text-[clamp(0.68rem,1.75vw,1.125rem)] text-slate-300">
+          <div className="mt-4 overflow-hidden">
+            <p className="mx-auto block truncate whitespace-nowrap text-sm text-slate-300 sm:text-lg">
               {subtitle}
             </p>
           </div>
@@ -835,9 +834,9 @@ export default function UniversalAssetComparisonPanel() {
         <div className="mx-auto mt-7 max-w-3xl space-y-3">
           {mode === "compare" ? (
             <>
-              <div className="rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
+              <div className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm">
                 <label className="block space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Adım 1 · Yatırım ufku</span>
+                  <span className="font-display text-[11px] text-slate-700">Adım 1 · Yatırım ufku</span>
                   <select
                     value={timeHorizon}
                     onChange={(event) => {
@@ -846,7 +845,7 @@ export default function UniversalAssetComparisonPanel() {
                       setCompareRequested(false);
                       setAnalysisData(null);
                     }}
-                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                   >
                     <option value="" disabled>
                       Önce yatırım ufkunu seçin
@@ -861,8 +860,8 @@ export default function UniversalAssetComparisonPanel() {
               </div>
 
               {compareStepReady ? (
-                <div className="relative z-[90] rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
-                  <p className="mb-2 font-display text-[11px] text-slate-300">Adım 2 · Hisse ekleme</p>
+                <div className="relative z-[90] rounded-xl border border-slate-300 bg-white p-3 shadow-sm">
+                  <p className="mb-2 font-display text-[11px] text-slate-700">Adım 2 · Hisse ekleme</p>
                   <AssetSearchInput
                     selectedAssets={selectedCompareAssets}
                     onSelectionChange={handleCompareSelectionChange}
@@ -886,7 +885,7 @@ export default function UniversalAssetComparisonPanel() {
                             return [...prev, asset];
                           });
                         }}
-                        className="rounded-full border border-slate-200/70 bg-slate-950/60 px-3 py-1 font-display text-[11px] tracking-[0.03em] text-slate-100 backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-[#22b7ff]/70 hover:text-[#8ddfff]"
+                        className="rounded-full border border-slate-300 bg-white px-3 py-1 font-display text-[11px] tracking-[0.03em] text-slate-900 transition-all hover:-translate-y-0.5 hover:border-sky-500 hover:text-sky-700"
                       >
                         {asset.ticker} ekle
                       </button>
@@ -900,7 +899,7 @@ export default function UniversalAssetComparisonPanel() {
                   <button
                     type="button"
                     onClick={handleStartCompare}
-                    className="rounded-xl border border-[#22b7ff]/60 bg-[#22b7ff]/20 px-4 py-2 font-display text-sm font-semibold text-[#dff4ff] transition hover:bg-[#22b7ff]/30"
+                    className="rounded-xl border border-sky-700 bg-sky-700 px-4 py-2 font-display text-sm font-semibold text-white transition hover:bg-sky-800"
                   >
                     Adım 3 · Hisseleri Karşılaştır
                   </button>
@@ -909,13 +908,13 @@ export default function UniversalAssetComparisonPanel() {
             </>
           ) : (
             <>
-              <div className="rounded-xl border border-white/12 bg-slate-900/45 p-3 backdrop-blur-xl">
+              <div className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm">
                 <label className="block space-y-1">
-                  <span className="font-display text-[11px] text-slate-300">Adım 1 · Profil ufku</span>
+                  <span className="font-display text-[11px] text-slate-700">Adım 1 · Profil ufku</span>
                   <select
                     value={discoverHorizon}
                     onChange={(event) => handleDiscoverHorizonChange(event.target.value as DiscoverHorizon)}
-                    className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                   >
                     {HORIZON_OPTIONS.map((option) => (
                       <option key={`discover-horizon:${option.value}`} value={option.value}>
@@ -926,8 +925,8 @@ export default function UniversalAssetComparisonPanel() {
                 </label>
               </div>
 
-              <div className="rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-3 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]">
-                <div className="mb-3 flex items-center gap-2 text-[#8ddfff]">
+              <div className="rounded-2xl border border-slate-300 bg-white p-3 shadow-sm">
+                <div className="mb-3 flex items-center gap-2 text-slate-700">
                   <SlidersHorizontal className="h-4 w-4" />
                   <p className="font-display text-xs font-semibold tracking-[0.08em]">Adım 2 · Profil seçimi</p>
                 </div>
@@ -944,33 +943,33 @@ export default function UniversalAssetComparisonPanel() {
                         onClick={() => handleDiscoverPresetChange(preset.key)}
                         className={`rounded-xl border p-3 text-left transition ${
                           isActive
-                            ? "border-[#22b7ff]/70 bg-[#22b7ff]/14 text-[#dff4ff]"
-                            : "border-white/10 bg-slate-950/45 text-slate-200 hover:border-white/25"
+                            ? "border-sky-600 bg-sky-50 text-sky-900"
+                            : "border-slate-300 bg-white text-slate-800 hover:border-slate-400"
                         }`}
                       >
                         <p className="font-display text-sm font-semibold">{preset.label}</p>
-                        <p className="mt-1 text-xs text-slate-300">{preset.summary}</p>
+                        <p className="mt-1 text-xs text-slate-600">{preset.summary}</p>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="mt-3 rounded-xl border border-white/12 bg-slate-950/60">
+                <div className="mt-3 rounded-xl border border-slate-300 bg-white">
                   <button
                     type="button"
                     onClick={() => setAdvancedSettingsOpen((current) => !current)}
-                    className="flex w-full items-center justify-between px-3 py-2 font-display text-xs text-slate-200"
+                    className="flex w-full items-center justify-between px-3 py-2 font-display text-xs text-slate-900"
                   >
                     <span>Adım 3 · Gelişmiş Ayarlar</span>
                     <span>{advancedSettingsOpen ? "−" : "+"}</span>
                   </button>
 
                   {advancedSettingsOpen ? (
-                    <div className="grid gap-3 border-t border-white/10 px-3 py-3 md:grid-cols-2">
+                    <div className="grid gap-3 border-t border-slate-300 px-3 py-3 md:grid-cols-2">
                       {discoverHorizon === "short" ? (
                         <>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Momentum Toleransı</span>
+                            <span className="font-display text-[11px] text-slate-700">Momentum Toleransı</span>
                             <select
                               value={shortFilters.momentumTolerance}
                               onChange={(event) => {
@@ -978,7 +977,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="low">Düşük</option>
                               <option value="medium">Orta</option>
@@ -986,7 +985,7 @@ export default function UniversalAssetComparisonPanel() {
                             </select>
                           </label>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Katalizör Beklentisi</span>
+                            <span className="font-display text-[11px] text-slate-700">Katalizör Beklentisi</span>
                             <select
                               value={shortFilters.catalystExpectation}
                               onChange={(event) => {
@@ -994,7 +993,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="near">Yakın (7 gün)</option>
                               <option value="mid">Orta (7-30 gün)</option>
@@ -1002,7 +1001,7 @@ export default function UniversalAssetComparisonPanel() {
                             </select>
                           </label>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Kurumsal Teyit</span>
+                            <span className="font-display text-[11px] text-slate-700">Kurumsal Teyit</span>
                             <select
                               value={shortFilters.institutionalConfirmation}
                               onChange={(event) => {
@@ -1010,7 +1009,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="required">Zorunlu</option>
                               <option value="preferred">Tercih Edilir</option>
@@ -1018,7 +1017,7 @@ export default function UniversalAssetComparisonPanel() {
                             </select>
                           </label>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Nakde Çevirme</span>
+                            <span className="font-display text-[11px] text-slate-700">Nakde Çevirme</span>
                             <select
                               value={shortFilters.liquidityNeed}
                               onChange={(event) => {
@@ -1026,7 +1025,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="low">Düşük</option>
                               <option value="medium">Orta</option>
@@ -1037,7 +1036,7 @@ export default function UniversalAssetComparisonPanel() {
                       ) : (
                         <>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Risk Hassasiyeti</span>
+                            <span className="font-display text-[11px] text-slate-700">Risk Hassasiyeti</span>
                             <select
                               value={longFilters.riskSensitivity}
                               onChange={(event) => {
@@ -1045,7 +1044,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="low">Düşük</option>
                               <option value="medium">Orta</option>
@@ -1053,7 +1052,7 @@ export default function UniversalAssetComparisonPanel() {
                             </select>
                           </label>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Büyüme Beklentisi</span>
+                            <span className="font-display text-[11px] text-slate-700">Büyüme Beklentisi</span>
                             <select
                               value={longFilters.growthExpectation}
                               onChange={(event) => {
@@ -1061,7 +1060,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="value">Değer Odaklı</option>
                               <option value="balanced">Dengeli</option>
@@ -1069,7 +1068,7 @@ export default function UniversalAssetComparisonPanel() {
                             </select>
                           </label>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Döviz Hassasiyeti</span>
+                            <span className="font-display text-[11px] text-slate-700">Döviz Hassasiyeti</span>
                             <select
                               value={longFilters.fxSensitivity}
                               onChange={(event) => {
@@ -1077,7 +1076,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="tl_strength">TL Güçlenme</option>
                               <option value="neutral">Nötr</option>
@@ -1085,7 +1084,7 @@ export default function UniversalAssetComparisonPanel() {
                             </select>
                           </label>
                           <label className="space-y-1">
-                            <span className="font-display text-[11px] text-slate-300">Minimum Piyasa Değeri</span>
+                            <span className="font-display text-[11px] text-slate-700">Minimum Piyasa Değeri</span>
                             <select
                               value={longFilters.minMarketCap}
                               onChange={(event) => {
@@ -1093,7 +1092,7 @@ export default function UniversalAssetComparisonPanel() {
                                 setDiscoveryRequested(false);
                                 setDiscoveryData(null);
                               }}
-                              className="w-full rounded-xl border border-white/12 bg-slate-950/70 px-3 py-2 font-display text-sm text-slate-100 outline-none"
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 font-display text-sm text-slate-900 outline-none"
                             >
                               <option value="bist30">BIST30</option>
                               <option value="bist100">BIST100</option>
@@ -1106,13 +1105,13 @@ export default function UniversalAssetComparisonPanel() {
                   ) : null}
                 </div>
 
-                <p className="mt-3 text-xs text-slate-300">{selectedDiscoverPreset?.summary}</p>
+                <p className="mt-3 text-xs text-slate-700">{selectedDiscoverPreset?.summary}</p>
 
                 <div className="mt-3 flex justify-end">
                   <button
                     type="button"
                     onClick={handleRunDiscover}
-                    className="rounded-xl border border-[#22b7ff]/60 bg-[#22b7ff]/20 px-4 py-2 font-display text-sm font-semibold text-[#dff4ff] transition hover:bg-[#22b7ff]/30"
+                    className="rounded-xl border border-sky-700 bg-sky-700 px-4 py-2 font-display text-sm font-semibold text-white transition hover:bg-sky-800"
                   >
                     Adım 4 · Profili Tara
                   </button>
@@ -1123,7 +1122,7 @@ export default function UniversalAssetComparisonPanel() {
         </div>
 
         {isLoading && ((mode === "compare" && compareRequested) || (mode === "discover" && discoveryRequested)) ? (
-          <div className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-[#22b7ff]/35 bg-[#22b7ff]/12 px-3 py-2 text-xs text-slate-100">
+          <div className="mx-auto mt-4 flex max-w-3xl items-center gap-2 rounded-xl border border-sky-300 bg-sky-50 px-3 py-2 text-xs text-slate-900">
             <LoaderCircle className="h-4 w-4 animate-spin" style={{ color: ACCENT_BLUE }} />
             {mode === "compare"
               ? "Karşılaştırma hesaplanıyor..."
@@ -1141,21 +1140,21 @@ export default function UniversalAssetComparisonPanel() {
           {showCompareResults ? (
             <>
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Tek Ekranda Karar Özeti</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Tek Ekranda Karar Özeti</p>
                 {bestBalancedAsset ? (
                   <>
-                    <p className="mt-1 font-display text-xl font-semibold text-slate-50 sm:text-2xl">
-                      Bu karşılaştırmada en dengeli varlık: <span className="text-[#8ddfff]">{bestBalancedAsset.symbol}</span>
+                    <p className="mt-1 font-display text-xl font-semibold text-slate-900 sm:text-2xl">
+                      Bu karşılaştırmada en dengeli varlık: <span className="text-sky-700">{bestBalancedAsset.symbol}</span>
                     </p>
-                    <p className="mt-2 text-sm text-slate-300">Sebep: {bestBalancedReason}.</p>
+                    <p className="mt-2 text-sm text-slate-700">Sebep: {bestBalancedReason}.</p>
                   </>
                 ) : (
-                  <p className="mt-1 text-sm text-slate-300">Karşılaştırma için yeterli veri bulunamadı.</p>
+                  <p className="mt-1 text-sm text-slate-700">Karşılaştırma için yeterli veri bulunamadı.</p>
                 )}
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Karşılaştırılan Varlık Kartları</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Karşılaştırılan Varlık Kartları</p>
                 <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                   {compareCards.map((card, index) => (
                     <article key={`compare-card:${card.symbol}`} className={`${GLASS_CHIP} tools-premium-copy animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
@@ -1163,7 +1162,7 @@ export default function UniversalAssetComparisonPanel() {
                         <h4 className="tools-card-asset-symbol">{card.symbol}</h4>
                         {card.isFallback ? (
                           <span
-                            className="rounded-full border border-white/20 bg-slate-900/70 px-2 py-0.5 text-xs text-slate-200"
+                            className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                             title={
                               card.hasCriticalDataGap
                                 ? "Bu varlıkta veri yetersiz. Puanlar karşılaştırma yerine nötr gösterimde tutulur."
@@ -1176,8 +1175,8 @@ export default function UniversalAssetComparisonPanel() {
                           </span>
                         ) : null}
                       </div>
-                      <div className="mt-3 rounded-md border border-white/10 bg-slate-950/40 px-3 py-2">
-                        <div className="flex items-center justify-between text-slate-100">
+                      <div className="mt-3 rounded-md border border-slate-300 bg-white px-3 py-2">
+                        <div className="flex items-center justify-between text-slate-900">
                           <span className="tools-card-score-label">FINCOGNIS PUAN</span>
                           <span className="tools-card-score-value">
                             {card.totalScore === null ? "Veri yetersiz" : card.totalScore.toFixed(1)}
@@ -1198,10 +1197,10 @@ export default function UniversalAssetComparisonPanel() {
                                     : "Karar Simülasyonu";
 
                           return (
-                            <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between text-slate-200">
+                            <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between text-slate-800">
                               <span className="tools-card-metric-label">{criterion.label}</span>
                               {value === null ? (
-                                <span className="rounded-md border border-white/20 px-2 py-0.5 text-sm font-medium text-slate-300">Veri yok</span>
+                                <span className="rounded-md border border-slate-300 px-2 py-0.5 text-sm font-medium text-slate-600">Veri yok</span>
                               ) : (
                                 <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone(toneLabel, value)}`}>
                                   {value.toFixed(1)}
@@ -1217,10 +1216,10 @@ export default function UniversalAssetComparisonPanel() {
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Karar İçgörüsü (Kısa)</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Karar İçgörüsü (Kısa)</p>
                 <div className="mt-3 space-y-2">
                   {insightLines.slice(0, 3).map((line, index) => (
-                    <p key={`insight:${index}`} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-sm text-slate-100`}>
+                    <p key={`insight:${index}`} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-sm text-slate-900`}>
                       {line}
                     </p>
                   ))}
@@ -1231,21 +1230,21 @@ export default function UniversalAssetComparisonPanel() {
 
           {mode === "compare" && compareRequested && !analysisLoading && !analysisData && !analysisError ? (
             <div className={PANEL_CARD}>
-              <p className="text-sm text-slate-300">Karşılaştırma sonucu üretilemedi. Varlık seçimini gözden geçirip tekrar deneyin.</p>
+              <p className="text-sm text-slate-700">Karşılaştırma sonucu üretilemedi. Varlık seçimini gözden geçirip tekrar deneyin.</p>
             </div>
           ) : null}
 
           {showDiscoveryResults ? (
             <>
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Profil Keşif Çıktısı</p>
-                <p className="mt-2 text-sm text-slate-200">Tarama Evreni: Tüm BIST hisseleri (.IS doğrulamalı)</p>
-                <p className="mt-1 text-xs text-slate-300">
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Profil Keşif Çıktısı</p>
+                <p className="mt-2 text-sm text-slate-800">Tarama Evreni: Tüm BIST hisseleri (.IS doğrulamalı)</p>
+                <p className="mt-1 text-xs text-slate-700">
                   Taranan hisse: {discoveryData?.totalScanned ?? 0} · Cache: {discoveryData?.cached ? `Evet (${discoveryData.cacheAge})` : "Hayır"}
                 </p>
                 {discoveryData?.macroSnapshot ? (
                   <>
-                    <p className="mt-1 text-xs text-slate-300">
+                    <p className="mt-1 text-xs text-slate-700">
                       Makro Snapshot: Politika faizi %{discoveryData.macroSnapshot.policyRate.toFixed(2)} · Kaynak: {discoveryData.macroSnapshot.source}
                     </p>
                     {discoveryData.macroSnapshot.source === "last_known_fallback" ? (
@@ -1258,22 +1257,22 @@ export default function UniversalAssetComparisonPanel() {
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Uygun Varlıklar</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Uygun Varlıklar</p>
                 <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                   {discoverTopRows.map((row, index) => (
                     <article key={`discover:${row.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
                       <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-display text-lg font-semibold text-slate-100">{row.symbol}</h4>
-                        <span className="rounded-md border border-[#22b7ff]/35 bg-[#22b7ff]/14 px-2 py-1 font-data text-xs text-[#8ddfff]">
+                        <h4 className="font-display text-lg font-semibold text-slate-900">{row.symbol}</h4>
+                        <span className="rounded-md border border-sky-300 bg-sky-100 px-2 py-1 font-data text-xs text-sky-900">
                           Uyum {row.profileFitScore.toFixed(1)}
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-slate-300">{row.name} · {row.sector}</p>
-                      <p className="mt-2 text-sm text-slate-200">Öne çıkan metrik: {row.highlightMetric}</p>
+                      <p className="mt-1 text-xs text-slate-700">{row.name} · {row.sector}</p>
+                      <p className="mt-2 text-sm text-slate-800">Öne çıkan metrik: {row.highlightMetric}</p>
                       {row.macroPenaltyApplied ? (
-                        <p className="mt-2 text-xs text-amber-300">⚠️ Bu hisse mevcut faiz ortamında düşük ağırlık aldı.</p>
+                        <p className="mt-2 text-xs text-amber-700">⚠️ Bu hisse mevcut faiz ortamında düşük ağırlık aldı.</p>
                       ) : null}
-                      {row.dataWarning ? <p className="mt-2 text-xs text-slate-300">{row.dataWarning}</p> : null}
+                      {row.dataWarning ? <p className="mt-2 text-xs text-slate-700">{row.dataWarning}</p> : null}
                     </article>
                   ))}
                 </div>
@@ -1282,8 +1281,8 @@ export default function UniversalAssetComparisonPanel() {
           ) : null}
 
           <div className={PANEL_CARD}>
-            <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-300">Uyum ve Bilgilendirme</p>
-            <p className="mt-2 text-sm text-slate-200">{mode === "discover" ? discoveryData?.disclaimer ?? COMPLIANCE_DISCLAIMER : COMPLIANCE_DISCLAIMER}</p>
+            <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Uyum ve Bilgilendirme</p>
+            <p className="mt-2 text-sm text-slate-800">{mode === "discover" ? discoveryData?.disclaimer ?? COMPLIANCE_DISCLAIMER : COMPLIANCE_DISCLAIMER}</p>
           </div>
 
           <MetricExplanation />

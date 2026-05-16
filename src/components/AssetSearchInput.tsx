@@ -269,21 +269,21 @@ export default function AssetSearchInput({
   return (
     <div
       ref={containerRef}
-      className="relative z-[120] isolate overflow-visible rounded-2xl border border-[#22b7ff]/20 bg-slate-900/45 p-2 backdrop-blur-xl shadow-[0_14px_36px_rgba(2,6,23,0.55)]"
+      className="relative z-[120] isolate overflow-visible rounded-2xl border border-slate-300 bg-white p-2 shadow-sm"
     >
-      <label htmlFor="asset-query" className="mb-2 block px-2 font-display text-[11px] font-semibold tracking-[0.06em] text-slate-300">
+      <label htmlFor="asset-query" className="mb-2 block px-2 font-display text-[11px] font-semibold tracking-[0.06em] text-slate-700">
         {label}
       </label>
 
       {selectedAssets.length > 0 ? (
         <div className="mb-2 flex flex-wrap gap-2 px-1">
           {selectedAssets.map((asset) => (
-            <span key={`asset-chip:${asset.ticker}`} className="inline-flex items-center gap-2 rounded-full border border-[#22b7ff]/35 bg-[#22b7ff]/12 px-3 py-1 text-xs text-slate-100">
+            <span key={`asset-chip:${asset.ticker}`} className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs text-slate-900">
               <span className="font-display font-semibold tracking-wide">{asset.ticker}</span>
               <button
                 type="button"
                 onClick={() => handleRemoveAsset(asset.ticker)}
-                className="rounded-full text-slate-300 transition-colors hover:text-slate-50"
+                className="rounded-full text-slate-600 transition-colors hover:text-slate-900"
                 aria-label={`${asset.ticker} kaldır`}
               >
                 <X className="h-3.5 w-3.5" />
@@ -294,11 +294,10 @@ export default function AssetSearchInput({
       ) : null}
 
       <div className="relative">
-        <div className="asset-search-neon-shell rounded-xl p-[1px]">
-          <div className="flex items-center gap-3 rounded-[calc(0.75rem-1px)] bg-slate-950/90 px-3 py-3 backdrop-blur-xl">
+        <div className="rounded-xl border border-slate-300 p-[1px]">
+          <div className="flex items-center gap-3 rounded-[calc(0.75rem-1px)] bg-white px-3 py-3">
             <span className="relative inline-flex h-6 w-6 items-center justify-center">
-              <span className="asset-search-icon-ring pointer-events-none absolute inset-0 rounded-full" />
-              <Search className="relative z-[1] h-4 w-4 text-slate-200" />
+              <Search className="relative z-[1] h-4 w-4 text-slate-600" />
             </span>
             <input
               id="asset-query"
@@ -311,7 +310,7 @@ export default function AssetSearchInput({
               onFocus={() => setIsOpen(true)}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
-              className="w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-500"
               placeholder={placeholder}
               autoComplete="off"
               spellCheck={false}
@@ -322,7 +321,7 @@ export default function AssetSearchInput({
               aria-label="Hisse karşılaştırma girişi"
               disabled={disabled}
             />
-            {isLoading || verifying ? <LoaderCircle className="h-4 w-4 animate-spin text-[#8ddfff]" /> : null}
+            {isLoading || verifying ? <LoaderCircle className="h-4 w-4 animate-spin text-sky-600" /> : null}
           </div>
         </div>
 
@@ -330,7 +329,7 @@ export default function AssetSearchInput({
           <div
             id={listboxId}
             role="listbox"
-            className="absolute z-[140] mt-2 max-h-80 w-full overflow-y-auto rounded-xl border border-white/12 bg-slate-950/95 p-1 shadow-[0_20px_40px_rgba(2,6,23,0.65)] backdrop-blur-xl"
+            className="absolute z-[140] mt-2 max-h-80 w-full overflow-y-auto rounded-xl border border-slate-300 bg-white p-1 shadow-md"
           >
             {results.map((result, index) => {
               const isActive = index === highlightedIndex;
@@ -343,12 +342,12 @@ export default function AssetSearchInput({
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => addAssetFromOption(result)}
                   className={`grid w-full grid-cols-[minmax(72px,88px)_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
-                    isActive ? "bg-[#22b7ff]/18" : "hover:bg-slate-800/70"
+                    isActive ? "bg-sky-100" : "hover:bg-slate-100"
                   }`}
                 >
-                  <span className="font-display text-sm font-semibold tracking-wide text-slate-100">{result.ticker}</span>
-                  <span className="truncate text-sm text-slate-200">{result.name}</span>
-                  <span className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] tracking-[0.04em] text-slate-300">
+                  <span className="font-display text-sm font-semibold tracking-wide text-slate-900">{result.ticker}</span>
+                  <span className="truncate text-sm text-slate-800">{result.name}</span>
+                  <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] tracking-[0.04em] text-slate-700">
                     {normalizeExchangeLabel(result.exchange)}
                   </span>
                 </button>
@@ -356,13 +355,13 @@ export default function AssetSearchInput({
             })}
 
             {results.length === 0 && (isLoading || verifying) ? (
-              <div className="px-3 py-2 text-xs text-slate-300">Aranıyor...</div>
+              <div className="px-3 py-2 text-xs text-slate-700">Aranıyor...</div>
             ) : null}
           </div>
         ) : null}
       </div>
 
-      <p className="mt-2 px-1 text-xs text-slate-300">Karar vermeden önce hisseler arasındaki farkları gör.</p>
+      <p className="mt-2 px-1 text-xs text-slate-700">Karar vermeden önce hisseler arasındaki farkları gör.</p>
       {message ? <p className="mt-2 rounded-lg border border-warning/35 bg-warning-container/20 px-2 py-1 text-xs text-warning">{message}</p> : null}
     </div>
   );
