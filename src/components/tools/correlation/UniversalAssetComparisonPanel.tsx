@@ -1160,7 +1160,7 @@ export default function UniversalAssetComparisonPanel() {
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Karşılaştırılan Varlık Kartları</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-black">Karşılaştırılan Varlık Kartları</p>
                 <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                   {compareCards.map((card, index) => (
                     <article key={`compare-card:${card.symbol}`} className={`${GLASS_CHIP} tools-premium-copy animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
@@ -1203,7 +1203,7 @@ export default function UniversalAssetComparisonPanel() {
                                     : "Karar Simülasyonu";
 
                           return (
-                            <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between gap-2 text-slate-800">
+                            <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between gap-2 text-black">
                               <div className="flex-1">
                                 <span className="tools-card-metric-label">{criterion.label}</span>
                                 {criterion.id === "kurumsal_akis" ? (
@@ -1211,7 +1211,7 @@ export default function UniversalAssetComparisonPanel() {
                                 ) : null}
                               </div>
                               {value === null ? (
-                                <span className="rounded-md border border-slate-300 px-2 py-0.5 text-sm font-medium text-slate-600">Veri yok</span>
+                                <span className="rounded-md border border-slate-300 px-2 py-0.5 text-sm font-medium text-black">Veri yok</span>
                               ) : (
                                 <span className={`tools-card-metric-value rounded-md border px-2 py-0.5 ${heatCellTone(toneLabel, value)}`}>
                                   {value.toFixed(1)}

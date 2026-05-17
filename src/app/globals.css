@@ -403,7 +403,7 @@ svg.lucide {
   font-weight: var(--kusanagi-weight-heading);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #e2e8f0;
+  color: #111111;
 }
 
 .tools-card-metric-label {
@@ -411,7 +411,7 @@ svg.lucide {
   font-size: 1.03rem;
   font-weight: var(--kusanagi-weight-ui);
   letter-spacing: 0.08em;
-  color: #e2e8f0;
+  color: #111111;
   text-transform: uppercase;
 }
 
@@ -430,7 +430,7 @@ svg.lucide {
   font-size: 0.92rem;
   font-weight: var(--kusanagi-weight-ui);
   letter-spacing: 0.08em;
-  color: #cbd5e1;
+  color: #111111;
   text-transform: uppercase;
 }
 
@@ -442,7 +442,7 @@ svg.lucide {
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
-  color: #e2e8f0;
+  color: #111111;
   text-transform: uppercase;
 }
 
@@ -701,19 +701,19 @@ html.light .tools-shell .theme-toggle-btn {
 }
 
 .heat-tone-high {
-  color: #dff4ff;
+  color: #111111;
   background-color: rgba(34, 183, 255, 0.22);
   border-color: rgba(77, 205, 255, 0.5);
 }
 
 .heat-tone-mid {
-  color: #e2e8f0;
+  color: #111111;
   background-color: rgba(100, 116, 139, 0.25);
   border-color: rgba(148, 163, 184, 0.45);
 }
 
 .heat-tone-low {
-  color: #f1f5f9;
+  color: #111111;
   background-color: rgba(120, 113, 108, 0.28);
   border-color: rgba(168, 162, 158, 0.45);
 }
