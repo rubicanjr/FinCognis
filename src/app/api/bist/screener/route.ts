@@ -4,6 +4,7 @@ import {
   type LiquidityMetrics,
   type RiskMetrics,
 } from "@/lib/bist/risk";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -247,7 +248,7 @@ function scoreBist(
     assetValid: true,
     compositeScore: composite,
     compositeMax: 100,
-    disclaimer: "Egitim amacli analizdir. Yatirim tavsiyesi degildir.",
+    disclaimer: SPK_LEGAL_DISCLAIMER,
     shortTerm: { label: "Kisa Vade (1-4 hafta)", totalScore: stScore, availableMax: stMax, criteria: stCriteria },
     longTerm: { label: "Uzun Vade (3-12 ay)", totalScore: ltScore, availableMax: ltMax, criteria: ltCriteria },
   };
@@ -347,9 +348,6 @@ export async function GET(request: Request) {
       results.push({ ticker, assetValid: false, compositeScore: 0, compositeMax: 100, disclaimer: "", shortTerm: { label: "", totalScore: 0, availableMax: 0, criteria: [] }, longTerm: { label: "", totalScore: 0, availableMax: 0, criteria: [] }, error: msg });
     }
   }
-
-  // Sort by composite score
-  results.sort((a, b) => b.compositeScore - a.compositeScore);
 
   return NextResponse.json({
     totalScanned: tickerList.length,

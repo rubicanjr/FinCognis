@@ -314,16 +314,9 @@ export default function BistScreener() {
 
         {results?.rankings && results.rankings.length > 0 ? (
           <div className="space-y-4">
-            {results.rankings.map((r, i) => (
-              <div key={r.ticker} className="relative">
-                {r.assetValid && (
-                  <span className="absolute -left-1 -top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-slate-300 ring-1 ring-white/15">
-                    {i + 1}
-                  </span>
-                )}
-                <div className="pl-5">
-                  <StockCard result={r} />
-                </div>
+            {results.rankings.map((r) => (
+              <div key={r.ticker}>
+                <StockCard result={r} />
               </div>
             ))}
           </div>

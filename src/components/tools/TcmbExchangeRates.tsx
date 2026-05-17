@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, Banknote, CalendarDays, RefreshCw } from "lucide-react";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 /* ─── Types ─── */
 
@@ -230,7 +231,7 @@ export default function TcmbExchangeRates() {
 
       {/* Footer */}
       <p className="mt-4 text-center text-[10px] text-slate-600">
-        Kaynak: TCMB Kur Bülteni • Veri eğitim amaçlıdır, yatırım tavsiyesi değildir.
+        Kaynak: TCMB Kur Bülteni • {SPK_LEGAL_DISCLAIMER}
       </p>
     </section>
   );

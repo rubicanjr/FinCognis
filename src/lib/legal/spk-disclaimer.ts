@@ -1,0 +1,2 @@
+export const SPK_LEGAL_DISCLAIMER =
+  "FinCognis, Sermaye Piyasası Kurulu (SPK) lisansına sahip bir yatırım danışmanlığı platformu değildir. Sitede ve araçlarda sunulan tüm veriler, grafikler ve analizler yalnızca veri görselleştirme amaçlıdır; yatırım kararlarına esas oluşturamaz. Kullanıcı, platformdaki verileri kullanarak aldığı tüm finansal ve yatırım kararlarından bizzat ve tamamen sorumludur.";

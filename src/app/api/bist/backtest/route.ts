@@ -348,21 +348,6 @@ async function buildBistBacktestResponse(sp: URLSearchParams): Promise<
     }
   }
 
-  results.sort((a, b) => {
-    const irA = a.informationRatio ?? Number.NEGATIVE_INFINITY;
-    const irB = b.informationRatio ?? Number.NEGATIVE_INFINITY;
-    const informationRatioDiff = irB - irA;
-    if (informationRatioDiff !== 0) return informationRatioDiff;
-
-    const trackingErrorDiff = a.trackingErrorPercent - b.trackingErrorPercent;
-    if (trackingErrorDiff !== 0) return trackingErrorDiff;
-
-    const survivalDiff = b.survival.survivalProbabilityPercent - a.survival.survivalProbabilityPercent;
-    if (survivalDiff !== 0) return survivalDiff;
-
-    return b.totalReturnPercent - a.totalReturnPercent;
-  });
-
   return {
     status: 200,
     payload: {

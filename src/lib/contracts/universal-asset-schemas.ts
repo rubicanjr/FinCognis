@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 import { AssetClass } from "@/components/tools/correlation/universal-asset-comparison";
 
 export const AssetClassSchema = z.nativeEnum(AssetClass);
@@ -151,9 +152,7 @@ export const DiscoverResponseSchema = z.object({
   cached: z.boolean(),
   cacheAge: z.string().min(1),
   macroSnapshot: MacroSnapshotSchema,
-  disclaimer: z.literal(
-    "Bu analiz eğitim amaçlıdır. Yatırım tavsiyesi değildir. SPK lisanslı danışmana başvurunuz."
-  ),
+  disclaimer: z.string().min(1).refine((value) => value === SPK_LEGAL_DISCLAIMER),
 });
 
 export const DecisionIntentSchema = z.enum(["ADD", "COMPARE", "REPLACE"]);

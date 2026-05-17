@@ -1,4 +1,5 @@
 import { computeMaxDrawdownPercent, computeRiskLayer, type LiquidityThresholds } from "@/lib/bist/risk";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 export type BacktestSignal = "LONG" | "HOLD" | "EXIT";
 export type BacktestStrategy = "sma_momentum" | "rsi_reversion" | "buy_hold";
@@ -184,8 +185,7 @@ const DEFAULT_COSTS: Required<BacktestCostConfig> = {
   taxBps: 10,
   tailRiskHedgePercent: 1.5,
 };
-const DISCLAIMER =
-  "Bu backtest egitim amaclidir. Gercek islemlerde likidite, kayma ve tail-risk daha sert olabilir. Yatirim tavsiyesi degildir.";
+const DISCLAIMER = SPK_LEGAL_DISCLAIMER;
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));

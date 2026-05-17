@@ -2,6 +2,7 @@ import { AssetClass, type AnalysisCriterionScoreId, type NormalizedAsset } from 
 import { ASSET_CATALOG } from "@/data/asset-catalog";
 import type { DiscoverRequest, DiscoverResponse } from "@/lib/contracts/universal-asset-schemas";
 import { marketDataGateway } from "@/lib/gateways/market-data-gateway";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 import { analyzeUniversalAssets } from "@/lib/services/universal-asset-analysis-service";
 
 type DiscoverProgressEvent = {
@@ -57,7 +58,7 @@ const LAST_KNOWN_POLICY_RATE = (() => {
 })();
 const POLICY_SERIES = "TP.MB.S.AOFON";
 const POLICY_SERIES_RESPONSE_KEY = "TP_MB_S_AOFON";
-const DISCLAIMER = "Bu analiz eğitim amaçlıdır. Yatırım tavsiyesi değildir. SPK lisanslı danışmana başvurunuz.";
+const DISCLAIMER = SPK_LEGAL_DISCLAIMER;
 
 const baseDiscoverCache = new Map<string, CacheEntry<DiscoverBaseCacheValue>>();
 let policyRateCache: CacheEntry<MacroSnapshot> | null = null;
@@ -764,8 +765,7 @@ function buildScoredResults(
   const activeMetricKeys = request.horizon === "short" ? SHORT_METRIC_KEYS : LONG_METRIC_KEYS;
   const unmappedSectorPairs = new Set<string>();
 
-  return baseRows
-    .map((row) => {
+  return baseRows.map((row) => {
       const macroProfile = request.macroFilter
         ? resolveMacroCoefficient(macroSnapshot.policyRate, row.sector, row.industry)
         : { coefficient: 1, sectorMapped: true };
@@ -823,8 +823,7 @@ function buildScoredResults(
           : undefined,
         dataWarning,
       };
-    })
-    .sort((left, right) => right.profileFitScore - left.profileFitScore);
+    });
 }
 
 export async function runDiscover(

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AlertCircle, ArrowRight, Chrome, ShieldCheck } from "lucide-react";
 import { getAuthSessionFromSupabase, isAuthActive } from "@/lib/auth/auth-session";
 import { startGoogleOAuthFlow } from "@/lib/auth/google-oauth";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 import { createSupabaseBrowserClient, hasSupabasePublicEnv } from "@/utils/supabase";
 
 interface ToolsLoginScreenProps {
@@ -128,6 +129,9 @@ export default function ToolsLoginScreen({ defaultNextPath }: ToolsLoginScreenPr
               Oturumunuz açıksa doğrudan araçlara geçebilirsiniz
             </Link>
           </div>
+          <p className="rounded-xl border border-outline-variant/30 bg-surface px-3 py-2 text-[11px] leading-relaxed text-on-surface-variant">
+            {SPK_LEGAL_DISCLAIMER}
+          </p>
         </div>
       </div>
     </section>

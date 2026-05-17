@@ -1,6 +1,7 @@
 "use client";
 
 import type { StressAnalysisResult } from "@/components/tools/stress/types";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 interface StressResultsProps {
   analysis: StressAnalysisResult;
@@ -270,8 +271,9 @@ export default function StressResults({ analysis, portfolioValue }: StressResult
 
       <section className="rounded-2xl border border-outline-variant/30 bg-surface p-4 shadow-sm">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-secondary">
-          Aksiyona Dönüşen Çıktılar (Yatırım tavsiyesi değildir)
+          Aksiyona Dönüşen Çıktılar
         </p>
+        <p className="mb-3 text-xs leading-relaxed text-on-surface-variant">{SPK_LEGAL_DISCLAIMER}</p>
         <div className="grid gap-3 lg:grid-cols-2">
           <div className="rounded-xl border border-outline-variant/30 bg-surface-container-high p-3">
             <p className="text-sm font-semibold text-on-surface">Hedge ve optimizasyon önerileri</p>

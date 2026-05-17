@@ -14,6 +14,7 @@ import {
   Zap,
   BarChart3,
 } from "lucide-react";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 /* ─── Types (must match API response) ─── */
 
@@ -276,7 +277,7 @@ function VerdictCard({ verdict }: { verdict: DebateVerdict }) {
         <div className="flex items-center justify-between">
           <p className="flex items-center gap-1.5 text-[10px] text-slate-500">
             <ShieldCheck className="h-3 w-3" />
-            Egitim amacli analiz. Yatirim tavsiyesi degildir.
+            {SPK_LEGAL_DISCLAIMER}
           </p>
           {(verdict.bullArguments.length > 3 || verdict.bearArguments.length > 3) && (
             <button

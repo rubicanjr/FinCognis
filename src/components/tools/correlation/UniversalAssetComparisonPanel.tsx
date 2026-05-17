@@ -31,6 +31,7 @@ import {
 import { resolveCriterionDisplayScore } from "@/lib/analysis/criteria-display-score";
 import { computeCriteriaTotal } from "@/lib/analysis/criteria-total";
 import { parseJsonResponseSafely } from "@/lib/http/safe-json-response";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 const ACCENT_BLUE = "#22b7ff";
 
@@ -41,8 +42,7 @@ const QUICK_PICK_ASSETS: AssetSelectionPayload[] = [
   { ticker: "TSLA", yahooSymbol: "TSLA", assetClass: "equity_us", exchange: "NASDAQ/NYSE", currency: "USD" },
 ];
 
-const COMPLIANCE_DISCLAIMER =
-  "Yatırım tavsiyesi değil; farklı metriklere göre yatırımcı profilinize uygun analiz çerçevesi.";
+const COMPLIANCE_DISCLAIMER = SPK_LEGAL_DISCLAIMER;
 
 const NEUTRAL_FALLBACK_TEXT =
   "Bu içerik yatırım tavsiyesi içermez; yalnızca genel karşılaştırmalı profil bilgisidir.";
@@ -372,9 +372,9 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
 
   const volatilityText = (riskMetric.values[returnLeader.asset] ?? 0) >= 7 ? "yüksek oynaklık" : "orta oynaklık";
   const lines = [
-    `${returnLeader.asset} → kazanç potansiyeli yüksek, ${volatilityText} profiline yakındır.`,
-    `${lowRiskLeader.asset} → daha dengeli ve daha stabil profile yakındır.`,
-    `Profil uyumu açısından, yüksek oynaklık toleransı için ${returnLeader.asset}; denge odaklı profil için ${lowRiskLeader.asset} öne çıkmaktadır.`,
+    `${returnLeader.asset} → getiri metriği yüksek, risk metriği tarafında ${volatilityText} bandında görünmektedir.`,
+    `${lowRiskLeader.asset} → risk metriği tarafında görece düşük oynaklık bandında görünmektedir.`,
+    `Bu satırlar yalnızca metrik görünümüdür; herhangi bir varlık için öneri veya yönlendirme içermez.`,
   ];
 
   return sanitizeNeutralNarratives(lines, NEUTRAL_FALLBACK_TEXT);
@@ -474,6 +474,7 @@ export default function UniversalAssetComparisonPanel() {
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [discoveryRequested, setDiscoveryRequested] = useState(false);
   const [discoverRunNonce, setDiscoverRunNonce] = useState(0);
+  const [discoverMinFitThreshold, setDiscoverMinFitThreshold] = useState(70);
   const discoverRequestVersionRef = useRef(0);
 
   useEffect(() => {
@@ -718,29 +719,43 @@ export default function UniversalAssetComparisonPanel() {
       }),
     [activeCompareHorizon, assets, matrix.assets, selectedCompareAssets]
   );
-  const bestBalancedAsset = useMemo(() => {
-    const eligible = compareCards.filter((card) => Number.isFinite(card.balanceScore));
-    if (eligible.length === 0) return null;
-    const sorted = [...eligible].sort((left, right) => right.balanceScore - left.balanceScore);
-    return sorted[0] ?? null;
+  const neutralMetricsSummary = useMemo(() => {
+    const highSignals = compareCards.flatMap((card) => {
+      const highCriteria = card.criteriaValues
+        .filter(
+          (entry) =>
+            typeof entry.value === "number" &&
+            entry.value >= 7 &&
+            (entry.criterion.id === "teknik_momentum" || entry.criterion.id === "katalizor_takvimi")
+        )
+        .map((entry) => entry.criterion.label.toLocaleLowerCase("tr-TR"));
+
+      if (highCriteria.length === 0) return [];
+      return [{ symbol: card.symbol, metrics: Array.from(new Set(highCriteria)) }];
+    });
+
+    if (highSignals.length === 0) {
+      return "Seçili hisselerde teknik momentum ve katalizör takvimi metrikleri benzer bantlarda görünmektedir.";
+    }
+
+    const highlightedSymbols = highSignals.slice(0, 2).map((item) => item.symbol);
+    const uniqueMetrics = Array.from(new Set(highSignals.flatMap((item) => item.metrics))).slice(0, 2);
+
+    const symbolsText = highlightedSymbols.join(" ve ");
+    const metricsText = uniqueMetrics.join(" veya ");
+
+    return `Seçtiğiniz hisseler arasında ${symbolsText} varlıklarının ${metricsText} metrikleri yüksek değerlerde görünmektedir.`;
   }, [compareCards]);
-  const bestBalancedReason = useMemo(() => {
-    if (!bestBalancedAsset) return "";
-    const factors = bestBalancedAsset.criteriaValues
-      .map((entry) => ({ label: entry.criterion.label.toLocaleLowerCase("tr-TR"), score: entry.value }))
-      .filter((item): item is { label: string; score: number } => typeof item.score === "number")
-      .sort((left, right) => right.score - left.score)
-      .slice(0, 2)
-      .map((item) => item.label);
-    return factors.join(" + ");
-  }, [bestBalancedAsset]);
 
   const discoverResults = useMemo(() => discoveryData?.results ?? [], [discoveryData]);
-  const discoverTopRows = useMemo(() => discoverResults.slice(0, 12), [discoverResults]);
+  const discoverFilteredRows = useMemo(
+    () => discoverResults.filter((row) => row.profileFitScore >= discoverMinFitThreshold),
+    [discoverMinFitThreshold, discoverResults]
+  );
+  const discoverTopRows = useMemo(() => discoverFilteredRows.slice(0, 12), [discoverFilteredRows]);
 
   const title = mode === "compare" ? "Hisseleri Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Hisseleri Keşfedin";
-  const subtitle =
-    "Yatırım tavsiyesi değil; farklı metriklere göre yatırımcı profilinize uygun analiz çerçevesi.";
+  const subtitle = COMPLIANCE_DISCLAIMER;
 
   const dataError =
     mode === "compare"
@@ -825,7 +840,7 @@ export default function UniversalAssetComparisonPanel() {
             </h2>
           </div>
           <div className="mt-4 overflow-hidden">
-            <p className="mx-auto block truncate whitespace-nowrap text-sm text-slate-300 sm:text-lg">
+            <p className="mx-auto max-w-5xl text-sm leading-relaxed text-slate-200 sm:text-base">
               {subtitle}
             </p>
           </div>
@@ -1140,17 +1155,8 @@ export default function UniversalAssetComparisonPanel() {
           {showCompareResults ? (
             <>
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Tek Ekranda Karar Özeti</p>
-                {bestBalancedAsset ? (
-                  <>
-                    <p className="mt-1 font-display text-xl font-semibold text-slate-900 sm:text-2xl">
-                      Bu karşılaştırmada en dengeli varlık: <span className="text-sky-700">{bestBalancedAsset.symbol}</span>
-                    </p>
-                    <p className="mt-2 text-sm text-slate-700">Sebep: {bestBalancedReason}.</p>
-                  </>
-                ) : (
-                  <p className="mt-1 text-sm text-slate-700">Karşılaştırma için yeterli veri bulunamadı.</p>
-                )}
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Seçili Kriterlere Göre Metrik Dağılım Özeti</p>
+                <p className="mt-2 text-sm text-slate-800">{neutralMetricsSummary}</p>
               </div>
 
               <div className={PANEL_CARD}>
@@ -1197,8 +1203,13 @@ export default function UniversalAssetComparisonPanel() {
                                     : "Karar Simülasyonu";
 
                           return (
-                            <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between text-slate-800">
-                              <span className="tools-card-metric-label">{criterion.label}</span>
+                            <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between gap-2 text-slate-800">
+                              <div className="flex-1">
+                                <span className="tools-card-metric-label">{criterion.label}</span>
+                                {criterion.id === "kurumsal_akis" ? (
+                                  <p className="mt-0.5 text-[10px] text-amber-700">ℹ️ Doğrulanmamış 3. parti veri kaynağıdır, kesinlik içermez.</p>
+                                ) : null}
+                              </div>
                               {value === null ? (
                                 <span className="rounded-md border border-slate-300 px-2 py-0.5 text-sm font-medium text-slate-600">Veri yok</span>
                               ) : (
@@ -1248,7 +1259,7 @@ export default function UniversalAssetComparisonPanel() {
                       Makro Snapshot: Politika faizi %{discoveryData.macroSnapshot.policyRate.toFixed(2)} · Kaynak: {discoveryData.macroSnapshot.source}
                     </p>
                     {discoveryData.macroSnapshot.source === "last_known_fallback" ? (
-                      <p className="mt-1 text-xs text-amber-300">
+                      <p className="mt-1 text-xs text-amber-700">
                         Politika faizi: %{discoveryData.macroSnapshot.policyRate.toFixed(0)} (son bilinen değer — canlı TCMB verisi bekleniyor)
                       </p>
                     ) : null}
@@ -1258,6 +1269,24 @@ export default function UniversalAssetComparisonPanel() {
 
               <div className={PANEL_CARD}>
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Uygun Varlıklar</p>
+                <div className="mt-3 rounded-xl border border-slate-300 bg-slate-50 p-3">
+                  <label className="block text-xs text-slate-700" htmlFor="discover-threshold">
+                    Eşik Filtreleme (Kullanıcı kontrollü): En az Uyum skoru {discoverMinFitThreshold}
+                  </label>
+                  <input
+                    id="discover-threshold"
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={discoverMinFitThreshold}
+                    onChange={(event) => setDiscoverMinFitThreshold(Number(event.target.value))}
+                    className="mt-2 w-full"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-600">
+                    Bu liste sıralama/tavsiye üretmez; yalnızca belirlediğiniz eşiğe göre görünümü filtreler.
+                  </p>
+                </div>
                 <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                   {discoverTopRows.map((row, index) => (
                     <article key={`discover:${row.symbol}`} className={`${GLASS_CHIP} animate-fade-in-left rounded-xl p-4`} style={rowAnimationStyle(index)}>
@@ -1276,6 +1305,9 @@ export default function UniversalAssetComparisonPanel() {
                     </article>
                   ))}
                 </div>
+                {discoverTopRows.length === 0 ? (
+                  <p className="mt-3 text-sm text-slate-700">Belirlediğiniz eşik değerinde gösterilecek varlık bulunamadı.</p>
+                ) : null}
               </div>
             </>
           ) : null}

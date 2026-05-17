@@ -1,3 +1,5 @@
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
+
 export const SCREENING_TRIGGERS = [
   "tarama yap",
   "bist analiz",
@@ -8,8 +10,7 @@ export const SCREENING_TRIGGERS = [
   "bist30 analiz",
 ] as const;
 
-const DISCLAIMER =
-  "Bu çıktı eğitim amaçlıdır, yatırım tavsiyesi değildir. SPK lisanslı bir danışmana başvurunuz.";
+const DISCLAIMER = SPK_LEGAL_DISCLAIMER;
 
 export type ScreeningHorizon = "short" | "medium" | "long";
 

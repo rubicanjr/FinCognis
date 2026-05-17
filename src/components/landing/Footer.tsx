@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import { Globe, TerminalSquare } from "lucide-react";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 export default function Footer() {
   return (
@@ -10,6 +11,7 @@ export default function Footer() {
             FinCognis
           </Link>
           <p className="text-sm tracking-wide text-slate-400">© 2026 FinCognis. Güvenli Finansal Zekâ.</p>
+          <p className="max-w-xl text-xs leading-relaxed text-slate-400">{SPK_LEGAL_DISCLAIMER}</p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-8">

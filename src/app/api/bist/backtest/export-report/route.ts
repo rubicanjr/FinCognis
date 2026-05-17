@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GET as runBacktestRoute } from "../route";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -191,7 +192,7 @@ function toMarkdownReport(summary: ReturnType<typeof buildExecutiveSummary>, str
     JSON.stringify(config, null, 2),
     "```",
     "",
-    "_Bu rapor egitim amaclidir, yatirim tavsiyesi degildir._",
+    `_${SPK_LEGAL_DISCLAIMER}_`,
   ].join("\n");
 }
 
@@ -241,7 +242,7 @@ export async function GET(request: Request) {
       summary,
       errors: payload.errors,
       rowCount: rows.length,
-      disclaimer: "Bu rapor egitim amaclidir, yatirim tavsiyesi degildir.",
+      disclaimer: SPK_LEGAL_DISCLAIMER,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown export error";

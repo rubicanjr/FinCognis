@@ -4,6 +4,7 @@ import {
   type LiquidityMetrics,
   type RiskMetrics,
 } from "@/lib/bist/risk";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -627,7 +628,7 @@ function generateSummary(
     `${ticker} icin tartisma sonucu: ${stanceLabel[stance]} egilim. ` +
     `Boga puan: ${bullScore}, Ayi puan: ${bearScore}. ` +
     `En guclu bogam: ${topBull}, En guclu ayim: ${topBear}. ` +
-    `Bu analiz egitim amaclidir, yatirim tavsiyesi degildir.`
+    `${SPK_LEGAL_DISCLAIMER}`
   );
 }
 

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   TrendingDown,
 } from "lucide-react";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 type Strategy = "sma_momentum" | "rsi_reversion" | "buy_hold";
 type RiskPreset = "conservative" | "balanced" | "aggressive";
@@ -747,9 +748,7 @@ export default function BistBacktest() {
 
         <div className="mt-4 flex items-start gap-1.5 text-[10px] text-slate-500">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5" />
-          <p>
-            Backtest ciktilari egitim amaclidir. Canli piyasada spread, likidite krizi ve rejim kaymasi etkileri daha sert olabilir.
-          </p>
+          <p>{SPK_LEGAL_DISCLAIMER}</p>
         </div>
       </div>
     </div>

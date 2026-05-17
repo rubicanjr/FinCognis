@@ -1,5 +1,6 @@
 import type { UseCommissionCalculatorResult } from "@/components/tools/commission/useCommissionCalculator";
 import { formatCompactNumber, formatMoney, formatPercent, toInputValue } from "@/components/tools/commissionHelpers";
+import { SPK_LEGAL_DISCLAIMER } from "@/lib/legal/spk-disclaimer";
 
 interface SupportPanelProps {
   vm: UseCommissionCalculatorResult;
@@ -167,7 +168,7 @@ export function SupportPanel({ vm }: SupportPanelProps) {
 
       <p className="px-2 text-center text-[11px] leading-6 text-on-surface-variant">
         {dataset._meta?.disclaimer} Son güncelleme: {dataset._meta?.lastUpdated}. Kategori: {selectedCategory?.name}
-        . Piyasa: {selectedMarket?.name}. Aktif kurum: {formatCompactNumber(filteredBrokers.length)}.
+        . Piyasa: {selectedMarket?.name}. Aktif kurum: {formatCompactNumber(filteredBrokers.length)}. {SPK_LEGAL_DISCLAIMER}
       </p>
     </>
   );
