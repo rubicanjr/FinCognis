@@ -16,7 +16,6 @@ import {
   type NormalizedAsset,
   type UniversalMetrics,
 } from "@/components/tools/correlation/universal-asset-comparison";
-import MetricExplanation from "@/components/tools/correlation/MetricExplanation";
 import AssetSearchInput from "@/components/AssetSearchInput";
 import type { CatalogAssetClass } from "@/data/asset-catalog";
 import type { AssetSelectionPayload } from "@/hooks/useAssetSearch";
@@ -253,7 +252,7 @@ const DEFAULT_LONG_FILTERS: LongFilters = {
   minMarketCap: "bist100",
 };
 
-const PANEL_CARD = "tools-card rounded-2xl border border-slate-300 bg-white p-4 shadow-sm";
+const PANEL_CARD = "tools-card rounded-xl border border-slate-200 bg-transparent p-4";
 
 const GLASS_CHIP =
   "tools-chip border border-slate-300 bg-white transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-sm";
@@ -826,12 +825,12 @@ export default function UniversalAssetComparisonPanel() {
             </div>
           </div>
 
-          <div className="mt-5 overflow-hidden">
-            <h2 className="tools-hero-title block truncate whitespace-nowrap bg-[linear-gradient(92deg,#eaf6ff_10%,#8fddff_45%,#cf9dff_90%)] bg-clip-text font-display text-[clamp(1.5rem,5.5vw,3.4rem)] font-semibold leading-[1.04] tracking-[0.02em] text-transparent">
+          <div className="mt-5">
+            <h2 className="tools-hero-title whitespace-nowrap font-display text-[clamp(0.95rem,4.2vw,3.4rem)] font-semibold leading-[1.04] tracking-[0.02em] text-white">
               {title}
             </h2>
           </div>
-          <div className="mt-4 overflow-hidden">
+          <div className="mt-4">
             <p className="mx-auto max-w-5xl text-sm leading-relaxed text-slate-200 sm:text-base">
               {subtitle}
             </p>
@@ -1143,7 +1142,7 @@ export default function UniversalAssetComparisonPanel() {
           </div>
         ) : null}
 
-        <div className="mx-auto mt-6 max-w-6xl space-y-4">
+        <div className="mx-auto mt-6 max-w-6xl space-y-4 rounded-2xl border border-slate-300 bg-white p-4">
           {showCompareResults ? (
             <>
               <div className={PANEL_CARD}>
@@ -1308,8 +1307,6 @@ export default function UniversalAssetComparisonPanel() {
             <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Uyum ve Bilgilendirme</p>
             <p className="mt-2 text-sm text-slate-800">{mode === "discover" ? discoveryData?.disclaimer ?? COMPLIANCE_DISCLAIMER : COMPLIANCE_DISCLAIMER}</p>
           </div>
-
-          <MetricExplanation />
         </div>
       </div>
     </section>
