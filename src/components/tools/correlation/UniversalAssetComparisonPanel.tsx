@@ -17,9 +17,6 @@ import {
   type UniversalMetrics,
 } from "@/components/tools/correlation/universal-asset-comparison";
 import MetricExplanation from "@/components/tools/correlation/MetricExplanation";
-import {
-  sanitizeNeutralNarratives,
-} from "@/lib/compliance/investment-language-guard";
 import AssetSearchInput from "@/components/AssetSearchInput";
 import type { CatalogAssetClass } from "@/data/asset-catalog";
 import type { AssetSelectionPayload } from "@/hooks/useAssetSearch";
@@ -43,9 +40,6 @@ const QUICK_PICK_ASSETS: AssetSelectionPayload[] = [
 ];
 
 const COMPLIANCE_DISCLAIMER = SPK_LEGAL_DISCLAIMER;
-
-const NEUTRAL_FALLBACK_TEXT =
-  "Bu içerik yatırım tavsiyesi içermez; yalnızca genel karşılaştırmalı profil bilgisidir.";
 
 type PanelMode = "compare" | "discover";
 type MatrixMetricLabel =
@@ -353,31 +347,24 @@ function rowAnimationStyle(index: number): CSSProperties {
 
 function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
   if (matrix.assets.length < 2) {
-    return ["Karşılaştırma içgörüsü için en az iki varlık girin."];
+    return ["Ham veri gösterimi için en az iki varlık girin."];
   }
 
   const riskMetric = matrix.metrics.find((metric) => metric.label === "Karar Simülasyonu");
   const returnMetric = matrix.metrics.find((metric) => metric.label === "Risk Görselleştirme");
 
   if (!riskMetric || !returnMetric) {
-    return ["Karşılaştırma içgörüsü için metrik verisi eksik."];
+    return ["Ham veri gösterimi için metrik verisi eksik."];
   }
 
-  const returnLeader = matrix.assets
-    .map((asset) => ({ asset, score: returnMetric.values[asset] ?? 0 }))
-    .sort((left, right) => right.score - left.score)[0];
-  const lowRiskLeader = matrix.assets
-    .map((asset) => ({ asset, score: riskMetric.values[asset] ?? 10 }))
-    .sort((left, right) => left.score - right.score)[0];
+  const formatMetric = (value: number | null | undefined): string =>
+    typeof value === "number" ? value.toFixed(1) : "Veri yok";
 
-  const volatilityText = (riskMetric.values[returnLeader.asset] ?? 0) >= 7 ? "yüksek oynaklık" : "orta oynaklık";
-  const lines = [
-    `${returnLeader.asset} → getiri metriği yüksek, risk metriği tarafında ${volatilityText} bandında görünmektedir.`,
-    `${lowRiskLeader.asset} → risk metriği tarafında görece düşük oynaklık bandında görünmektedir.`,
-    `Bu satırlar yalnızca metrik görünümüdür; herhangi bir varlık için öneri veya yönlendirme içermez.`,
-  ];
-
-  return sanitizeNeutralNarratives(lines, NEUTRAL_FALLBACK_TEXT);
+  return matrix.assets.slice(0, 5).map((asset) => {
+    const returnValue = returnMetric.values[asset];
+    const riskValue = riskMetric.values[asset];
+    return `${asset} → Getiri Metriği: ${formatMetric(returnValue)}, Risk Metriği: ${formatMetric(riskValue)}, Oynaklık Bandı: ${formatMetric(riskValue)}`;
+  });
 }
 
 function activeDiscoverPresetMap(horizon: DiscoverHorizon): Record<string, DiscoverProfilePreset> {
@@ -748,10 +735,15 @@ export default function UniversalAssetComparisonPanel() {
   }, [compareCards]);
 
   const discoverResults = useMemo(() => discoveryData?.results ?? [], [discoveryData]);
-  const discoverFilteredRows = useMemo(
-    () => discoverResults.filter((row) => row.profileFitScore >= discoverMinFitThreshold),
-    [discoverMinFitThreshold, discoverResults]
-  );
+  const discoverFilteredRows = useMemo(() => {
+    return discoverResults
+      .filter((row) => row.profileFitScore >= discoverMinFitThreshold)
+      .sort((left, right) => {
+        const leftName = left.name?.trim() || left.symbol;
+        const rightName = right.name?.trim() || right.symbol;
+        return leftName.localeCompare(rightName, "tr", { sensitivity: "base" });
+      });
+  }, [discoverMinFitThreshold, discoverResults]);
   const discoverTopRows = useMemo(() => discoverFilteredRows.slice(0, 12), [discoverFilteredRows]);
 
   const title = mode === "compare" ? "Hisseleri Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Hisseleri Keşfedin";
@@ -1227,7 +1219,7 @@ export default function UniversalAssetComparisonPanel() {
               </div>
 
               <div className={PANEL_CARD}>
-                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Karar İçgörüsü (Kısa)</p>
+                <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Ham Veri Gösterimi</p>
                 <div className="mt-3 space-y-2">
                   {insightLines.slice(0, 3).map((line, index) => (
                     <p key={`insight:${index}`} className={`${GLASS_CHIP} rounded-lg px-3 py-2 text-sm text-slate-900`}>
@@ -1297,7 +1289,7 @@ export default function UniversalAssetComparisonPanel() {
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-slate-700">{row.name} · {row.sector}</p>
-                      <p className="mt-2 text-sm text-slate-800">Öne çıkan metrik: {row.highlightMetric}</p>
+                      <p className="mt-2 text-sm text-slate-800">En yüksek skor alan metrik: {row.highlightMetric}</p>
                       {row.macroPenaltyApplied ? (
                         <p className="mt-2 text-xs text-amber-700">⚠️ Bu hisse mevcut faiz ortamında düşük ağırlık aldı.</p>
                       ) : null}
