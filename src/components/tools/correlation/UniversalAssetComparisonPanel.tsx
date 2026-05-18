@@ -791,20 +791,12 @@ export default function UniversalAssetComparisonPanel() {
   }
 
   return (
-    <section className="tools-panel-shell relative overflow-visible rounded-[34px] border border-[#22b7ff]/20 bg-[#030915]/90 p-4 shadow-[0_40px_120px_rgba(2,8,23,0.72)] sm:p-6">
-      <div
-        className="tools-panel-shell__aurora pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at 18% -12%, rgb(34 183 255 / 0.38) 0%, transparent 44%), radial-gradient(circle at 84% 3%, rgb(168 85 247 / 0.24) 0%, transparent 38%), linear-gradient(180deg, rgb(2 8 23) 0%, rgb(2 6 18) 100%)",
-        }}
-      />
-      <div className="tools-panel-shell__grid pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:28px_28px]" />
+    <section className="tools-panel-shell relative overflow-visible rounded-[34px] border border-slate-300 bg-white p-4 shadow-sm sm:p-6">
 
       <div className="relative z-10">
-        <div className="mx-auto max-w-4xl text-center">
+        <div className="mx-auto w-full max-w-4xl text-center">
           <div className="flex justify-center">
-            <div className="inline-flex rounded-xl border border-white/12 bg-slate-900/55 p-1 backdrop-blur-xl">
+            <div className="inline-flex rounded-xl border border-slate-300 bg-white p-1">
               {MODE_OPTIONS.map((option) => {
                 const isActive = option.key === mode;
                 return (
@@ -814,8 +806,8 @@ export default function UniversalAssetComparisonPanel() {
                     onClick={() => setMode(option.key)}
                     className={`tools-mode-btn rounded-lg px-4 py-2 font-display text-sm font-semibold transition-all ${
                       isActive
-                        ? "tools-mode-btn--active border border-[#22b7ff]/55 bg-[#22b7ff]/18 text-[#dff4ff]"
-                        : "tools-mode-btn--idle text-slate-300 hover:text-[#8ddfff]"
+                        ? "tools-mode-btn--active border border-sky-600 bg-sky-100 text-sky-900"
+                        : "tools-mode-btn--idle text-slate-700 hover:text-sky-700"
                     }`}
                   >
                     {option.label}
@@ -826,12 +818,12 @@ export default function UniversalAssetComparisonPanel() {
           </div>
 
           <div className="mt-5">
-            <h2 className="tools-hero-title whitespace-nowrap font-display text-[clamp(0.95rem,4.2vw,3.4rem)] font-semibold leading-[1.04] tracking-[0.02em] text-white">
+            <h2 className="tools-hero-title mx-auto w-full max-w-full whitespace-normal break-words font-display text-2xl font-semibold leading-tight tracking-[0.02em] text-slate-900 sm:text-3xl lg:text-5xl">
               {title}
             </h2>
           </div>
           <div className="mt-4">
-            <p className="mx-auto max-w-5xl text-sm leading-relaxed text-slate-200 sm:text-base">
+            <p className="mx-auto max-w-5xl text-sm leading-relaxed text-slate-700 sm:text-base">
               {subtitle}
             </p>
           </div>
@@ -1260,7 +1252,7 @@ export default function UniversalAssetComparisonPanel() {
 
               <div className={PANEL_CARD}>
                 <p className="font-display text-[11px] font-semibold tracking-[0.08em] text-slate-700">Uygun Varlıklar</p>
-                <div className="mt-3 rounded-xl border border-slate-300 bg-slate-50 p-3">
+                <div className="mt-3 rounded-xl border border-slate-300 bg-white p-3">
                   <label className="block text-xs text-slate-700" htmlFor="discover-threshold">
                     Eşik Filtreleme (Kullanıcı kontrollü): En az Uyum skoru {discoverMinFitThreshold}
                   </label>
