@@ -794,10 +794,10 @@ export default function UniversalAssetComparisonPanel() {
   }
 
   return (
-    <section className="tools-panel-shell relative overflow-visible rounded-[34px] border border-slate-300 bg-white p-4 shadow-sm sm:p-6">
+    <section className="tools-panel-shell relative w-full max-w-full overflow-x-hidden rounded-[34px] border border-slate-300 bg-white p-4 shadow-sm sm:p-6">
 
       <div className="relative z-10">
-        <div className="mx-auto w-full max-w-4xl text-center">
+        <div className="mx-auto w-full max-w-4xl overflow-hidden text-center">
           <div className="flex justify-center">
             <div className="inline-flex rounded-xl border border-slate-300 bg-white p-1">
               {MODE_OPTIONS.map((option) => {
@@ -821,7 +821,7 @@ export default function UniversalAssetComparisonPanel() {
           </div>
 
           <div className="mt-5">
-            <h2 className="tools-hero-title mx-auto w-full max-w-full whitespace-nowrap font-display text-[clamp(0.72rem,3.1vw,2.65rem)] font-semibold leading-tight tracking-[0.01em] text-slate-900">
+            <h2 className="tools-hero-title mx-auto w-full max-w-full whitespace-nowrap text-center font-display text-[clamp(0.56rem,2.4vw,2.45rem)] font-semibold leading-tight tracking-[0.005em] text-slate-900">
               {title}
             </h2>
           </div>

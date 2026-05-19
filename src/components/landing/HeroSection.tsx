@@ -137,16 +137,16 @@ export default function HeroSection() {
           </span>
         </div>
 
-        <h1 className="animate-fade-in-up-delay-1 mb-5 text-[2.55rem] font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-[3.2rem] md:text-[4.1rem] lg:text-[5.75rem]">
-          <span className="block whitespace-nowrap">
+        <h1 className="animate-fade-in-up-delay-1 mb-5 text-[clamp(1.7rem,8vw,5.75rem)] font-semibold leading-[1.04] tracking-[-0.03em] text-white">
+          <span className="block whitespace-normal">
             <span className="text-[0.9em]">FİNANSAL</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">KARARLAR</span>
           </span>
-          <span className="block whitespace-nowrap">
+          <span className="block whitespace-normal">
             <span className="text-[0.9em]">VERİYLE</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">ŞEKİLLENİYOR</span>
           </span>
-          <span className="block whitespace-nowrap">
+          <span className="block whitespace-normal">
             <span className="text-[0.9em]">FINCOGNIS İLE</span>{" "}
             <span className="hero-exclusive-dynamic text-[1.08em] font-semibold">NETLEŞİYOR</span>
           </span>
@@ -176,7 +176,7 @@ export default function HeroSection() {
             <div className="mt-2 text-sm text-slate-300">yıllık tecrübe</div>
           </div>
           <div className="min-w-0 sm:-ml-2 lg:-ml-4">
-            <div className="whitespace-nowrap text-3xl font-semibold leading-none text-white sm:text-4xl">Decısıon Intellıgence</div>
+            <div className="text-3xl font-semibold leading-none text-white sm:text-4xl">Decısıon Intellıgence</div>
             <div className="mt-2 text-sm text-slate-300">yaklaşımı</div>
           </div>
         </div>

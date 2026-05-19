@@ -53,7 +53,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="landing-nav fixed top-0 z-50 w-full border-b border-[#22b7ff]/20 bg-[#030915]/75 shadow-[0_14px_35px_rgba(2,8,23,0.65)] backdrop-blur-xl">
+    <nav className="landing-nav fixed top-0 z-50 w-full overflow-x-clip border-b border-[#22b7ff]/20 bg-[#030915]/75 shadow-[0_14px_35px_rgba(2,8,23,0.65)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-[1320px] items-center justify-between px-6 py-4">
         <div className="hidden items-center gap-6 md:flex">
           {NAV_ITEMS.map((item) => {
@@ -73,7 +73,7 @@ export default function Navbar() {
                     <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.6} />
                   </Link>
                   <div
-                    className={`absolute left-0 top-full z-50 mt-2 min-w-[420px] rounded-xl border border-white/25 bg-[#020a1f]/95 p-2 shadow-[0_20px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ${
+                    className={`absolute left-0 top-full z-50 mt-2 w-max min-w-[280px] max-w-[calc(100vw-2rem)] md:min-w-[420px] rounded-xl border border-white/25 bg-[#020a1f]/95 p-2 shadow-[0_20px_35px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 ${
                       aboutMenuOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"
                     }`}
                     onMouseEnter={openAboutMenu}
