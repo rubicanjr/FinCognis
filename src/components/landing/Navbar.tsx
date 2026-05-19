@@ -14,6 +14,7 @@ const NAV_ITEMS: Array<{ label: string; href: string; finLab?: boolean }> = [
 ];
 
 const ABOUT_MENU_ITEMS = [
+  { label: "BİZ NASIL ÇALIŞIYORUZ", href: "/nasil-calisiyoruz" },
   { label: "MISYON & VİZYON", href: "/hakkimizda/misyon-vizyon" },
   { label: "FELSEFE", href: "/hakkimizda/felsefe" },
   { label: "YOL HARİTASI", href: "/hakkimizda/yol-haritasi" },
