@@ -1187,9 +1187,6 @@ export default function UniversalAssetComparisonPanel() {
                             <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between gap-2 text-black">
                               <div className="flex-1">
                                 <span className="tools-card-metric-label">{compareCriterionDisplayLabel(criterion)}</span>
-                                {criterion.id === "kurumsal_akis" ? (
-                                  <p className="mt-0.5 text-[10px] text-amber-700">ℹ️ Doğrulanmamış 3. parti veri kaynağıdır, kesinlik içermez.</p>
-                                ) : null}
                               </div>
                               {value === null ? (
                                 <span className="rounded-md border border-slate-300 px-2 py-0.5 text-sm font-medium text-black">Veri yok</span>
