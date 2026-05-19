@@ -366,6 +366,10 @@ function generateCompareInsightLines(matrix: ComparisonMatrix): string[] {
   });
 }
 
+function compareCriterionDisplayLabel(criterion: AnalysisCriterion): string {
+  return criterion.id === "kurumsal_akis" ? "Hacim Dinamiği" : criterion.label;
+}
+
 function activeDiscoverPresetMap(horizon: DiscoverHorizon): Record<string, DiscoverProfilePreset> {
   return horizon === "short" ? SHORT_DISCOVER_PRESETS : LONG_DISCOVER_PRESETS;
 }
@@ -714,7 +718,7 @@ export default function UniversalAssetComparisonPanel() {
             entry.value >= 7 &&
             (entry.criterion.id === "teknik_momentum" || entry.criterion.id === "katalizor_takvimi")
         )
-        .map((entry) => entry.criterion.label.toLocaleLowerCase("tr-TR"));
+        .map((entry) => compareCriterionDisplayLabel(entry.criterion).toLocaleLowerCase("tr-TR"));
 
       if (highCriteria.length === 0) return [];
       return [{ symbol: card.symbol, metrics: Array.from(new Set(highCriteria)) }];
@@ -1182,7 +1186,7 @@ export default function UniversalAssetComparisonPanel() {
                           return (
                             <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between gap-2 text-black">
                               <div className="flex-1">
-                                <span className="tools-card-metric-label">{criterion.id === "kurumsal_akis" ? "Hacim Dinamiği" : criterion.label}</span>
+                                <span className="tools-card-metric-label">{compareCriterionDisplayLabel(criterion)}</span>
                                 {criterion.id === "kurumsal_akis" ? (
                                   <p className="mt-0.5 text-[10px] text-amber-700">ℹ️ Doğrulanmamış 3. parti veri kaynağıdır, kesinlik içermez.</p>
                                 ) : null}
