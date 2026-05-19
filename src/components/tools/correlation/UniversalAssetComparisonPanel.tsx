@@ -746,7 +746,6 @@ export default function UniversalAssetComparisonPanel() {
   const discoverTopRows = useMemo(() => discoverFilteredRows.slice(0, 12), [discoverFilteredRows]);
 
   const title = mode === "compare" ? "Hisseleri Aynı Çerçevede Karşılaştırın" : "Aradığınız Profile Yakın Hisseleri Keşfedin";
-  const subtitle = COMPLIANCE_DISCLAIMER;
 
   const dataError =
     mode === "compare"
@@ -818,14 +817,9 @@ export default function UniversalAssetComparisonPanel() {
           </div>
 
           <div className="mt-5">
-            <h2 className="tools-hero-title mx-auto w-full max-w-full whitespace-normal break-words font-display text-2xl font-semibold leading-tight tracking-[0.02em] text-slate-900 sm:text-3xl lg:text-5xl">
+            <h2 className="tools-hero-title mx-auto w-full max-w-full whitespace-nowrap font-display text-[clamp(0.72rem,3.1vw,2.65rem)] font-semibold leading-tight tracking-[0.01em] text-slate-900">
               {title}
             </h2>
-          </div>
-          <div className="mt-4">
-            <p className="mx-auto max-w-5xl text-sm leading-relaxed text-slate-700 sm:text-base">
-              {subtitle}
-            </p>
           </div>
         </div>
 
@@ -1188,7 +1182,7 @@ export default function UniversalAssetComparisonPanel() {
                           return (
                             <div key={`${card.symbol}:${criterion.id}`} className="flex items-center justify-between gap-2 text-black">
                               <div className="flex-1">
-                                <span className="tools-card-metric-label">{criterion.label}</span>
+                                <span className="tools-card-metric-label">{criterion.id === "kurumsal_akis" ? "Hacim Dinamiği" : criterion.label}</span>
                                 {criterion.id === "kurumsal_akis" ? (
                                   <p className="mt-0.5 text-[10px] text-amber-700">ℹ️ Doğrulanmamış 3. parti veri kaynağıdır, kesinlik içermez.</p>
                                 ) : null}
