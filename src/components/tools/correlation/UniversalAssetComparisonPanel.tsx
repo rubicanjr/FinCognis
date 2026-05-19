@@ -820,8 +820,8 @@ export default function UniversalAssetComparisonPanel() {
             </div>
           </div>
 
-          <div className="mt-5">
-            <h2 className="tools-hero-title mx-auto w-full max-w-full whitespace-nowrap text-center font-display text-[clamp(0.56rem,2.4vw,2.45rem)] font-semibold leading-tight tracking-[0.005em] text-slate-900">
+          <div className="mt-3">
+            <h2 className="tools-hero-title mx-auto w-full max-w-[88%] whitespace-nowrap text-center font-display text-[clamp(0.52rem,1.75vw,1.72rem)] font-semibold leading-tight tracking-[0.004em] text-slate-900">
               {title}
             </h2>
           </div>
